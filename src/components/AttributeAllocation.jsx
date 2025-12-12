@@ -12,7 +12,11 @@ function AttributeAllocation({ attributes, availablePoints, onIncrease, onDecrea
     { key: 'math', name: '📐 数学' },
     { key: 'dp', name: '🔄 动态规划' },
     { key: 'graph', name: '🕸️ 图论' },
-    { key: 'dataStructure', name: '🗂️ 数据结构' }
+    { key: 'dataStructure', name: '🗂️ 数据结构' },
+    { key: 'string', name: '🔤 字符串' },
+    { key: 'search', name: '🔍 搜索' },
+    { key: 'greedy', name: '💡 贪心' },
+    { key: 'geometry', name: '📏 计算几何' }
   ];
 
   const renderAttributeGroup = (attributeList, title) => (

@@ -18,18 +18,22 @@ const ATTRIBUTE_MULTIPLIERS = {
   MATH: 15,
   DP: 13,
   GRAPH: 13,
-  DATA_STRUCTURE: 13
+  DATA_STRUCTURE: 13,
+  STRING: 12,
+  SEARCH: 12,
+  GREEDY: 11,
+  GEOMETRY: 14
 };
 
 const MAX_ATTRIBUTE_VALUE = 10;
-const SUCCESS_RATE_DIVISOR = 30;
+const SUCCESS_RATE_DIVISOR = 40;
 
 function App() {
   const [gameState, setGameState] = useState({
     isRunning: false,
     isPaused: false,
     gameTime: 0,
-    availablePoints: 15,
+    availablePoints: 20,
     attributes: {
       // 通用属性
       coding: 0,
@@ -42,7 +46,11 @@ function App() {
       math: 0,
       dp: 0,
       graph: 0,
-      dataStructure: 0
+      dataStructure: 0,
+      string: 0,
+      search: 0,
+      greedy: 0,
+      geometry: 0
     },
     playerScore: 0,
     playerContests: 0,
@@ -111,17 +119,23 @@ function App() {
     const dpBonus = attributes.dp * ATTRIBUTE_MULTIPLIERS.DP;
     const graphBonus = attributes.graph * ATTRIBUTE_MULTIPLIERS.GRAPH;
     const dataStructureBonus = attributes.dataStructure * ATTRIBUTE_MULTIPLIERS.DATA_STRUCTURE;
+    const stringBonus = attributes.string * ATTRIBUTE_MULTIPLIERS.STRING;
+    const searchBonus = attributes.search * ATTRIBUTE_MULTIPLIERS.SEARCH;
+    const greedyBonus = attributes.greedy * ATTRIBUTE_MULTIPLIERS.GREEDY;
+    const geometryBonus = attributes.geometry * ATTRIBUTE_MULTIPLIERS.GEOMETRY;
 
     return baseScore + codingBonus + algorithmBonus +
       speedBonus + stressBonus + teamworkBonus + englishBonus +
       mathBonus + dpBonus + graphBonus + dataStructureBonus +
+      stringBonus + searchBonus + greedyBonus + geometryBonus +
       Math.floor(Math.random() * 50);
   };
 
   // 解题
   const solveProblem = (attributes) => {
     const successRate = (attributes.coding + attributes.algorithm + 
-      attributes.math + attributes.dp + attributes.graph + attributes.dataStructure) / SUCCESS_RATE_DIVISOR;
+      attributes.math + attributes.dp + attributes.graph + attributes.dataStructure +
+      attributes.string + attributes.search + attributes.greedy + attributes.geometry) / SUCCESS_RATE_DIVISOR;
     return Math.random() < successRate;
   };
 
@@ -149,7 +163,7 @@ function App() {
         isRunning: false,
         isPaused: false,
         gameTime: 0,
-        availablePoints: 15,
+        availablePoints: 20,
         attributes: {
           // 通用属性
           coding: 0,
@@ -162,7 +176,11 @@ function App() {
           math: 0,
           dp: 0,
           graph: 0,
-          dataStructure: 0
+          dataStructure: 0,
+          string: 0,
+          search: 0,
+          greedy: 0,
+          geometry: 0
         },
         playerScore: 0,
         playerContests: 0,
