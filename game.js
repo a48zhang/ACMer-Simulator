@@ -1,3 +1,15 @@
+// 游戏常量
+const ATTRIBUTE_MULTIPLIERS = {
+    CODING: 10,
+    ALGORITHM: 12,
+    SPEED: 8,
+    STRESS: 6,
+    TEAMWORK: 7
+};
+
+const MAX_ATTRIBUTE_VALUE = 10;
+const SUCCESS_RATE_DIVISOR = 20;
+
 // 游戏状态
 let gameState = {
     isRunning: false,
@@ -15,6 +27,10 @@ let gameState = {
     playerContests: 0,
     playerProblems: 0
 };
+
+// 游戏定时器引用
+let gameInterval = null;
+let statsInterval = null;
 
 // 初始化游戏
 function initGame() {
@@ -81,7 +97,7 @@ document.getElementById('resetGameBtn').addEventListener('click', function() {
 
 // 增加属性点
 function increaseAttribute(attr) {
-    if (gameState.availablePoints > 0 && gameState.attributes[attr] < 10) {
+    if (gameState.availablePoints > 0 && gameState.attributes[attr] < MAX_ATTRIBUTE_VALUE) {
         gameState.attributes[attr]++;
         gameState.availablePoints--;
         updateUI();
@@ -123,9 +139,15 @@ function updateUI() {
 
 // 游戏循环
 function startGameLoop() {
-    const gameInterval = setInterval(() => {
+    // 清除之前的定时器（如果存在）
+    if (gameInterval) {
+        clearInterval(gameInterval);
+    }
+    
+    gameInterval = setInterval(() => {
         if (!gameState.isRunning) {
             clearInterval(gameInterval);
+            gameInterval = null;
             return;
         }
         
@@ -151,11 +173,11 @@ function participateInContest() {
     
     // 根据属性计算比赛得分
     const baseScore = 100;
-    const codingBonus = gameState.attributes.coding * 10;
-    const algorithmBonus = gameState.attributes.algorithm * 12;
-    const speedBonus = gameState.attributes.speed * 8;
-    const stressBonus = gameState.attributes.stress * 6;
-    const teamworkBonus = gameState.attributes.teamwork * 7;
+    const codingBonus = gameState.attributes.coding * ATTRIBUTE_MULTIPLIERS.CODING;
+    const algorithmBonus = gameState.attributes.algorithm * ATTRIBUTE_MULTIPLIERS.ALGORITHM;
+    const speedBonus = gameState.attributes.speed * ATTRIBUTE_MULTIPLIERS.SPEED;
+    const stressBonus = gameState.attributes.stress * ATTRIBUTE_MULTIPLIERS.STRESS;
+    const teamworkBonus = gameState.attributes.teamwork * ATTRIBUTE_MULTIPLIERS.TEAMWORK;
     
     const contestScore = baseScore + codingBonus + algorithmBonus + 
                         speedBonus + stressBonus + teamworkBonus +
@@ -170,7 +192,7 @@ function participateInContest() {
 // 解题
 function solveProblem() {
     // 根据编程能力和算法思维决定是否解题成功
-    const successRate = (gameState.attributes.coding + gameState.attributes.algorithm) / 20;
+    const successRate = (gameState.attributes.coding + gameState.attributes.algorithm) / SUCCESS_RATE_DIVISOR;
     
     if (Math.random() < successRate) {
         gameState.playerProblems++;
@@ -202,7 +224,10 @@ function showNotification(message) {
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.5s ease';
         setTimeout(() => {
-            document.body.removeChild(notification);
+            // 检查元素是否仍然存在且有父节点
+            if (notification && notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
         }, 500);
     }, 3000);
 }
@@ -236,8 +261,13 @@ function updatePlayerRank() {
 
 // 加载统计数据（模拟动态数据）
 function loadStatistics() {
+    // 清除之前的定时器（如果存在）
+    if (statsInterval) {
+        clearInterval(statsInterval);
+    }
+    
     // 模拟统计数据更新
-    setInterval(() => {
+    statsInterval = setInterval(() => {
         // 随机更新总玩家数
         const currentPlayers = parseInt(document.getElementById('totalPlayers').textContent.replace(',', ''));
         const newPlayers = currentPlayers + Math.floor(Math.random() * 5);
@@ -277,5 +307,20 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// 清理定时器
+function cleanupTimers() {
+    if (gameInterval) {
+        clearInterval(gameInterval);
+        gameInterval = null;
+    }
+    if (statsInterval) {
+        clearInterval(statsInterval);
+        statsInterval = null;
+    }
+}
+
 // 页面加载完成后初始化游戏
 window.addEventListener('DOMContentLoaded', initGame);
+
+// 页面卸载时清理定时器
+window.addEventListener('beforeunload', cleanupTimers);
