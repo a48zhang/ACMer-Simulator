@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import GameControls from './components/GameControls'
-import AttributeAllocation from './components/AttributeAllocation'
+import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
-import PlayerStatus from './components/PlayerStatus'
 import Notification from './components/Notification'
 
 // 游戏常量
@@ -230,33 +229,32 @@ function App() {
         <p className="subtitle">体验编程竞赛选手的生活</p>
       </header>
 
-      <main>
-        <GameControls
-          gameState={gameState}
-          onStart={startGame}
-          onTogglePause={togglePause}
-          onReset={resetGame}
-        />
-
-        <AttributeAllocation
+      <div className="app-layout">
+        <PlayerPanel
           attributes={gameState.attributes}
           availablePoints={gameState.availablePoints}
           onIncrease={increaseAttribute}
           onDecrease={decreaseAttribute}
-        />
-
-        <GlobalStatistics
-          leaderboardData={leaderboardData}
-          playerScore={gameState.playerScore}
-        />
-
-        <PlayerStatus
           score={gameState.playerScore}
           contests={gameState.playerContests}
           problems={gameState.playerProblems}
           leaderboardData={leaderboardData}
         />
-      </main>
+
+        <main>
+          <GameControls
+            gameState={gameState}
+            onStart={startGame}
+            onTogglePause={togglePause}
+            onReset={resetGame}
+          />
+
+          <GlobalStatistics
+            leaderboardData={leaderboardData}
+            playerScore={gameState.playerScore}
+          />
+        </main>
+      </div>
 
       <footer>
         <p>© 2024 ACMer选手模拟器 | 让每个人都能体验XCPC的乐趣</p>
