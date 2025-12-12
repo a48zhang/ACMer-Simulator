@@ -624,7 +624,7 @@ footer {
   transition: margin-left 0.3s ease;
 }
 
-.player-panel.collapsed ~ main {
+.app-layout:has(.player-panel.collapsed) main {
   margin-left: 40px;
 }
 
@@ -637,7 +637,7 @@ footer {
     margin-left: 240px;
   }
 
-  .player-panel.collapsed ~ main {
+  .app-layout:has(.player-panel.collapsed) main {
     margin-left: 40px;
   }
 }
