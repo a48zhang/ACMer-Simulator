@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACMer选手模拟器 - XCPC Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏆 ACMer选手模拟器</h1>
+            <p class="subtitle">体验编程竞赛选手的生活</p>
+        </header>
+
+        <main>
+            <!-- 游戏开始按钮区域 -->
+            <section class="game-start-section">
+                <h2>游戏控制</h2>
+                <div class="game-controls">
+                    <button id="startGameBtn" class="btn btn-primary">开始游戏</button>
+                    <button id="pauseGameBtn" class="btn btn-secondary" disabled>暂停游戏</button>
+                    <button id="resetGameBtn" class="btn btn-danger">重置游戏</button>
+                </div>
+                <div id="gameStatus" class="game-status">
+                    <p>状态: <span id="statusText">未开始</span></p>
+                    <p>游戏时间: <span id="gameTime">0</span> 天</p>
+                </div>
+            </section>
+
+            <!-- 属性点分配区域 -->
+            <section class="attributes-section">
+                <h2>属性点分配</h2>
+                <div class="attribute-points">
+                    <p>可用属性点: <span id="availablePoints">10</span></p>
+                </div>
+                <div class="attributes-grid">
+                    <div class="attribute-item">
+                        <div class="attribute-header">
+                            <span class="attribute-name">💻 编程能力</span>
+                            <span class="attribute-value" id="codingValue">0</span>
+                        </div>
+                        <div class="attribute-controls">
+                            <button class="btn-small" onclick="decreaseAttribute('coding')">-</button>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="codingBar" style="width: 0%"></div>
+                            </div>
+                            <button class="btn-small" onclick="increaseAttribute('coding')">+</button>
+                        </div>
+                    </div>
+
+                    <div class="attribute-item">
+                        <div class="attribute-header">
+                            <span class="attribute-name">🧮 算法思维</span>
+                            <span class="attribute-value" id="algorithmValue">0</span>
+                        </div>
+                        <div class="attribute-controls">
+                            <button class="btn-small" onclick="decreaseAttribute('algorithm')">-</button>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="algorithmBar" style="width: 0%"></div>
+                            </div>
+                            <button class="btn-small" onclick="increaseAttribute('algorithm')">+</button>
+                        </div>
+                    </div>
+
+                    <div class="attribute-item">
+                        <div class="attribute-header">
+                            <span class="attribute-name">🏃 速度</span>
+                            <span class="attribute-value" id="speedValue">0</span>
+                        </div>
+                        <div class="attribute-controls">
+                            <button class="btn-small" onclick="decreaseAttribute('speed')">-</button>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="speedBar" style="width: 0%"></div>
+                            </div>
+                            <button class="btn-small" onclick="increaseAttribute('speed')">+</button>
+                        </div>
+                    </div>
+
+                    <div class="attribute-item">
+                        <div class="attribute-header">
+                            <span class="attribute-name">🧘 抗压能力</span>
+                            <span class="attribute-value" id="stressValue">0</span>
+                        </div>
+                        <div class="attribute-controls">
+                            <button class="btn-small" onclick="decreaseAttribute('stress')">-</button>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="stressBar" style="width: 0%"></div>
+                            </div>
+                            <button class="btn-small" onclick="increaseAttribute('stress')">+</button>
+                        </div>
+                    </div>
+
+                    <div class="attribute-item">
+                        <div class="attribute-header">
+                            <span class="attribute-name">🤝 团队协作</span>
+                            <span class="attribute-value" id="teamworkValue">0</span>
+                        </div>
+                        <div class="attribute-controls">
+                            <button class="btn-small" onclick="decreaseAttribute('teamwork')">-</button>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="teamworkBar" style="width: 0%"></div>
+                            </div>
+                            <button class="btn-small" onclick="increaseAttribute('teamwork')">+</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 全球玩家成绩统计区域 -->
+            <section class="statistics-section">
+                <h2>全球玩家成绩统计</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>🌍 总玩家数</h3>
+                        <p class="stat-value" id="totalPlayers">1,234</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🏅 平均分数</h3>
+                        <p class="stat-value" id="avgScore">850</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>👑 最高分</h3>
+                        <p class="stat-value" id="highScore">2,500</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⏱️ 平均游戏时长</h3>
+                        <p class="stat-value" id="avgPlayTime">45天</p>
+                    </div>
+                </div>
+
+                <div class="leaderboard">
+                    <h3>🏆 排行榜 Top 10</h3>
+                    <table id="leaderboardTable">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>玩家</th>
+                                <th>分数</th>
+                                <th>比赛场次</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody">
+                            <tr><td>1</td><td>张三</td><td>2,500</td><td>25</td></tr>
+                            <tr><td>2</td><td>李四</td><td>2,350</td><td>23</td></tr>
+                            <tr><td>3</td><td>王五</td><td>2,200</td><td>22</td></tr>
+                            <tr><td>4</td><td>赵六</td><td>2,100</td><td>21</td></tr>
+                            <tr><td>5</td><td>钱七</td><td>1,950</td><td>20</td></tr>
+                            <tr><td>6</td><td>孙八</td><td>1,800</td><td>19</td></tr>
+                            <tr><td>7</td><td>周九</td><td>1,650</td><td>18</td></tr>
+                            <tr><td>8</td><td>吴十</td><td>1,500</td><td>17</td></tr>
+                            <tr><td>9</td><td>郑十一</td><td>1,350</td><td>16</td></tr>
+                            <tr><td>10</td><td>陈十二</td><td>1,200</td><td>15</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 当前玩家状态 -->
+            <section class="player-status-section">
+                <h2>我的状态</h2>
+                <div class="player-stats">
+                    <div class="player-stat">
+                        <span class="stat-label">当前分数:</span>
+                        <span class="stat-number" id="playerScore">0</span>
+                    </div>
+                    <div class="player-stat">
+                        <span class="stat-label">参赛次数:</span>
+                        <span class="stat-number" id="playerContests">0</span>
+                    </div>
+                    <div class="player-stat">
+                        <span class="stat-label">解题数:</span>
+                        <span class="stat-number" id="playerProblems">0</span>
+                    </div>
+                    <div class="player-stat">
+                        <span class="stat-label">排名:</span>
+                        <span class="stat-number" id="playerRank">-</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2024 ACMer选手模拟器 | 让每个人都能体验XCPC的乐趣</p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
