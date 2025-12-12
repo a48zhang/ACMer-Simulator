@@ -142,6 +142,18 @@ section h2 {
   color: #667eea;
 }
 
+.attribute-group {
+  margin-bottom: 25px;
+}
+
+.attribute-group h3 {
+  color: #764ba2;
+  margin-bottom: 15px;
+  font-size: 1.3em;
+  padding-left: 10px;
+  border-left: 4px solid #764ba2;
+}
+
 .attributes-grid {
   display: grid;
   gap: 15px;

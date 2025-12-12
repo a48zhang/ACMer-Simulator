@@ -7,28 +7,42 @@ import Notification from './components/Notification'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
+  // 通用属性
   CODING: 10,
   ALGORITHM: 12,
   SPEED: 8,
   STRESS: 6,
-  TEAMWORK: 7
+  TEAMWORK: 7,
+  ENGLISH: 5,
+  // 专业属性
+  MATH: 15,
+  DP: 13,
+  GRAPH: 13,
+  DATA_STRUCTURE: 13
 };
 
 const MAX_ATTRIBUTE_VALUE = 10;
-const SUCCESS_RATE_DIVISOR = 20;
+const SUCCESS_RATE_DIVISOR = 30;
 
 function App() {
   const [gameState, setGameState] = useState({
     isRunning: false,
     isPaused: false,
     gameTime: 0,
-    availablePoints: 10,
+    availablePoints: 15,
     attributes: {
+      // 通用属性
       coding: 0,
       algorithm: 0,
       speed: 0,
       stress: 0,
-      teamwork: 0
+      teamwork: 0,
+      english: 0,
+      // 专业属性
+      math: 0,
+      dp: 0,
+      graph: 0,
+      dataStructure: 0
     },
     playerScore: 0,
     playerContests: 0,
@@ -85,20 +99,29 @@ function App() {
   // 参加比赛
   const participateInContest = (attributes) => {
     const baseScore = 100;
+    // 通用属性
     const codingBonus = attributes.coding * ATTRIBUTE_MULTIPLIERS.CODING;
     const algorithmBonus = attributes.algorithm * ATTRIBUTE_MULTIPLIERS.ALGORITHM;
     const speedBonus = attributes.speed * ATTRIBUTE_MULTIPLIERS.SPEED;
     const stressBonus = attributes.stress * ATTRIBUTE_MULTIPLIERS.STRESS;
     const teamworkBonus = attributes.teamwork * ATTRIBUTE_MULTIPLIERS.TEAMWORK;
+    const englishBonus = attributes.english * ATTRIBUTE_MULTIPLIERS.ENGLISH;
+    // 专业属性
+    const mathBonus = attributes.math * ATTRIBUTE_MULTIPLIERS.MATH;
+    const dpBonus = attributes.dp * ATTRIBUTE_MULTIPLIERS.DP;
+    const graphBonus = attributes.graph * ATTRIBUTE_MULTIPLIERS.GRAPH;
+    const dataStructureBonus = attributes.dataStructure * ATTRIBUTE_MULTIPLIERS.DATA_STRUCTURE;
 
     return baseScore + codingBonus + algorithmBonus +
-      speedBonus + stressBonus + teamworkBonus +
+      speedBonus + stressBonus + teamworkBonus + englishBonus +
+      mathBonus + dpBonus + graphBonus + dataStructureBonus +
       Math.floor(Math.random() * 50);
   };
 
   // 解题
   const solveProblem = (attributes) => {
-    const successRate = (attributes.coding + attributes.algorithm) / SUCCESS_RATE_DIVISOR;
+    const successRate = (attributes.coding + attributes.algorithm + 
+      attributes.math + attributes.dp + attributes.graph + attributes.dataStructure) / SUCCESS_RATE_DIVISOR;
     return Math.random() < successRate;
   };
 
@@ -126,13 +149,20 @@ function App() {
         isRunning: false,
         isPaused: false,
         gameTime: 0,
-        availablePoints: 10,
+        availablePoints: 15,
         attributes: {
+          // 通用属性
           coding: 0,
           algorithm: 0,
           speed: 0,
           stress: 0,
-          teamwork: 0
+          teamwork: 0,
+          english: 0,
+          // 专业属性
+          math: 0,
+          dp: 0,
+          graph: 0,
+          dataStructure: 0
         },
         playerScore: 0,
         playerContests: 0,
