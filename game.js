@@ -30,11 +30,11 @@ let gameState = {
 
 // 游戏定时器引用
 let gameInterval = null;
-let statsInterval = null;
 
 // 初始化游戏
 function initGame() {
     updateUI();
+    updateLeaderboard();
     loadStatistics();
 }
 
@@ -232,52 +232,86 @@ function showNotification(message) {
     }, 3000);
 }
 
+// 排行榜数据（存储所有玩家记录）
+let leaderboardData = [];
+
+// 更新排行榜显示
+function updateLeaderboard() {
+    const leaderboardBody = document.getElementById('leaderboardBody');
+    
+    // 如果排行榜为空，显示提示
+    if (leaderboardData.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无排行榜数据</td></tr>';
+        return;
+    }
+    
+    // 按分数排序
+    const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score).slice(0, 10);
+    
+    // 更新表格
+    leaderboardBody.innerHTML = sortedData.map((player, index) => 
+        `<tr><td>${index + 1}</td><td>${player.name}</td><td>${player.score.toLocaleString()}</td><td>${player.contests}</td></tr>`
+    ).join('');
+}
+
+// 添加玩家到排行榜
+function addToLeaderboard(name, score, contests) {
+    leaderboardData.push({ name, score, contests });
+    updateLeaderboard();
+    updateGlobalStatistics();
+}
+
 // 更新玩家排名
 function updatePlayerRank() {
-    const leaderboardData = [
-        { name: '张三', score: 2500 },
-        { name: '李四', score: 2350 },
-        { name: '王五', score: 2200 },
-        { name: '赵六', score: 2100 },
-        { name: '钱七', score: 1950 },
-        { name: '孙八', score: 1800 },
-        { name: '周九', score: 1650 },
-        { name: '吴十', score: 1500 },
-        { name: '郑十一', score: 1350 },
-        { name: '陈十二', score: 1200 }
-    ];
+    if (leaderboardData.length === 0) {
+        document.getElementById('playerRank').textContent = '未上榜';
+        return;
+    }
     
-    let rank = leaderboardData.length + 1;
-    for (let i = 0; i < leaderboardData.length; i++) {
-        if (gameState.playerScore > leaderboardData[i].score) {
+    const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
+    let rank = sortedData.length + 1;
+    
+    for (let i = 0; i < sortedData.length; i++) {
+        if (gameState.playerScore > sortedData[i].score) {
             rank = i + 1;
             break;
         }
     }
     
-    document.getElementById('playerRank').textContent = rank > leaderboardData.length ? 
+    document.getElementById('playerRank').textContent = rank > sortedData.length ? 
         '未上榜' : '#' + rank;
 }
 
-// 加载统计数据（模拟动态数据）
-function loadStatistics() {
-    // 清除之前的定时器（如果存在）
-    if (statsInterval) {
-        clearInterval(statsInterval);
+// 更新全局统计数据
+function updateGlobalStatistics() {
+    if (leaderboardData.length === 0) {
+        document.getElementById('totalPlayers').textContent = '0';
+        document.getElementById('avgScore').textContent = '0';
+        document.getElementById('highScore').textContent = '0';
+        document.getElementById('avgPlayTime').textContent = '0天';
+        return;
     }
     
-    // 模拟统计数据更新
-    statsInterval = setInterval(() => {
-        // 随机更新总玩家数
-        const currentPlayers = parseInt(document.getElementById('totalPlayers').textContent.replace(',', ''));
-        const newPlayers = currentPlayers + Math.floor(Math.random() * 5);
-        document.getElementById('totalPlayers').textContent = newPlayers.toLocaleString();
-        
-        // 随机更新平均分数
-        const currentAvg = parseInt(document.getElementById('avgScore').textContent);
-        const newAvg = currentAvg + Math.floor(Math.random() * 3) - 1;
-        document.getElementById('avgScore').textContent = Math.max(800, newAvg);
-    }, 10000); // 每10秒更新一次
+    // 总玩家数
+    document.getElementById('totalPlayers').textContent = leaderboardData.length.toLocaleString();
+    
+    // 平均分数
+    const avgScore = Math.floor(leaderboardData.reduce((sum, player) => sum + player.score, 0) / leaderboardData.length);
+    document.getElementById('avgScore').textContent = avgScore.toLocaleString();
+    
+    // 最高分
+    const highScore = Math.max(...leaderboardData.map(p => p.score));
+    document.getElementById('highScore').textContent = highScore.toLocaleString();
+    
+    // 平均游戏时长（基于比赛次数估算）
+    const avgContests = Math.floor(leaderboardData.reduce((sum, player) => sum + player.contests, 0) / leaderboardData.length);
+    const avgDays = avgContests * 5; // 每5天一场比赛
+    document.getElementById('avgPlayTime').textContent = avgDays + '天';
+}
+
+// 加载统计数据
+function loadStatistics() {
+    updateGlobalStatistics();
 }
 
 // 添加动画样式
@@ -312,10 +346,6 @@ function cleanupTimers() {
     if (gameInterval) {
         clearInterval(gameInterval);
         gameInterval = null;
-    }
-    if (statsInterval) {
-        clearInterval(statsInterval);
-        statsInterval = null;
     }
 }
 
