@@ -34,10 +34,7 @@ ACMer选手模拟器是一个单页面游戏，让你体验编程竞赛选手的
 
 ## 🚀 快速开始
 
-### 在线体验
-直接打开 `index.html` 文件即可开始游戏！
-
-### 本地运行
+### 本地开发
 ```bash
 # 克隆仓库
 git clone https://github.com/a48zhang/ACMer-Simulator.git
@@ -45,22 +42,49 @@ git clone https://github.com/a48zhang/ACMer-Simulator.git
 # 进入目录
 cd ACMer-Simulator
 
-# 直接用浏览器打开 index.html
-# 或使用本地服务器（推荐）
-python -m http.server 8000
-# 然后访问 http://localhost:8000
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+# 然后访问 http://localhost:5173
+```
+
+### 生产构建
+```bash
+# 构建生产版本
+npm run build
+
+# 预览生产版本
+npm run preview
 ```
 
 ## 📁 项目结构
 
 ```
 ACMer-Simulator/
-├── index.html      # 游戏主页面
-├── style.css       # 样式文件
-├── game.js         # 游戏逻辑
-├── ROADMAP.md      # 开发路线图
-└── README.md       # 项目说明
+├── src/
+│   ├── components/          # React组件
+│   │   ├── GameControls.jsx
+│   │   ├── AttributeAllocation.jsx
+│   │   ├── GlobalStatistics.jsx
+│   │   ├── PlayerStatus.jsx
+│   │   └── Notification.jsx
+│   ├── App.jsx              # 主应用组件
+│   ├── main.jsx             # React入口
+│   └── index.css            # 全局样式
+├── index.html               # HTML模板
+├── vite.config.js           # Vite配置
+├── package.json             # 项目依赖
+├── ROADMAP.md               # 开发路线图
+└── README.md                # 项目说明
 ```
+
+## 🛠️ 技术栈
+
+- **React 18** - 用户界面库
+- **Vite** - 快速的构建工具和开发服务器
+- **CSS3** - 样式和动画
 
 ## 🎯 游戏玩法
 
