@@ -47,10 +47,6 @@ function PlayerPanel({
               <span className="info-value balance">¥{balance}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">行动点</span>
-              <span className="info-value ap">{remainingAP}/{monthlyAP}</span>
-            </div>
-            <div className="info-item">
               <span className="info-label">SAN值</span>
               <span className="info-value san">{san}</span>
             </div>
