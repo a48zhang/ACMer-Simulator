@@ -59,7 +59,7 @@ function App() {
 
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [notification, setNotification] = useState(null);
-  const [showAttributeDialog, setShowAttributeDialog] = useState(true);
+  const [showAttributeDialog, setShowAttributeDialog] = useState(false);
   const [attributesAllocated, setAttributesAllocated] = useState(false);
 
   // 游戏循环
@@ -143,11 +143,17 @@ function App() {
 
   // 开始游戏
   const startGame = () => {
-    setGameState(prev => ({
-      ...prev,
-      isRunning: true,
-      isPaused: false
-    }));
+    if (!attributesAllocated) {
+      // 如果属性还未分配，显示对话框
+      setShowAttributeDialog(true);
+    } else {
+      // 如果属性已分配，直接开始游戏
+      setGameState(prev => ({
+        ...prev,
+        isRunning: true,
+        isPaused: false
+      }));
+    }
   };
 
   // 暂停/继续游戏
@@ -213,7 +219,9 @@ function App() {
     setGameState(prev => ({
       ...prev,
       attributes: allocatedAttributes,
-      availablePoints: 0
+      availablePoints: 0,
+      isRunning: true,
+      isPaused: false
     }));
     setShowAttributeDialog(false);
     setAttributesAllocated(true);
