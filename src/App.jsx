@@ -3,6 +3,7 @@ import GameControls from './components/GameControls'
 import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
+import AttributeDialog from './components/AttributeDialog'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
@@ -58,6 +59,8 @@ function App() {
 
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [notification, setNotification] = useState(null);
+  const [showAttributeDialog, setShowAttributeDialog] = useState(true);
+  const [attributesAllocated, setAttributesAllocated] = useState(false);
 
   // 游戏循环
   useEffect(() => {
@@ -205,21 +208,15 @@ function App() {
     });
   };
 
-  // 减少属性点
-  const decreaseAttribute = (attr) => {
-    setGameState(prev => {
-      if (prev.attributes[attr] > 0) {
-        return {
-          ...prev,
-          availablePoints: prev.availablePoints + 1,
-          attributes: {
-            ...prev.attributes,
-            [attr]: prev.attributes[attr] - 1
-          }
-        };
-      }
-      return prev;
-    });
+  // 确认属性分配
+  const handleAttributeConfirm = (allocatedAttributes) => {
+    setGameState(prev => ({
+      ...prev,
+      attributes: allocatedAttributes,
+      availablePoints: 0
+    }));
+    setShowAttributeDialog(false);
+    setAttributesAllocated(true);
   };
 
   return (
@@ -232,9 +229,6 @@ function App() {
       <div className="app-layout">
         <PlayerPanel
           attributes={gameState.attributes}
-          availablePoints={gameState.availablePoints}
-          onIncrease={increaseAttribute}
-          onDecrease={decreaseAttribute}
           score={gameState.playerScore}
           contests={gameState.playerContests}
           problems={gameState.playerProblems}
@@ -264,6 +258,14 @@ function App() {
         <Notification
           message={notification}
           onClose={() => setNotification(null)}
+        />
+      )}
+
+      {showAttributeDialog && !attributesAllocated && (
+        <AttributeDialog
+          onConfirm={handleAttributeConfirm}
+          initialPoints={20}
+          maxValue={MAX_ATTRIBUTE_VALUE}
         />
       )}
     </div>

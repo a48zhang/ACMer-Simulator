@@ -2,9 +2,6 @@ import { useState } from 'react';
 
 function PlayerPanel({ 
   attributes, 
-  availablePoints, 
-  onIncrease, 
-  onDecrease,
   score,
   contests,
   problems,
@@ -82,34 +79,15 @@ function PlayerPanel({
 
         {/* Attributes */}
         <div className="panel-section">
-          <h3 className="panel-title">
-            属性分配
-            <span className="points-badge">{availablePoints}</span>
-          </h3>
+          <h3 className="panel-title">我的属性</h3>
 
           {/* General Attributes */}
           <div className="attr-category">
             <div className="category-label">通用</div>
             {generalAttributes.map(({ key, name, short }) => (
-              <div key={key} className="attr-row">
+              <div key={key} className="attr-row-readonly">
                 <span className="attr-name" title={name}>{short}</span>
-                <div className="attr-controls">
-                  <button 
-                    className="attr-btn" 
-                    onClick={() => onDecrease(key)}
-                    disabled={attributes[key] === 0}
-                  >
-                    -
-                  </button>
-                  <span className="attr-val">{attributes[key]}</span>
-                  <button 
-                    className="attr-btn" 
-                    onClick={() => onIncrease(key)}
-                    disabled={availablePoints === 0 || attributes[key] >= 10}
-                  >
-                    +
-                  </button>
-                </div>
+                <span className="attr-val-readonly">{attributes[key]}</span>
               </div>
             ))}
           </div>
@@ -118,25 +96,9 @@ function PlayerPanel({
           <div className="attr-category">
             <div className="category-label">专业</div>
             {specializedAttributes.map(({ key, name, short }) => (
-              <div key={key} className="attr-row">
+              <div key={key} className="attr-row-readonly">
                 <span className="attr-name" title={name}>{short}</span>
-                <div className="attr-controls">
-                  <button 
-                    className="attr-btn" 
-                    onClick={() => onDecrease(key)}
-                    disabled={attributes[key] === 0}
-                  >
-                    -
-                  </button>
-                  <span className="attr-val">{attributes[key]}</span>
-                  <button 
-                    className="attr-btn" 
-                    onClick={() => onIncrease(key)}
-                    disabled={availablePoints === 0 || attributes[key] >= 10}
-                  >
-                    +
-                  </button>
-                </div>
+                <span className="attr-val-readonly">{attributes[key]}</span>
               </div>
             ))}
           </div>
