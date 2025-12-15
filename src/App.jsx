@@ -1,34 +1,56 @@
 import { useState, useEffect } from 'react'
 import GameControls from './components/GameControls'
-import AttributeAllocation from './components/AttributeAllocation'
+import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
-import PlayerStatus from './components/PlayerStatus'
 import Notification from './components/Notification'
+import AttributeDialog from './components/AttributeDialog'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
+  // 通用属性
   CODING: 10,
   ALGORITHM: 12,
   SPEED: 8,
   STRESS: 6,
-  TEAMWORK: 7
+  TEAMWORK: 7,
+  ENGLISH: 5,
+  // 专业属性
+  MATH: 15,
+  DP: 13,
+  GRAPH: 13,
+  DATA_STRUCTURE: 13,
+  STRING: 12,
+  SEARCH: 12,
+  GREEDY: 11,
+  GEOMETRY: 14
 };
 
 const MAX_ATTRIBUTE_VALUE = 10;
-const SUCCESS_RATE_DIVISOR = 20;
+const SUCCESS_RATE_DIVISOR = 40;
 
 function App() {
   const [gameState, setGameState] = useState({
     isRunning: false,
     isPaused: false,
     gameTime: 0,
-    availablePoints: 10,
+    availablePoints: 20,
     attributes: {
+      // 通用属性
       coding: 0,
       algorithm: 0,
       speed: 0,
       stress: 0,
-      teamwork: 0
+      teamwork: 0,
+      english: 0,
+      // 专业属性
+      math: 0,
+      dp: 0,
+      graph: 0,
+      dataStructure: 0,
+      string: 0,
+      search: 0,
+      greedy: 0,
+      geometry: 0
     },
     playerScore: 0,
     playerContests: 0,
@@ -37,6 +59,8 @@ function App() {
 
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [notification, setNotification] = useState(null);
+  const [showAttributeDialog, setShowAttributeDialog] = useState(false);
+  const [attributesAllocated, setAttributesAllocated] = useState(false);
 
   // 游戏循环
   useEffect(() => {
@@ -85,30 +109,51 @@ function App() {
   // 参加比赛
   const participateInContest = (attributes) => {
     const baseScore = 100;
+    // 通用属性
     const codingBonus = attributes.coding * ATTRIBUTE_MULTIPLIERS.CODING;
     const algorithmBonus = attributes.algorithm * ATTRIBUTE_MULTIPLIERS.ALGORITHM;
     const speedBonus = attributes.speed * ATTRIBUTE_MULTIPLIERS.SPEED;
     const stressBonus = attributes.stress * ATTRIBUTE_MULTIPLIERS.STRESS;
     const teamworkBonus = attributes.teamwork * ATTRIBUTE_MULTIPLIERS.TEAMWORK;
+    const englishBonus = attributes.english * ATTRIBUTE_MULTIPLIERS.ENGLISH;
+    // 专业属性
+    const mathBonus = attributes.math * ATTRIBUTE_MULTIPLIERS.MATH;
+    const dpBonus = attributes.dp * ATTRIBUTE_MULTIPLIERS.DP;
+    const graphBonus = attributes.graph * ATTRIBUTE_MULTIPLIERS.GRAPH;
+    const dataStructureBonus = attributes.dataStructure * ATTRIBUTE_MULTIPLIERS.DATA_STRUCTURE;
+    const stringBonus = attributes.string * ATTRIBUTE_MULTIPLIERS.STRING;
+    const searchBonus = attributes.search * ATTRIBUTE_MULTIPLIERS.SEARCH;
+    const greedyBonus = attributes.greedy * ATTRIBUTE_MULTIPLIERS.GREEDY;
+    const geometryBonus = attributes.geometry * ATTRIBUTE_MULTIPLIERS.GEOMETRY;
 
     return baseScore + codingBonus + algorithmBonus +
-      speedBonus + stressBonus + teamworkBonus +
+      speedBonus + stressBonus + teamworkBonus + englishBonus +
+      mathBonus + dpBonus + graphBonus + dataStructureBonus +
+      stringBonus + searchBonus + greedyBonus + geometryBonus +
       Math.floor(Math.random() * 50);
   };
 
   // 解题
   const solveProblem = (attributes) => {
-    const successRate = (attributes.coding + attributes.algorithm) / SUCCESS_RATE_DIVISOR;
+    const successRate = (attributes.coding + attributes.algorithm + 
+      attributes.math + attributes.dp + attributes.graph + attributes.dataStructure +
+      attributes.string + attributes.search + attributes.greedy + attributes.geometry) / SUCCESS_RATE_DIVISOR;
     return Math.random() < successRate;
   };
 
   // 开始游戏
   const startGame = () => {
-    setGameState(prev => ({
-      ...prev,
-      isRunning: true,
-      isPaused: false
-    }));
+    if (!attributesAllocated) {
+      // 如果属性还未分配，显示对话框
+      setShowAttributeDialog(true);
+    } else {
+      // 如果属性已分配，直接开始游戏
+      setGameState(prev => ({
+        ...prev,
+        isRunning: true,
+        isPaused: false
+      }));
+    }
   };
 
   // 暂停/继续游戏
@@ -126,13 +171,24 @@ function App() {
         isRunning: false,
         isPaused: false,
         gameTime: 0,
-        availablePoints: 10,
+        availablePoints: 20,
         attributes: {
+          // 通用属性
           coding: 0,
           algorithm: 0,
           speed: 0,
           stress: 0,
-          teamwork: 0
+          teamwork: 0,
+          english: 0,
+          // 专业属性
+          math: 0,
+          dp: 0,
+          graph: 0,
+          dataStructure: 0,
+          string: 0,
+          search: 0,
+          greedy: 0,
+          geometry: 0
         },
         playerScore: 0,
         playerContests: 0,
@@ -158,21 +214,17 @@ function App() {
     });
   };
 
-  // 减少属性点
-  const decreaseAttribute = (attr) => {
-    setGameState(prev => {
-      if (prev.attributes[attr] > 0) {
-        return {
-          ...prev,
-          availablePoints: prev.availablePoints + 1,
-          attributes: {
-            ...prev.attributes,
-            [attr]: prev.attributes[attr] - 1
-          }
-        };
-      }
-      return prev;
-    });
+  // 确认属性分配
+  const handleAttributeConfirm = (allocatedAttributes) => {
+    setGameState(prev => ({
+      ...prev,
+      attributes: allocatedAttributes,
+      availablePoints: 0,
+      isRunning: true,
+      isPaused: false
+    }));
+    setShowAttributeDialog(false);
+    setAttributesAllocated(true);
   };
 
   return (
@@ -182,33 +234,29 @@ function App() {
         <p className="subtitle">体验编程竞赛选手的生活</p>
       </header>
 
-      <main>
-        <GameControls
-          gameState={gameState}
-          onStart={startGame}
-          onTogglePause={togglePause}
-          onReset={resetGame}
-        />
-
-        <AttributeAllocation
+      <div className="app-layout">
+        <PlayerPanel
           attributes={gameState.attributes}
-          availablePoints={gameState.availablePoints}
-          onIncrease={increaseAttribute}
-          onDecrease={decreaseAttribute}
-        />
-
-        <GlobalStatistics
-          leaderboardData={leaderboardData}
-          playerScore={gameState.playerScore}
-        />
-
-        <PlayerStatus
           score={gameState.playerScore}
           contests={gameState.playerContests}
           problems={gameState.playerProblems}
           leaderboardData={leaderboardData}
         />
-      </main>
+
+        <main>
+          <GameControls
+            gameState={gameState}
+            onStart={startGame}
+            onTogglePause={togglePause}
+            onReset={resetGame}
+          />
+
+          <GlobalStatistics
+            leaderboardData={leaderboardData}
+            playerScore={gameState.playerScore}
+          />
+        </main>
+      </div>
 
       <footer>
         <p>© 2024 ACMer选手模拟器 | 让每个人都能体验XCPC的乐趣</p>
@@ -218,6 +266,14 @@ function App() {
         <Notification
           message={notification}
           onClose={() => setNotification(null)}
+        />
+      )}
+
+      {showAttributeDialog && !attributesAllocated && (
+        <AttributeDialog
+          onConfirm={handleAttributeConfirm}
+          initialPoints={20}
+          maxValue={MAX_ATTRIBUTE_VALUE}
         />
       )}
     </div>
