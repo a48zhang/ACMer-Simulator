@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-function PlayerPanel({ 
-  attributes, 
+function PlayerPanel({
+  attributes,
   remainingAP,
   monthlyAP,
   san,
@@ -66,24 +66,44 @@ function PlayerPanel({
 
           {/* General Attributes */}
           <div className="attr-category">
-            <div className="category-label">通用</div>
-            {generalAttributes.map(({ key, name, short }) => (
-              <div key={key} className="attr-row-readonly">
-                <span className="attr-name" title={name}>{short}</span>
-                <span className="attr-val-readonly">{attributes[key]}</span>
-              </div>
-            ))}
+            <div className="category-label">通用能力</div>
+            <div className="attr-grid">
+              {generalAttributes.map(({ key, name, short }) => (
+                <div key={key} className="attr-card">
+                  <div className="attr-header">
+                    <span className="attr-label" title={name}>{short}</span>
+                    <span className="attr-value-text">{attributes[key]}</span>
+                  </div>
+                  <div className="attr-progress-bg">
+                    <div
+                      className="attr-progress-fill primary"
+                      style={{ width: `${Math.min(attributes[key] * 10, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Specialized Attributes */}
           <div className="attr-category">
-            <div className="category-label">专业</div>
-            {specializedAttributes.map(({ key, name, short }) => (
-              <div key={key} className="attr-row-readonly">
-                <span className="attr-name" title={name}>{short}</span>
-                <span className="attr-val-readonly">{attributes[key]}</span>
-              </div>
-            ))}
+            <div className="category-label">专业知识</div>
+            <div className="attr-grid">
+              {specializedAttributes.map(({ key, name, short }) => (
+                <div key={key} className="attr-card">
+                  <div className="attr-header">
+                    <span className="attr-label" title={name}>{short}</span>
+                    <span className="attr-value-text">{attributes[key]}</span>
+                  </div>
+                  <div className="attr-progress-bg">
+                    <div
+                      className="attr-progress-fill secondary"
+                      style={{ width: `${Math.min(attributes[key] * 10, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

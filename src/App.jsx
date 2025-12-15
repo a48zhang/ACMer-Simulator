@@ -5,6 +5,7 @@ import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
 import AttributeDialog from './components/AttributeDialog'
 import ActivityPanel from './components/ActivityPanel'
+import LogPanel from './components/LogPanel'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
@@ -67,6 +68,13 @@ function App() {
   const [notification, setNotification] = useState(null);
   const [showAttributeDialog, setShowAttributeDialog] = useState(false);
   const [attributesAllocated, setAttributesAllocated] = useState(false);
+  const [logs, setLogs] = useState([]);
+
+  // 添加日志
+  const addLog = (message, type = 'info') => {
+    const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    setLogs(prev => [...prev, { id: Date.now(), time, message, type }]);
+  };
 
   // 活动定义
   const activities = [
@@ -89,7 +97,8 @@ function App() {
         return {
           playerProblems: state.playerProblems + solved,
           playerScore: state.playerScore + scoreGain,
-          notification: `📚 刷题训练完成！解决了 ${solved}/${attempts} 道题，获得 ${scoreGain} 分！`
+          log: `📚 刷题训练完成！解决了 ${solved}/${attempts} 道题，获得 ${scoreGain} 分！`,
+          logType: 'success'
         };
       },
       repeatable: true
@@ -103,7 +112,8 @@ function App() {
         const scoreGain = Math.floor(Math.random() * 30) + 20;
         return {
           playerScore: state.playerScore + scoreGain,
-          notification: `🧮 算法训练完成！获得 ${scoreGain} 分提升！`
+          log: `🧮 算法训练完成！获得 ${scoreGain} 分提升！`,
+          logType: 'success'
         };
       },
       repeatable: true
@@ -118,7 +128,8 @@ function App() {
         return {
           playerContests: state.playerContests + 1,
           playerScore: state.playerScore + contestScore,
-          notification: `🏆 参加了一场模拟赛！获得 ${contestScore} 分！`
+          log: `🏆 参加了一场模拟赛！获得 ${contestScore} 分！`,
+          logType: 'success'
         };
       },
       repeatable: true
@@ -130,7 +141,8 @@ function App() {
       description: '放松休息，恢复状态',
       effects: (state) => {
         return {
-          notification: `😌 休息了一段时间，精神状态恢复！`
+          log: `😌 休息了一段时间，精神状态恢复！`,
+          logType: 'info'
         };
       },
       repeatable: true
@@ -177,27 +189,27 @@ function App() {
     const activity = activities.find(a => a.id === activityId);
     if (!activity) return;
 
+    // 检查AP是否足够
+    if (gameState.remainingAP < activity.cost) {
+      addLog(`❌ 行动点不足！需要 ${activity.cost} AP，剩余 ${gameState.remainingAP} AP`, 'error');
+      return;
+    }
+
+    // 检查游戏是否结束
+    if (gameState.month > 48) {
+      addLog('❌ 游戏已结束！', 'error');
+      return;
+    }
+
+    // 执行活动效果
+    const effects = activity.effects(gameState);
+    
+    // 记录日志
+    if (effects.log) {
+      addLog(effects.log, effects.logType || 'info');
+    }
+
     setGameState(prev => {
-      // 检查AP是否足够
-      if (prev.remainingAP < activity.cost) {
-        setNotification(`❌ 行动点不足！需要 ${activity.cost} AP，剩余 ${prev.remainingAP} AP`);
-        return prev;
-      }
-
-      // 检查游戏是否结束
-      if (prev.month > 48) {
-        setNotification('❌ 游戏已结束！');
-        return prev;
-      }
-
-      // 执行活动效果
-      const effects = activity.effects(prev);
-      
-      // 显示通知
-      if (effects.notification) {
-        setNotification(effects.notification);
-      }
-
       // 返回更新后的状态
       return {
         ...prev,
@@ -211,28 +223,27 @@ function App() {
 
   // 推进到下一月
   const advanceMonth = () => {
-    setGameState(prev => {
-      const newMonth = prev.month + 1;
-      
-      // 检查游戏是否结束
-      if (newMonth > 48) {
-        setNotification(`🎓 大学四年结束！最终分数：${prev.playerScore}，比赛次数：${prev.playerContests}，解题数：${prev.playerProblems}`);
-        return {
-          ...prev,
-          month: newMonth,
-          isRunning: false
-        };
-      }
-
-      // 重置行动点
-      setNotification(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月`);
-      
-      return {
+    const newMonth = gameState.month + 1;
+    
+    // 检查游戏是否结束
+    if (newMonth > 48) {
+      addLog(`🎓 大学四年结束！最终分数：${gameState.playerScore}，比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
+      setGameState(prev => ({
         ...prev,
         month: newMonth,
-        remainingAP: prev.monthlyAP
-      };
-    });
+        isRunning: false
+      }));
+      return;
+    }
+
+    // 重置行动点
+    addLog(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月`, 'info');
+    
+    setGameState(prev => ({
+      ...prev,
+      month: newMonth,
+      remainingAP: prev.monthlyAP
+    }));
   };
 
   // 开始游戏
@@ -247,14 +258,17 @@ function App() {
         isRunning: true,
         isPaused: false
       }));
+      addLog('🎮 游戏继续！', 'info');
     }
   };
 
   // 暂停/继续游戏
   const togglePause = () => {
+    const newPausedState = !gameState.isPaused;
+    addLog(newPausedState ? '⏸️ 游戏已暂停' : '▶️ 游戏继续', 'info');
     setGameState(prev => ({
       ...prev,
-      isPaused: !prev.isPaused
+      isPaused: newPausedState
     }));
   };
 
@@ -294,10 +308,10 @@ function App() {
         playerProblems: 0
       });
       setAttributesAllocated(false);
+      setLogs([]);
+      addLog('🔄 游戏已重置', 'warning');
     }
   };
-
-  // 增加属性点
   const increaseAttribute = (attr) => {
     setGameState(prev => {
       if (prev.availablePoints > 0 && prev.attributes[attr] < MAX_ATTRIBUTE_VALUE) {
@@ -355,6 +369,8 @@ function App() {
             onReset={resetGame}
             onAdvanceMonth={advanceMonth}
           />
+
+          <LogPanel logs={logs} />
 
           <ActivityPanel
             activities={activities}
