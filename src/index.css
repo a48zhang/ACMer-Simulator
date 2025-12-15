@@ -760,3 +760,153 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Trait Selection Dialog Styles */
+.trait-dialog {
+  max-width: 900px;
+}
+
+.trait-points {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.tp-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tp-info span:first-child {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.points-count.consumed {
+  color: var(--danger);
+}
+
+.points-count.gained {
+  color: var(--secondary);
+}
+
+.points-count.negative {
+  color: var(--danger);
+}
+
+.points-count.positive {
+  color: var(--secondary);
+}
+
+.trait-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.positive-title {
+  color: var(--secondary);
+  border-bottom-color: var(--secondary);
+}
+
+.negative-title {
+  color: var(--warning);
+  border-bottom-color: var(--warning);
+}
+
+.trait-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.trait-card {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: var(--surface);
+}
+
+.trait-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.trait-card.positive {
+  border-color: #d1fae5;
+}
+
+.trait-card.positive.selected {
+  border-color: var(--secondary);
+  background: #f0fdf4;
+}
+
+.trait-card.negative {
+  border-color: #fed7aa;
+}
+
+.trait-card.negative.selected {
+  border-color: var(--warning);
+  background: #fffbeb;
+}
+
+.trait-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.trait-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-main);
+}
+
+.trait-cost {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: var(--background);
+}
+
+.trait-card.positive .trait-cost {
+  color: var(--danger);
+}
+
+.trait-card.negative .trait-cost {
+  color: var(--secondary);
+}
+
+.trait-description {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.trait-selected-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--primary);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+/* Balance display style */
+.info-value.balance {
+  color: var(--warning);
+  font-weight: 700;
+}
+}

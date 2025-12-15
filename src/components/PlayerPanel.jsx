@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 function PlayerPanel({
   attributes,
+  balance,
   remainingAP,
   monthlyAP,
   san,
@@ -41,6 +42,10 @@ function PlayerPanel({
         <div className="panel-section">
           <h3 className="panel-title">我的状态</h3>
           <div className="player-info">
+            <div className="info-item">
+              <span className="info-label">余额</span>
+              <span className="info-value balance">¥{balance}</span>
+            </div>
             <div className="info-item">
               <span className="info-label">行动点</span>
               <span className="info-value ap">{remainingAP}/{monthlyAP}</span>

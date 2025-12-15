@@ -3,9 +3,10 @@ import GameControls from './components/GameControls'
 import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
-import AttributeDialog from './components/AttributeDialog'
+import TraitSelectionDialog from './components/TraitSelectionDialog'
 import ActivityPanel from './components/ActivityPanel'
 import LogPanel from './components/LogPanel'
+import { applyTraitEffects } from './data/traits'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
@@ -37,10 +38,10 @@ function App() {
     month: 1, // 当前月份 (1-48)
     monthlyAP: 30, // 每月行动点
     remainingAP: 30, // 剩余行动点
+    balance: 1000, // 余额（金钱）
     san: 100, // SAN值 (理智值)
     rating: 1500, // Rating
     gpa: 4.0, // GPA
-    availablePoints: 20,
     attributes: {
       // 通用属性
       coding: 0,
@@ -61,13 +62,14 @@ function App() {
     },
     playerScore: 0,
     playerContests: 0,
-    playerProblems: 0
+    playerProblems: 0,
+    selectedTraits: [] // 已选择的特性
   });
 
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [notification, setNotification] = useState(null);
-  const [showAttributeDialog, setShowAttributeDialog] = useState(false);
-  const [attributesAllocated, setAttributesAllocated] = useState(false);
+  const [showTraitDialog, setShowTraitDialog] = useState(false);
+  const [traitsSelected, setTraitsSelected] = useState(false);
   const [logs, setLogs] = useState([]);
 
   // 添加日志
@@ -248,11 +250,11 @@ function App() {
 
   // 开始游戏
   const startGame = () => {
-    if (!attributesAllocated) {
-      // 如果属性还未分配，显示对话框
-      setShowAttributeDialog(true);
+    if (!traitsSelected) {
+      // 如果特性还未选择，显示对话框
+      setShowTraitDialog(true);
     } else {
-      // 如果属性已分配，直接开始游戏
+      // 如果特性已选择，直接开始游戏
       setGameState(prev => ({
         ...prev,
         isRunning: true,
@@ -281,10 +283,10 @@ function App() {
         month: 1,
         monthlyAP: 30,
         remainingAP: 30,
+        balance: 1000,
         san: 100,
         rating: 1500,
         gpa: 4.0,
-        availablePoints: 20,
         attributes: {
           // 通用属性
           coding: 0,
@@ -305,42 +307,49 @@ function App() {
         },
         playerScore: 0,
         playerContests: 0,
-        playerProblems: 0
+        playerProblems: 0,
+        selectedTraits: []
       });
-      setAttributesAllocated(false);
+      setTraitsSelected(false);
       setLogs([]);
       addLog('🔄 游戏已重置', 'warning');
     }
   };
-  const increaseAttribute = (attr) => {
-    setGameState(prev => {
-      if (prev.availablePoints > 0 && prev.attributes[attr] < MAX_ATTRIBUTE_VALUE) {
-        return {
-          ...prev,
-          availablePoints: prev.availablePoints - 1,
-          attributes: {
-            ...prev.attributes,
-            [attr]: prev.attributes[attr] + 1
-          }
-        };
-      }
-      return prev;
-    });
-  };
+  // 确认特性选择
+  const handleTraitConfirm = (selectedTraitIds) => {
+    // 初始属性全为0
+    const baseAttributes = {
+      coding: 0,
+      algorithm: 0,
+      speed: 0,
+      stress: 0,
+      teamwork: 0,
+      english: 0,
+      math: 0,
+      dp: 0,
+      graph: 0,
+      dataStructure: 0,
+      string: 0,
+      search: 0,
+      greedy: 0,
+      geometry: 0
+    };
 
-  // 确认属性分配
-  const handleAttributeConfirm = (allocatedAttributes) => {
+    // 应用特性效果
+    const { attributes, sanPenalty } = applyTraitEffects(selectedTraitIds, baseAttributes);
+
     setGameState(prev => ({
       ...prev,
-      attributes: allocatedAttributes,
-      availablePoints: 0,
+      attributes: attributes,
+      san: Math.max(0, 100 - sanPenalty),
+      selectedTraits: selectedTraitIds,
       isRunning: true,
       isPaused: false,
       month: 1,
       remainingAP: 30
     }));
-    setShowAttributeDialog(false);
-    setAttributesAllocated(true);
+    setShowTraitDialog(false);
+    setTraitsSelected(true);
     setNotification('🎮 游戏开始！你现在是大学一年级的学生，开始你的ACM之旅吧！');
   };
 
@@ -354,6 +363,7 @@ function App() {
       <div className="app-layout">
         <PlayerPanel
           attributes={gameState.attributes}
+          balance={gameState.balance}
           remainingAP={gameState.remainingAP}
           monthlyAP={gameState.monthlyAP}
           san={gameState.san}
@@ -394,11 +404,9 @@ function App() {
         />
       )}
 
-      {showAttributeDialog && !attributesAllocated && (
-        <AttributeDialog
-          onConfirm={handleAttributeConfirm}
-          initialPoints={20}
-          maxValue={MAX_ATTRIBUTE_VALUE}
+      {showTraitDialog && !traitsSelected && (
+        <TraitSelectionDialog
+          onConfirm={handleTraitConfirm}
         />
       )}
     </div>
