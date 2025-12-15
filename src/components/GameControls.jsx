@@ -1,8 +1,15 @@
-function GameControls({ gameState, onStart, onTogglePause, onReset }) {
+function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMonth }) {
   const getStatusText = () => {
     if (!gameState.isRunning) return '未开始';
     if (gameState.isPaused) return '已暂停';
+    if (gameState.month > 48) return '已结束';
     return '进行中';
+  };
+
+  const getYearMonth = () => {
+    const year = Math.ceil(gameState.month / 12);
+    const monthInYear = ((gameState.month - 1) % 12) + 1;
+    return `大学 ${year} 年 ${monthInYear} 月`;
   };
 
   return (
@@ -19,9 +26,16 @@ function GameControls({ gameState, onStart, onTogglePause, onReset }) {
         <button
           className="btn btn-secondary"
           onClick={onTogglePause}
-          disabled={!gameState.isRunning}
+          disabled={!gameState.isRunning || gameState.month > 48}
         >
           {gameState.isPaused ? '继续游戏' : '暂停游戏'}
+        </button>
+        <button 
+          className="btn btn-success"
+          onClick={onAdvanceMonth}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 48}
+        >
+          下一月 ➡️
         </button>
         <button className="btn btn-danger" onClick={onReset}>
           重置游戏
@@ -29,7 +43,8 @@ function GameControls({ gameState, onStart, onTogglePause, onReset }) {
       </div>
       <div className="game-status">
         <p>状态: <span>{getStatusText()}</span></p>
-        <p>游戏时间: <span>{gameState.gameTime}</span> 天</p>
+        <p>时间: <span>{getYearMonth()}</span></p>
+        <p>剩余行动点: <span className="ap-display">{gameState.remainingAP}</span> / {gameState.monthlyAP} AP</p>
       </div>
     </section>
   );

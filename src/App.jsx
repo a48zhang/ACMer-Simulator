@@ -4,6 +4,7 @@ import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
 import AttributeDialog from './components/AttributeDialog'
+import ActivityPanel from './components/ActivityPanel'
 
 // 游戏常量
 const ATTRIBUTE_MULTIPLIERS = {
@@ -32,7 +33,9 @@ function App() {
   const [gameState, setGameState] = useState({
     isRunning: false,
     isPaused: false,
-    gameTime: 0,
+    month: 1, // 当前月份 (1-48)
+    monthlyAP: 30, // 每月行动点
+    remainingAP: 30, // 剩余行动点
     availablePoints: 20,
     attributes: {
       // 通用属性
@@ -62,49 +65,74 @@ function App() {
   const [showAttributeDialog, setShowAttributeDialog] = useState(false);
   const [attributesAllocated, setAttributesAllocated] = useState(false);
 
-  // 游戏循环
-  useEffect(() => {
-    if (!gameState.isRunning || gameState.isPaused) return;
-
-    const interval = setInterval(() => {
-      setGameState(prev => {
-        const newTime = prev.gameTime + 1;
-        let newScore = prev.playerScore;
-        let newContests = prev.playerContests;
-        let newProblems = prev.playerProblems;
-        let message = null;
-
-        // 每5天参加一次比赛
-        if (newTime % 5 === 0) {
-          const contestScore = participateInContest(prev.attributes);
-          newScore += contestScore;
-          newContests += 1;
-          message = `🏆 参加了一场比赛！获得 ${contestScore} 分！`;
+  // 活动定义
+  const activities = [
+    {
+      id: 'practice',
+      name: '刷题',
+      cost: 5,
+      description: '进行日常刷题训练，提升解题能力',
+      effects: (state) => {
+        // 每次尝试8-12次解题
+        const attempts = Math.floor(Math.random() * 5) + 8;
+        let solved = 0;
+        let scoreGain = 0;
+        for (let i = 0; i < attempts; i++) {
+          if (solveProblem(state.attributes)) {
+            solved++;
+            scoreGain += 5;
+          }
         }
-
-        // 每天解题
-        const problemSolved = solveProblem(prev.attributes);
-        if (problemSolved) {
-          newProblems += 1;
-          newScore += 5;
-        }
-
-        if (message) {
-          setNotification(message);
-        }
-
         return {
-          ...prev,
-          gameTime: newTime,
-          playerScore: newScore,
-          playerContests: newContests,
-          playerProblems: newProblems
+          playerProblems: state.playerProblems + solved,
+          playerScore: state.playerScore + scoreGain,
+          notification: `📚 刷题训练完成！解决了 ${solved}/${attempts} 道题，获得 ${scoreGain} 分！`
         };
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [gameState.isRunning, gameState.isPaused]);
+      },
+      repeatable: true
+    },
+    {
+      id: 'algorithm_training',
+      name: '算法训练',
+      cost: 8,
+      description: '进行专项算法训练，提升算法能力',
+      effects: (state) => {
+        const scoreGain = Math.floor(Math.random() * 30) + 20;
+        return {
+          playerScore: state.playerScore + scoreGain,
+          notification: `🧮 算法训练完成！获得 ${scoreGain} 分提升！`
+        };
+      },
+      repeatable: true
+    },
+    {
+      id: 'mock_contest',
+      name: '模拟赛',
+      cost: 12,
+      description: '参加模拟比赛，全面锻炼比赛能力',
+      effects: (state) => {
+        const contestScore = participateInContest(state.attributes);
+        return {
+          playerContests: state.playerContests + 1,
+          playerScore: state.playerScore + contestScore,
+          notification: `🏆 参加了一场模拟赛！获得 ${contestScore} 分！`
+        };
+      },
+      repeatable: true
+    },
+    {
+      id: 'rest',
+      name: '休息',
+      cost: 3,
+      description: '放松休息，恢复状态',
+      effects: (state) => {
+        return {
+          notification: `😌 休息了一段时间，精神状态恢复！`
+        };
+      },
+      repeatable: true
+    }
+  ];
 
   // 参加比赛
   const participateInContest = (attributes) => {
@@ -141,6 +169,69 @@ function App() {
     return Math.random() < successRate;
   };
 
+  // 执行活动
+  const executeActivity = (activityId) => {
+    const activity = activities.find(a => a.id === activityId);
+    if (!activity) return;
+
+    setGameState(prev => {
+      // 检查AP是否足够
+      if (prev.remainingAP < activity.cost) {
+        setNotification(`❌ 行动点不足！需要 ${activity.cost} AP，剩余 ${prev.remainingAP} AP`);
+        return prev;
+      }
+
+      // 检查游戏是否结束
+      if (prev.month > 48) {
+        setNotification('❌ 游戏已结束！');
+        return prev;
+      }
+
+      // 执行活动效果
+      const effects = activity.effects(prev);
+      
+      // 显示通知
+      if (effects.notification) {
+        setNotification(effects.notification);
+      }
+
+      // 返回更新后的状态
+      return {
+        ...prev,
+        remainingAP: prev.remainingAP - activity.cost,
+        playerScore: effects.playerScore !== undefined ? effects.playerScore : prev.playerScore,
+        playerContests: effects.playerContests !== undefined ? effects.playerContests : prev.playerContests,
+        playerProblems: effects.playerProblems !== undefined ? effects.playerProblems : prev.playerProblems
+      };
+    });
+  };
+
+  // 推进到下一月
+  const advanceMonth = () => {
+    setGameState(prev => {
+      const newMonth = prev.month + 1;
+      
+      // 检查游戏是否结束
+      if (newMonth > 48) {
+        setNotification(`🎓 大学四年结束！最终分数：${prev.playerScore}，比赛次数：${prev.playerContests}，解题数：${prev.playerProblems}`);
+        return {
+          ...prev,
+          month: newMonth,
+          isRunning: false
+        };
+      }
+
+      // 重置行动点
+      setNotification(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月`);
+      
+      return {
+        ...prev,
+        month: newMonth,
+        remainingAP: prev.monthlyAP
+      };
+    });
+  };
+
   // 开始游戏
   const startGame = () => {
     if (!attributesAllocated) {
@@ -170,7 +261,9 @@ function App() {
       setGameState({
         isRunning: false,
         isPaused: false,
-        gameTime: 0,
+        month: 1,
+        monthlyAP: 30,
+        remainingAP: 30,
         availablePoints: 20,
         attributes: {
           // 通用属性
@@ -194,6 +287,7 @@ function App() {
         playerContests: 0,
         playerProblems: 0
       });
+      setAttributesAllocated(false);
     }
   };
 
@@ -221,10 +315,13 @@ function App() {
       attributes: allocatedAttributes,
       availablePoints: 0,
       isRunning: true,
-      isPaused: false
+      isPaused: false,
+      month: 1,
+      remainingAP: 30
     }));
     setShowAttributeDialog(false);
     setAttributesAllocated(true);
+    setNotification('🎮 游戏开始！你现在是大学一年级的学生，开始你的ACM之旅吧！');
   };
 
   return (
@@ -249,6 +346,16 @@ function App() {
             onStart={startGame}
             onTogglePause={togglePause}
             onReset={resetGame}
+            onAdvanceMonth={advanceMonth}
+          />
+
+          <ActivityPanel
+            activities={activities}
+            remainingAP={gameState.remainingAP}
+            onExecuteActivity={executeActivity}
+            isRunning={gameState.isRunning}
+            isPaused={gameState.isPaused}
+            gameEnded={gameState.month > 48}
           />
 
           <GlobalStatistics
