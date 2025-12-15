@@ -566,8 +566,20 @@ footer {
   font-weight: bold;
 }
 
-.info-value.rank {
+.info-value.ap {
+  color: #28a745;
+}
+
+.info-value.san {
+  color: #17a2b8;
+}
+
+.info-value.rating {
   color: #ffd700;
+}
+
+.info-value.gpa {
+  color: #ff6b6b;
 }
 
 /* Attributes */
@@ -885,5 +897,112 @@ footer {
   
   .dialog-box {
     padding: 20px;
+  }
+}
+
+/* Activity Panel */
+.activity-panel {
+  margin-bottom: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.activity-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.activity-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.activity-name {
+  font-size: 1.1em;
+  color: #667eea;
+  margin: 0;
+}
+
+.activity-cost {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.activity-description {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.btn-activity {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  font-size: 0.95em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  width: 100%;
+}
+
+.btn-activity:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-activity:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Success button style */
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+/* AP Display */
+.ap-display {
+  color: #28a745 !important;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .activity-list {
+    grid-template-columns: 1fr;
   }
 }
