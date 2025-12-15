@@ -36,6 +36,9 @@ function App() {
     month: 1, // 当前月份 (1-48)
     monthlyAP: 30, // 每月行动点
     remainingAP: 30, // 剩余行动点
+    san: 100, // SAN值 (理智值)
+    rating: 1500, // Rating
+    gpa: 4.0, // GPA
     availablePoints: 20,
     attributes: {
       // 通用属性
@@ -264,6 +267,9 @@ function App() {
         month: 1,
         monthlyAP: 30,
         remainingAP: 30,
+        san: 100,
+        rating: 1500,
+        gpa: 4.0,
         availablePoints: 20,
         attributes: {
           // 通用属性
@@ -334,10 +340,11 @@ function App() {
       <div className="app-layout">
         <PlayerPanel
           attributes={gameState.attributes}
-          score={gameState.playerScore}
-          contests={gameState.playerContests}
-          problems={gameState.playerProblems}
-          leaderboardData={leaderboardData}
+          remainingAP={gameState.remainingAP}
+          monthlyAP={gameState.monthlyAP}
+          san={gameState.san}
+          rating={gameState.rating}
+          gpa={gameState.gpa}
         />
 
         <main>
@@ -356,11 +363,6 @@ function App() {
             isRunning={gameState.isRunning}
             isPaused={gameState.isPaused}
             gameEnded={gameState.month > 48}
-          />
-
-          <GlobalStatistics
-            leaderboardData={leaderboardData}
-            playerScore={gameState.playerScore}
           />
         </main>
       </div>

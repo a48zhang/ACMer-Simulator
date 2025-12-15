@@ -566,8 +566,20 @@ footer {
   font-weight: bold;
 }
 
-.info-value.rank {
+.info-value.ap {
+  color: #28a745;
+}
+
+.info-value.san {
+  color: #17a2b8;
+}
+
+.info-value.rating {
   color: #ffd700;
+}
+
+.info-value.gpa {
+  color: #ff6b6b;
 }
 
 /* Attributes */

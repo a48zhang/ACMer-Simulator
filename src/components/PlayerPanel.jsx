@@ -2,10 +2,11 @@ import { useState } from 'react';
 
 function PlayerPanel({ 
   attributes, 
-  score,
-  contests,
-  problems,
-  leaderboardData 
+  remainingAP,
+  monthlyAP,
+  san,
+  rating,
+  gpa
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -29,24 +30,6 @@ function PlayerPanel({
     { key: 'geometry', name: '📏 几何', short: '几何' }
   ];
 
-  const getRank = () => {
-    if (leaderboardData.length === 0) {
-      return '未上榜';
-    }
-
-    const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
-    let rank = sortedData.length + 1;
-
-    for (let i = 0; i < sortedData.length; i++) {
-      if (score > sortedData[i].score) {
-        rank = i + 1;
-        break;
-      }
-    }
-
-    return rank > sortedData.length ? '未上榜' : `#${rank}`;
-  };
-
   return (
     <aside className={`player-panel ${isExpanded ? 'expanded' : 'collapsed'}`}>
       <div className="panel-toggle" onClick={() => setIsExpanded(!isExpanded)}>
@@ -59,20 +42,20 @@ function PlayerPanel({
           <h3 className="panel-title">我的状态</h3>
           <div className="player-info">
             <div className="info-item">
-              <span className="info-label">分数</span>
-              <span className="info-value">{score.toLocaleString()}</span>
+              <span className="info-label">行动点</span>
+              <span className="info-value ap">{remainingAP}/{monthlyAP}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">排名</span>
-              <span className="info-value rank">{getRank()}</span>
+              <span className="info-label">SAN值</span>
+              <span className="info-value san">{san}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">比赛</span>
-              <span className="info-value">{contests}</span>
+              <span className="info-label">Rating</span>
+              <span className="info-value rating">{rating}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">解题</span>
-              <span className="info-value">{problems}</span>
+              <span className="info-label">GPA</span>
+              <span className="info-value gpa">{gpa.toFixed(2)}</span>
             </div>
           </div>
         </div>
