@@ -197,11 +197,17 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
   // 随机分配额外属性点
   if (totalRandomBonus > 0) {
     const attributeKeys = Object.keys(result);
-    for (let i = 0; i < totalRandomBonus; i++) {
+    let remainingBonus = totalRandomBonus;
+    let attempts = 0;
+    const maxAttempts = totalRandomBonus * 100; // Prevent infinite loop
+    
+    while (remainingBonus > 0 && attempts < maxAttempts) {
       const randomAttr = attributeKeys[Math.floor(Math.random() * attributeKeys.length)];
       if (result[randomAttr] < 10) {
         result[randomAttr] = Math.min(10, result[randomAttr] + 1);
+        remainingBonus--;
       }
+      attempts++;
     }
   }
 

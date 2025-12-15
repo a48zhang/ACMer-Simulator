@@ -30,6 +30,8 @@ const ATTRIBUTE_MULTIPLIERS = {
 
 const MAX_ATTRIBUTE_VALUE = 10;
 const SUCCESS_RATE_DIVISOR = 40;
+const INITIAL_SAN = 100;
+const INITIAL_BALANCE = 1000;
 
 function App() {
   const [gameState, setGameState] = useState({
@@ -38,8 +40,8 @@ function App() {
     month: 1, // 当前月份 (1-48)
     monthlyAP: 30, // 每月行动点
     remainingAP: 30, // 剩余行动点
-    balance: 1000, // 余额（金钱）
-    san: 100, // SAN值 (理智值)
+    balance: INITIAL_BALANCE, // 余额（金钱）
+    san: INITIAL_SAN, // SAN值 (理智值)
     rating: 1500, // Rating
     gpa: 4.0, // GPA
     attributes: {
@@ -283,8 +285,8 @@ function App() {
         month: 1,
         monthlyAP: 30,
         remainingAP: 30,
-        balance: 1000,
-        san: 100,
+        balance: INITIAL_BALANCE,
+        san: INITIAL_SAN,
         rating: 1500,
         gpa: 4.0,
         attributes: {
@@ -341,7 +343,7 @@ function App() {
     setGameState(prev => ({
       ...prev,
       attributes: attributes,
-      san: Math.max(0, 100 - sanPenalty),
+      san: Math.max(0, INITIAL_SAN - sanPenalty),
       selectedTraits: selectedTraitIds,
       isRunning: true,
       isPaused: false,
