@@ -243,7 +243,7 @@ header h1 {
 /* Main Content */
 main {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   overflow-y: auto;
   background-color: var(--background);
 }
@@ -251,10 +251,10 @@ main {
 /* Game Controls */
 .game-start-section {
   background-color: var(--surface);
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -349,9 +349,9 @@ main {
 .log-panel {
   background-color: var(--surface);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: var(--shadow-sm);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   height: 200px;
@@ -460,22 +460,22 @@ main {
 
 /* Activity Panel */
 .activity-panel h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
   color: var(--text-main);
   font-weight: 700;
 }
 
 .activity-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
 .activity-card {
   background-color: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid transparent;
@@ -493,35 +493,41 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .activity-name {
   font-weight: 600;
-  font-size: 1.125rem;
+  font-size: 0.9rem;
 }
 
 .activity-cost {
   background-color: #e0e7ff;
   color: var(--primary);
-  padding: 0.25rem 0.75rem;
+  padding: 0.1rem 0.5rem;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
 .activity-description {
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
   flex: 1;
-  line-height: 1.6;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .btn-activity {
   width: 100%;
   background-color: var(--background);
   color: var(--text-main);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
 }
 
 .btn-activity:hover:not(:disabled) {
