@@ -7,31 +7,47 @@ import TraitSelectionDialog from './components/TraitSelectionDialog'
 import ActivityPanel from './components/ActivityPanel'
 import LogPanel from './components/LogPanel'
 import { applyTraitEffects } from './data/traits'
+import { ACTIVITIES } from './data/activities'
 
 // 游戏常量
-const ATTRIBUTE_MULTIPLIERS = {
-  // 通用属性
-  CODING: 10,
-  ALGORITHM: 12,
-  SPEED: 8,
-  STRESS: 6,
-  TEAMWORK: 7,
-  ENGLISH: 5,
-  // 专业属性
-  MATH: 15,
-  DP: 13,
-  GRAPH: 13,
-  DATA_STRUCTURE: 13,
-  STRING: 12,
-  SEARCH: 12,
-  GREEDY: 11,
-  GEOMETRY: 14
+const MAX_ATTRIBUTE_VALUE = 10;
+const INITIAL_SAN = 100;
+const INITIAL_BALANCE = 3000;
+const MIN_GPA = 0;
+const MAX_GPA = 4.0;
+
+const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const applyAttributeChanges = (currentAttributes, changes) => {
+  if (!changes) return currentAttributes;
+  const updated = { ...currentAttributes };
+  Object.entries(changes).forEach(([attr, delta]) => {
+    if (updated[attr] === undefined) return;
+    updated[attr] = clampValue(updated[attr] + delta, 0, MAX_ATTRIBUTE_VALUE);
+  });
+  return updated;
 };
 
-const MAX_ATTRIBUTE_VALUE = 10;
-const SUCCESS_RATE_DIVISOR = 40;
-const INITIAL_SAN = 100;
-const INITIAL_BALANCE = 1000;
+const clampGPA = (value) => clampValue(value, MIN_GPA, MAX_GPA);
+
+const randomStarterValue = () => Math.floor(Math.random() * 3);
+
+const createBaseAttributes = () => ({
+  coding: 0,
+  algorithm: randomStarterValue(),
+  speed: randomStarterValue(),
+  stress: randomStarterValue(),
+  teamwork: randomStarterValue(),
+  english: randomStarterValue(),
+  math: randomStarterValue(),
+  dp: 0,
+  graph: 0,
+  dataStructure: 0,
+  string: 0,
+  search: 0,
+  greedy: randomStarterValue(),
+  geometry: randomStarterValue()
+});
 
 function App() {
   const [gameState, setGameState] = useState({
@@ -42,26 +58,9 @@ function App() {
     remainingAP: 30, // 剩余行动点
     balance: INITIAL_BALANCE, // 余额（金钱）
     san: INITIAL_SAN, // SAN值 (理智值)
-    rating: 1500, // Rating
+    rating: 0, // Rating
     gpa: 4.0, // GPA
-    attributes: {
-      // 通用属性
-      coding: 0,
-      algorithm: 0,
-      speed: 0,
-      stress: 0,
-      teamwork: 0,
-      english: 0,
-      // 专业属性
-      math: 0,
-      dp: 0,
-      graph: 0,
-      dataStructure: 0,
-      string: 0,
-      search: 0,
-      greedy: 0,
-      geometry: 0
-    },
+    attributes: createBaseAttributes(),
     playerScore: 0,
     playerContests: 0,
     playerProblems: 0,
@@ -80,113 +79,8 @@ function App() {
     setLogs(prev => [...prev, { id: Date.now(), time, message, type }]);
   };
 
-  // 活动定义
-  const activities = [
-    {
-      id: 'practice',
-      name: '刷题',
-      cost: 5,
-      description: '进行日常刷题训练，提升解题能力',
-      effects: (state) => {
-        // 每次尝试8-12次解题
-        const attempts = Math.floor(Math.random() * 5) + 8;
-        let solved = 0;
-        let scoreGain = 0;
-        for (let i = 0; i < attempts; i++) {
-          if (solveProblem(state.attributes)) {
-            solved++;
-            scoreGain += 5;
-          }
-        }
-        return {
-          playerProblems: state.playerProblems + solved,
-          playerScore: state.playerScore + scoreGain,
-          log: `📚 刷题训练完成！解决了 ${solved}/${attempts} 道题，获得 ${scoreGain} 分！`,
-          logType: 'success'
-        };
-      },
-      repeatable: true
-    },
-    {
-      id: 'algorithm_training',
-      name: '算法训练',
-      cost: 8,
-      description: '进行专项算法训练，提升算法能力',
-      effects: (state) => {
-        const scoreGain = Math.floor(Math.random() * 30) + 20;
-        return {
-          playerScore: state.playerScore + scoreGain,
-          log: `🧮 算法训练完成！获得 ${scoreGain} 分提升！`,
-          logType: 'success'
-        };
-      },
-      repeatable: true
-    },
-    {
-      id: 'mock_contest',
-      name: '模拟赛',
-      cost: 12,
-      description: '参加模拟比赛，全面锻炼比赛能力',
-      effects: (state) => {
-        const contestScore = participateInContest(state.attributes);
-        return {
-          playerContests: state.playerContests + 1,
-          playerScore: state.playerScore + contestScore,
-          log: `🏆 参加了一场模拟赛！获得 ${contestScore} 分！`,
-          logType: 'success'
-        };
-      },
-      repeatable: true
-    },
-    {
-      id: 'rest',
-      name: '休息',
-      cost: 3,
-      description: '放松休息，恢复状态',
-      effects: (state) => {
-        return {
-          log: `😌 休息了一段时间，精神状态恢复！`,
-          logType: 'info'
-        };
-      },
-      repeatable: true
-    }
-  ];
-
-  // 参加比赛
-  const participateInContest = (attributes) => {
-    const baseScore = 100;
-    // 通用属性
-    const codingBonus = attributes.coding * ATTRIBUTE_MULTIPLIERS.CODING;
-    const algorithmBonus = attributes.algorithm * ATTRIBUTE_MULTIPLIERS.ALGORITHM;
-    const speedBonus = attributes.speed * ATTRIBUTE_MULTIPLIERS.SPEED;
-    const stressBonus = attributes.stress * ATTRIBUTE_MULTIPLIERS.STRESS;
-    const teamworkBonus = attributes.teamwork * ATTRIBUTE_MULTIPLIERS.TEAMWORK;
-    const englishBonus = attributes.english * ATTRIBUTE_MULTIPLIERS.ENGLISH;
-    // 专业属性
-    const mathBonus = attributes.math * ATTRIBUTE_MULTIPLIERS.MATH;
-    const dpBonus = attributes.dp * ATTRIBUTE_MULTIPLIERS.DP;
-    const graphBonus = attributes.graph * ATTRIBUTE_MULTIPLIERS.GRAPH;
-    const dataStructureBonus = attributes.dataStructure * ATTRIBUTE_MULTIPLIERS.DATA_STRUCTURE;
-    const stringBonus = attributes.string * ATTRIBUTE_MULTIPLIERS.STRING;
-    const searchBonus = attributes.search * ATTRIBUTE_MULTIPLIERS.SEARCH;
-    const greedyBonus = attributes.greedy * ATTRIBUTE_MULTIPLIERS.GREEDY;
-    const geometryBonus = attributes.geometry * ATTRIBUTE_MULTIPLIERS.GEOMETRY;
-
-    return baseScore + codingBonus + algorithmBonus +
-      speedBonus + stressBonus + teamworkBonus + englishBonus +
-      mathBonus + dpBonus + graphBonus + dataStructureBonus +
-      stringBonus + searchBonus + greedyBonus + geometryBonus +
-      Math.floor(Math.random() * 50);
-  };
-
-  // 解题
-  const solveProblem = (attributes) => {
-    const successRate = (attributes.coding + attributes.algorithm + 
-      attributes.math + attributes.dp + attributes.graph + attributes.dataStructure +
-      attributes.string + attributes.search + attributes.greedy + attributes.geometry) / SUCCESS_RATE_DIVISOR;
-    return Math.random() < successRate;
-  };
+  // 活动定义（外部数据模块提供）
+  const activities = ACTIVITIES;
 
   // 执行活动
   const executeActivity = (activityId) => {
@@ -207,28 +101,67 @@ function App() {
 
     // 执行活动效果
     const effects = activity.effects(gameState);
-    
+
     // 记录日志
     if (effects.log) {
       addLog(effects.log, effects.logType || 'info');
     }
 
     setGameState(prev => {
-      // 返回更新后的状态
-      return {
-        ...prev,
-        remainingAP: prev.remainingAP - activity.cost,
-        playerScore: effects.playerScore !== undefined ? effects.playerScore : prev.playerScore,
-        playerContests: effects.playerContests !== undefined ? effects.playerContests : prev.playerContests,
-        playerProblems: effects.playerProblems !== undefined ? effects.playerProblems : prev.playerProblems
+      const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
+      const baseRemainingAP = Math.max(0, prev.remainingAP - activity.cost);
+      let nextRemainingAP = Math.min(prev.monthlyAP, baseRemainingAP);
+      if (effects.apBonus !== undefined) {
+        nextRemainingAP = Math.max(0, Math.min(prev.monthlyAP, nextRemainingAP + effects.apBonus));
+      }
+
+      const getFieldValue = (field, deltaField) => {
+        if (effects[field] !== undefined) return effects[field];
+        if (effects[deltaField] !== undefined) return prev[field] + effects[deltaField];
+        return prev[field];
       };
+
+      const nextState = {
+        ...prev,
+        remainingAP: nextRemainingAP,
+        playerScore: getFieldValue('playerScore', 'playerScoreDelta'),
+        playerContests: getFieldValue('playerContests', 'playerContestsDelta'),
+        playerProblems: getFieldValue('playerProblems', 'playerProblemsDelta'),
+        attributes: updatedAttributes
+      };
+
+      if (effects.balance !== undefined) {
+        nextState.balance = effects.balance;
+      } else if (effects.balanceDelta !== undefined) {
+        nextState.balance = Math.max(0, prev.balance + effects.balanceDelta);
+      }
+
+      if (effects.san !== undefined) {
+        nextState.san = Math.max(0, effects.san);
+      } else if (effects.sanDelta !== undefined) {
+        nextState.san = Math.max(0, prev.san + effects.sanDelta);
+      }
+
+      if (effects.rating !== undefined) {
+        nextState.rating = effects.rating;
+      } else if (effects.ratingDelta !== undefined) {
+        nextState.rating = prev.rating + effects.ratingDelta;
+      }
+
+      if (effects.gpa !== undefined) {
+        nextState.gpa = clampGPA(effects.gpa);
+      } else if (effects.gpaDelta !== undefined) {
+        nextState.gpa = clampGPA(prev.gpa + effects.gpaDelta);
+      }
+
+      return nextState;
     });
   };
 
   // 推进到下一月
   const advanceMonth = () => {
     const newMonth = gameState.month + 1;
-    
+
     // 检查游戏是否结束
     if (newMonth > 48) {
       addLog(`🎓 大学四年结束！最终分数：${gameState.playerScore}，比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
@@ -242,7 +175,7 @@ function App() {
 
     // 重置行动点
     addLog(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月`, 'info');
-    
+
     setGameState(prev => ({
       ...prev,
       month: newMonth,
@@ -289,24 +222,7 @@ function App() {
         san: INITIAL_SAN,
         rating: 1500,
         gpa: 4.0,
-        attributes: {
-          // 通用属性
-          coding: 0,
-          algorithm: 0,
-          speed: 0,
-          stress: 0,
-          teamwork: 0,
-          english: 0,
-          // 专业属性
-          math: 0,
-          dp: 0,
-          graph: 0,
-          dataStructure: 0,
-          string: 0,
-          search: 0,
-          greedy: 0,
-          geometry: 0
-        },
+        attributes: createBaseAttributes(),
         playerScore: 0,
         playerContests: 0,
         playerProblems: 0,
@@ -320,22 +236,7 @@ function App() {
   // 确认特性选择
   const handleTraitConfirm = (selectedTraitIds) => {
     // 初始属性全为0
-    const baseAttributes = {
-      coding: 0,
-      algorithm: 0,
-      speed: 0,
-      stress: 0,
-      teamwork: 0,
-      english: 0,
-      math: 0,
-      dp: 0,
-      graph: 0,
-      dataStructure: 0,
-      string: 0,
-      search: 0,
-      greedy: 0,
-      geometry: 0
-    };
+    const baseAttributes = createBaseAttributes();
 
     // 应用特性效果
     const { attributes, sanPenalty } = applyTraitEffects(selectedTraitIds, baseAttributes);
@@ -396,7 +297,7 @@ function App() {
       </div>
 
       <footer>
-        <p>© 2024 ACMer选手模拟器 | 让每个人都能体验XCPC的乐趣</p>
+        <p>© 2025 ACMer选手模拟器</p>
       </footer>
 
       {notification && (

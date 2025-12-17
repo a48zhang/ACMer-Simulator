@@ -13,7 +13,7 @@ function PlayerPanel({
 
   const generalAttributes = [
     { key: 'coding', name: '💻 编程', short: '编程' },
-    { key: 'algorithm', name: '🧮 算法', short: '算法' },
+    { key: 'algorithm', name: '🧠 思维', short: '思维' },
     { key: 'speed', name: '🏃 速度', short: '速度' },
     { key: 'stress', name: '🧘 抗压', short: '抗压' },
     { key: 'teamwork', name: '🤝 协作', short: '协作' },
