@@ -4,6 +4,7 @@ import PlayerPanel from './components/PlayerPanel'
 import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
 import TraitSelectionDialog from './components/TraitSelectionDialog'
+import TeammateSelectionDialog from './components/TeammateSelectionDialog'
 import ActivityPanel from './components/ActivityPanel'
 import EventPanel from './components/EventPanel'
 import EventDialog from './components/EventDialog'
@@ -96,6 +97,8 @@ function App() {
   const [currentEvent, setCurrentEvent] = useState(null);
   const [showContestResult, setShowContestResult] = useState(false);
   const [contestOutcome, setContestOutcome] = useState(null);
+  const [showTeammateDialog, setShowTeammateDialog] = useState(false);
+  const [pendingEventChoice, setPendingEventChoice] = useState(null);
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -503,12 +506,112 @@ function App() {
     setShowEventDialog(true);
   };
 
+  // 队友选择确认
+  const handleTeammateConfirm = (selectedTeammateIds) => {
+    setShowTeammateDialog(false);
+    
+    if (pendingEventChoice) {
+      const { eventId, choiceId } = pendingEventChoice;
+      
+      // 保存选择的队友
+      setGameState(prev => ({
+        ...prev,
+        selectedTeam: selectedTeammateIds
+      }));
+      
+      addLog(`👥 组队成功！队友：${selectedTeammateIds.map(id => {
+        const tm = gameState.teammates.find(t => t.id === id);
+        return tm ? tm.name : id;
+      }).join('、')}`, 'success');
+      
+      // 继续处理事件选择
+      const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
+      if (!ev) return;
+      const choice = ev.choices.find(c => c.id === choiceId);
+      if (!choice) return;
+      
+      let effects = { ...(choice.effects || {}) };
+      const setFlags = choice.setFlags || {};
+      
+      // 应用事件效果（简化版，不再重复GPA审核逻辑）
+      setGameState(prev => {
+        const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
+        
+        const getFieldValue = (field, deltaField) => {
+          if (effects[field] !== undefined) return effects[field];
+          if (effects[deltaField] !== undefined) return prev[field] + effects[deltaField];
+          return prev[field];
+        };
+        
+        const nextState = {
+          ...prev,
+          remainingAP: Math.min(prev.monthlyAP, Math.max(0, prev.remainingAP + (effects.apBonus || 0))),
+          playerContests: getFieldValue('playerContests', 'playerContestsDelta'),
+          playerProblems: getFieldValue('playerProblems', 'playerProblemsDelta'),
+          attributes: updatedAttributes,
+          selectedTeam: selectedTeammateIds
+        };
+        
+        if (effects.balance !== undefined) {
+          nextState.balance = effects.balance;
+        } else if (effects.balanceDelta !== undefined) {
+          nextState.balance = Math.max(0, prev.balance + effects.balanceDelta);
+        }
+        
+        if (effects.san !== undefined) {
+          nextState.san = Math.max(0, effects.san);
+        } else if (effects.sanDelta !== undefined) {
+          nextState.san = Math.max(0, prev.san + effects.sanDelta);
+        }
+        
+        if (effects.rating !== undefined) {
+          nextState.rating = effects.rating;
+        } else if (effects.ratingDelta !== undefined) {
+          nextState.rating = prev.rating + effects.ratingDelta;
+        }
+        
+        if (effects.gpa !== undefined) {
+          nextState.gpa = clampGPA(effects.gpa);
+        } else if (effects.gpaDelta !== undefined) {
+          nextState.gpa = clampGPA(prev.gpa + effects.gpaDelta);
+        }
+        
+        nextState.worldFlags = { ...(prev.worldFlags || {}), ...setFlags };
+        
+        const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
+        const resolvedItem = { id: ev.id, choiceId, time: Date.now() };
+        nextState.pendingEvents = remaining;
+        nextState.resolvedEvents = [...(prev.resolvedEvents || []), resolvedItem];
+        
+        return nextState;
+      });
+      
+      setPendingEventChoice(null);
+    }
+  };
+
+  // 取消队友选择
+  const handleTeammateCancel = () => {
+    setShowTeammateDialog(false);
+    setPendingEventChoice(null);
+    setShowEventDialog(true); // 返回事件对话框
+  };
+
   // 事件选择应用
   const applyEventChoice = (eventId, choiceId) => {
     const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
     if (!ev) return;
     const choice = ev.choices.find(c => c.id === choiceId);
     if (!choice) return;
+
+    // 检查是否需要队友选择
+    if (choice.requiresTeamSelection) {
+      setPendingEventChoice({ eventId, choiceId });
+      setShowEventDialog(false);
+      setShowTeammateDialog(true);
+      return;
+    }
+
     let effects = { ...(choice.effects || {}) };
     const setFlags = choice.setFlags || {};
 
@@ -767,6 +870,15 @@ function App() {
             setContestOutcome(null);
           }}
           onClose={() => { setShowContestResult(false); setContestOutcome(null); }}
+        />
+      )}
+
+      {showTeammateDialog && (
+        <TeammateSelectionDialog
+          teammates={gameState.teammates}
+          onConfirm={handleTeammateConfirm}
+          onCancel={handleTeammateCancel}
+          contestName={currentEvent?.title}
         />
       )}
     </div>

@@ -55,7 +55,7 @@ export const EVENTS = [
     {
         id: 'march_invitational_signup',
         title: '3月邀请赛名额抢夺',
-        description: '邀请赛开始报名，是否参加？',
+        description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -68,7 +68,8 @@ export const EVENTS = [
                 effects: {
                     sanDelta: -5
                 },
-                setFlags: { marchInvitationalParticipating: true }
+                setFlags: { marchInvitationalParticipating: true },
+                requiresTeamSelection: true
             },
             {
                 id: 'skip',
@@ -84,7 +85,7 @@ export const EVENTS = [
     {
         id: 'april_provincial',
         title: '4月XCPC省赛',
-        description: '省级竞赛即将举行，是否参加？',
+        description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -97,7 +98,8 @@ export const EVENTS = [
                 effects: {
                     sanDelta: -10
                 },
-                setFlags: { aprilProvincialParticipating: true }
+                setFlags: { aprilProvincialParticipating: true },
+                requiresTeamSelection: true
             },
             {
                 id: 'skip',
@@ -113,7 +115,7 @@ export const EVENTS = [
     {
         id: 'may_invitational',
         title: '5月邀请赛',
-        description: '又一场邀请赛来临，是否参加？',
+        description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -126,7 +128,8 @@ export const EVENTS = [
                 effects: {
                     sanDelta: -5
                 },
-                setFlags: { mayInvitationalParticipating: true }
+                setFlags: { mayInvitationalParticipating: true },
+                requiresTeamSelection: true
             },
             {
                 id: 'skip',
@@ -215,6 +218,94 @@ export const EVENTS = [
                     sanDelta: 5
                 },
                 setFlags: { septemberQualifierParticipating: false }
+            }
+        ]
+    },
+    // 10月-12月亚洲区域赛事件（每年，概率刷出）
+    {
+        id: 'october_regional',
+        title: '10月区域赛站点',
+        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 10月（第2个月），大二及以上，30%概率刷出
+            return month === 2 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { octoberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { octoberRegionalParticipating: false }
+            }
+        ]
+    },
+    {
+        id: 'november_regional',
+        title: '11月区域赛站点',
+        description: '又有区域赛赛站了！是否继续争抢？',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 11月（第3个月），大二及以上，30%概率刷出
+            return month === 3 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { novemberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { novemberRegionalParticipating: false }
+            }
+        ]
+    },
+    {
+        id: 'december_regional',
+        title: '12月区域赛站点',
+        description: '区域赛季的最后机会！是否参加？',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 12月（第4个月），大二及以上，30%概率刷出
+            return month === 4 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { decemberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { decemberRegionalParticipating: false }
             }
         ]
     },
