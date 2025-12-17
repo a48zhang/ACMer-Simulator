@@ -186,8 +186,9 @@ export const ACTIVITIES = [
         effects: (state) => ({
             sanDelta: -5,
             gpaDelta: 0.03,
-            log: '',
-            logType: 'info'
+            log: '📚 认真上课，GPA+0.03',
+            logType: 'info',
+            setFlags: { attendedClassThisMonth: true }
         }),
         repeatable: true
     },
