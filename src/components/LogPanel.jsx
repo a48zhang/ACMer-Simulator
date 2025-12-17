@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 function LogPanel({ logs }) {
-    const logsEndRef = useRef(null);
+    const containerRef = useRef(null);
 
     const scrollToBottom = () => {
-        logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -17,7 +19,7 @@ function LogPanel({ logs }) {
                 <h2>📜 运行日志</h2>
                 <span className="log-count">{logs.length} 条记录</span>
             </div>
-            <div className="log-container">
+            <div className="log-container" ref={containerRef}>
                 {logs.length === 0 ? (
                     <div className="log-empty">暂无日志记录...</div>
                 ) : (
@@ -28,7 +30,6 @@ function LogPanel({ logs }) {
                         </div>
                     ))
                 )}
-                <div ref={logsEndRef} />
             </div>
         </section>
     );

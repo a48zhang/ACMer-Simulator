@@ -83,17 +83,21 @@ export const ACTIVITIES = [
     {
         id: 'mock_contest',
         name: 'Codeforces比赛',
-        cost: 5,
-        description: '参加比赛，全面锻炼比赛能力',
-        effects: (state) => {
-            const contestScore = participateInContest(state.attributes);
-            return {
-                playerContests: state.playerContests + 1,
-                playerScore: state.playerScore + contestScore,
-                log: `🏆 参加了一场模拟赛！获得 ${contestScore} 分！`,
-                logType: 'success'
-            };
+        cost: 10,
+        description: '参加一场Codeforces Div.2比赛',
+        contestConfig: {
+            name: 'Codeforces Div.2',
+            problemCount: [7, 8],
+            durationMinutes: 120,
+            difficulties: [1, 1, 2, 3, 5, 6, 7, 10],
+            isRated: true,
+            ratingSource: 'cf'
         },
+        effects: () => ({
+            specialAction: 'START_CONTEST',
+            log: '🏁 准备开始Codeforces Div.2比赛...',
+            logType: 'info'
+        }),
         repeatable: true
     },
     {

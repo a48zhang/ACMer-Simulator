@@ -7,10 +7,13 @@ import TraitSelectionDialog from './components/TraitSelectionDialog'
 import ActivityPanel from './components/ActivityPanel'
 import EventPanel from './components/EventPanel'
 import EventDialog from './components/EventDialog'
+import ContestInProgress from './components/ContestInProgress'
+import ContestResultDialog from './components/ContestResultDialog'
 import LogPanel from './components/LogPanel'
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
 import { scheduleMonthlyEvents } from './data/events'
+import { createContestSession, evaluateAttempt, calculateContestOutcome } from './data/contests'
 
 // 游戏常量
 const MAX_ATTRIBUTE_VALUE = 10;
@@ -62,7 +65,7 @@ function App() {
     balance: INITIAL_BALANCE, // 余额（金钱）
     san: INITIAL_SAN, // SAN值 (理智值)
     rating: 0, // Rating
-    gpa: 4.0, // GPA
+    gpa: 3.0, // GPA
     attributes: createBaseAttributes(),
     playerScore: 0,
     playerContests: 0,
@@ -71,7 +74,9 @@ function App() {
     pendingEvents: [],
     resolvedEvents: [],
     worldFlags: {},
-    eventGraph: {}
+    eventGraph: {},
+    activeContest: null,
+    contestTimeRemaining: 0
   });
 
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -81,6 +86,8 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
+  const [showContestResult, setShowContestResult] = useState(false);
+  const [contestOutcome, setContestOutcome] = useState(null);
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -110,6 +117,31 @@ function App() {
 
     // 执行活动效果
     const effects = activity.effects(gameState);
+
+    // 处理特殊动作：启动比赛
+    if (effects.specialAction === 'START_CONTEST') {
+      if (gameState.activeContest) {
+        addLog('⚠️ 已有正在进行的比赛', 'warning');
+        return;
+      }
+
+      const contestConfig = activity.contestConfig;
+      if (!contestConfig) {
+        addLog('❌ 比赛配置错误', 'error');
+        return;
+      }
+
+      const session = createContestSession(contestConfig);
+      addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+
+      setGameState(prev => ({
+        ...prev,
+        remainingAP: Math.max(0, prev.remainingAP - activity.cost),
+        activeContest: session,
+        contestTimeRemaining: session.timeRemaining
+      }));
+      return;
+    }
 
     // 记录日志
     if (effects.log) {
@@ -164,6 +196,120 @@ function App() {
       }
 
       return nextState;
+    });
+  };
+
+  // 比赛：开始一场模拟赛
+  const startContest = () => {
+    if (gameState.remainingAP < 10) {
+      addLog('❌ 行动点不足！开始比赛需要 10 AP', 'error');
+      return;
+    }
+    if (gameState.activeContest) {
+      addLog('⚠️ 已有正在进行的比赛', 'warning');
+      return;
+    }
+
+    const session = createContestSession();
+    addLog(`🏁 开始Codeforces Div.2 比赛（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+    setGameState(prev => ({
+      ...prev,
+      remainingAP: Math.max(0, prev.remainingAP - 10),
+      activeContest: session,
+      contestTimeRemaining: session.timeRemaining
+    }));
+  };
+
+  const finishContest = (force = false) => {
+    setGameState(prev => {
+      const session = prev.activeContest;
+      if (!session) return prev;
+
+      const outcome = calculateContestOutcome(session, prev.contestTimeRemaining, prev.rating);
+
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+
+      // 展示结算窗口，等待用户确认后再应用结算
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+
+      return {
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0
+      };
+    });
+  };
+
+  // 尝试比赛题目
+  const attemptContestProblem = (problemId) => {
+    setGameState(prev => {
+      const session = prev.activeContest;
+      if (!session) return prev;
+      if (prev.contestTimeRemaining <= 0) return prev;
+
+      const problem = session.problems.find(p => p.id === problemId);
+      if (!problem || problem.status === 'solved') return prev;
+
+      if (session.isOrdered) {
+        const blocked = session.problems.some(p => p.order < problem.order && p.status !== 'solved');
+        if (blocked) return prev;
+      }
+
+      const attempt = evaluateAttempt(problem, prev.attributes);
+
+      const updatedProblems = session.problems.map(p => {
+        if (p.id !== problemId) return p;
+        return {
+          ...p,
+          status: attempt.success ? 'solved' : 'attempted',
+          attempts: (p.attempts || 0) + 1
+        };
+      });
+
+      const timeRemaining = Math.max(0, prev.contestTimeRemaining - attempt.timeCost);
+      const attemptLog = {
+        problemId,
+        success: attempt.success,
+        timeCost: attempt.timeCost,
+        weakestAttr: attempt.weakestAttr
+      };
+
+      const nextSession = {
+        ...session,
+        problems: updatedProblems,
+        attempts: [...(session.attempts || []), attemptLog],
+        timeRemaining
+      };
+
+      const solvedAll = updatedProblems.every(p => p.status === 'solved');
+      const shouldFinish = solvedAll || timeRemaining <= 0;
+
+      const baseState = {
+        ...prev,
+        activeContest: nextSession,
+        contestTimeRemaining: timeRemaining,
+        playerProblems: attempt.success ? prev.playerProblems + 1 : prev.playerProblems
+      };
+
+      addLog(`🧩 尝试 ${problem.title}：${attempt.success ? '通过' : '未通过'}，耗时 ${attempt.timeCost} 分钟`, attempt.success ? 'success' : 'warning');
+
+      if (shouldFinish) {
+        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
+        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+
+        // 展示结算窗口，等待用户确认后再应用结算
+        setContestOutcome(outcome);
+        setShowContestResult(true);
+
+        return {
+          ...baseState,
+          activeContest: null,
+          contestTimeRemaining: 0
+        };
+      }
+
+      return baseState;
     });
   };
 
@@ -242,7 +388,9 @@ function App() {
         pendingEvents: [],
         resolvedEvents: [],
         worldFlags: {},
-        eventGraph: {}
+        eventGraph: {},
+        activeContest: null,
+        contestTimeRemaining: 0
       });
       setTraitsSelected(false);
       setLogs([]);
@@ -271,7 +419,9 @@ function App() {
       pendingEvents: scheduleMonthlyEvents(prev, 1),
       resolvedEvents: [],
       worldFlags: {},
-      eventGraph: {}
+      eventGraph: {},
+      activeContest: null,
+      contestTimeRemaining: 0
     }));
     setShowTraitDialog(false);
     setTraitsSelected(true);
@@ -294,6 +444,33 @@ function App() {
     if (!choice) return;
     const effects = choice.effects || {};
     const setFlags = choice.setFlags || {};
+
+    // 处理特殊动作：启动比赛
+    if (choice.specialAction === 'START_CONTEST') {
+      if (gameState.remainingAP < 10) {
+        addLog('❌ 行动点不足！参加比赛需要 10 AP', 'error');
+        return;
+      }
+      if (gameState.activeContest) {
+        addLog('⚠️ 已有正在进行的比赛', 'warning');
+        return;
+      }
+
+      const session = createContestSession();
+      addLog(`🏁 开始Codeforces比赛（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+
+      setGameState(prev => ({
+        ...prev,
+        remainingAP: Math.max(0, prev.remainingAP - 10),
+        activeContest: session,
+        contestTimeRemaining: session.timeRemaining,
+        pendingEvents: (prev.pendingEvents || []).filter(e => e.id !== eventId)
+      }));
+
+      setShowEventDialog(false);
+      setCurrentEvent(null);
+      return;
+    }
 
     // 记录日志
     addLog(`🗳️ 事件处理：${ev.title} → ${choice.label}`, 'info');
@@ -391,6 +568,15 @@ function App() {
             canAdvance={(gameState.pendingEvents || []).length === 0}
           />
 
+          {gameState.activeContest && (
+            <ContestInProgress
+              contest={gameState.activeContest}
+              timeRemaining={gameState.contestTimeRemaining}
+              onAttempt={attemptContestProblem}
+              onFinish={() => finishContest(true)}
+            />
+          )}
+
           <ActivityPanel
             activities={activities}
             remainingAP={gameState.remainingAP}
@@ -424,6 +610,27 @@ function App() {
           event={currentEvent}
           onSelectChoice={applyEventChoice}
           onClose={() => { setShowEventDialog(false); setCurrentEvent(null); }}
+        />
+      )}
+
+      {showContestResult && contestOutcome && (
+        <ContestResultDialog
+          outcome={contestOutcome}
+          onConfirm={() => {
+            // 应用结算
+            setGameState(prev => ({
+              ...prev,
+              rating: contestOutcome.isRated && contestOutcome.ratingSource === 'cf'
+                ? prev.rating + contestOutcome.ratingDelta
+                : prev.rating,
+              playerScore: prev.playerScore + contestOutcome.scoreDelta,
+              san: Math.max(0, prev.san + contestOutcome.sanDelta),
+              playerContests: prev.playerContests + 1
+            }));
+            setShowContestResult(false);
+            setContestOutcome(null);
+          }}
+          onClose={() => { setShowContestResult(false); setContestOutcome(null); }}
         />
       )}
     </div>
