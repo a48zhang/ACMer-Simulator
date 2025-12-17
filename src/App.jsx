@@ -24,7 +24,7 @@ const MIN_GPA = 0;
 const MAX_GPA = 4.0;
 const INITIAL_GPA = 3.2;
 const START_MONTH = 9; // 大一9月开始
-const END_MONTH = 57; // 大五6月结束 (9 + 48 = 57, representing 4 years 9 months)
+const END_MONTH = 57; // 游戏结束月份 (月份9到57，共48个月，覆盖大一9月到大五6月)
 
 const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -334,7 +334,7 @@ function App() {
 
     // 检查游戏是否结束
     if (newMonth > END_MONTH) {
-      addLog(`🎓 大学四年结束！比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
+      addLog(`🎓 游戏结束！比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
       setGameState(prev => ({
         ...prev,
         month: newMonth,
@@ -644,26 +644,25 @@ function App() {
         addLog(`📉 挂科！GPA低于3.0，获得挂科 buff（当前${newFailures}个）`, 'warning');
         
         // 每3次挂科转换为1个学业警告
-        if (newFailures >= 3) {
-          const warningsToAdd = Math.floor(newFailures / 3);
-          const newWarnings = currentBuffs.academicWarnings + warningsToAdd;
-          const remainingFailures = newFailures % 3;
+        if (newFailures % 3 === 0) {
+          // 恰好达到3的倍数，转换为学业警告
+          const newWarnings = currentBuffs.academicWarnings + 1;
           
-          addLog(`⚠️ 累计3次挂科，转换为学业警告！（当前${newWarnings}个学业警告）`, 'error');
+          addLog(`⚠️ 累计3次挂科，转换为1个学业警告！（当前${newWarnings}个学业警告，0个挂科）`, 'error');
           
           if (newWarnings >= 2) {
             addLog(`❌ 累计2个学业警告，进入退学结局！`, 'error');
             setGameState(prev => ({
               ...prev,
               isRunning: false,
-              buffs: { failedCourses: remainingFailures, academicWarnings: newWarnings }
+              buffs: { failedCourses: 0, academicWarnings: newWarnings }
             }));
             setShowEventDialog(false);
             setCurrentEvent(null);
             return;
           }
           
-          effects.buffChanges = { failedCourses: remainingFailures - currentBuffs.failedCourses, academicWarnings: warningsToAdd };
+          effects.buffChanges = { failedCourses: -currentBuffs.failedCourses, academicWarnings: 1 };
         } else {
           effects.buffChanges = { failedCourses: 1 };
         }

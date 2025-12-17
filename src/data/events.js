@@ -14,12 +14,6 @@ const getSchoolMonth = (absoluteMonth) => {
     return { year, month };
 };
 
-// 检查是否为指定的学年月份
-const isSchoolMonth = (absoluteMonth, targetMonth) => {
-    const { month } = getSchoolMonth(absoluteMonth);
-    return month === targetMonth;
-};
-
 // 事件库（可扩展）
 export const EVENTS = [
     {
