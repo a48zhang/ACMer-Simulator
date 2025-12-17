@@ -1,7 +1,7 @@
 // 特性系统数据定义
 // Trait system data definitions
 
-export const INITIAL_TRAIT_POINTS = 10;
+export const INITIAL_TRAIT_POINTS = 5;
 
 // 特性类型
 export const TRAIT_TYPES = {
@@ -17,7 +17,7 @@ export const TRAITS = [
     name: '高中NOIP一等奖',
     type: TRAIT_TYPES.POSITIVE,
     cost: 10,
-    description: '你曾是信息学奥赛选手。所有专业属性+5，并额外随机分配10点属性。',
+    description: '你曾是信息学奥赛选手。所有专业属性+5，并额外随机分配5点属性。',
     effects: {
       // 固定属性加成
       initialStats: {
@@ -31,7 +31,7 @@ export const TRAITS = [
         geometry: 5
       },
       // 额外随机分配的属性点
-      randomBonus: 10
+      randomBonus: 5
     }
   },
   {

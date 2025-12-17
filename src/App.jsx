@@ -67,7 +67,6 @@ function App() {
     rating: 0, // Rating
     gpa: 3.0, // GPA
     attributes: createBaseAttributes(),
-    playerScore: 0,
     playerContests: 0,
     playerProblems: 0,
     selectedTraits: [], // 已选择的特性
@@ -165,7 +164,6 @@ function App() {
       const nextState = {
         ...prev,
         remainingAP: nextRemainingAP,
-        playerScore: getFieldValue('playerScore', 'playerScoreDelta'),
         playerContests: getFieldValue('playerContests', 'playerContestsDelta'),
         playerProblems: getFieldValue('playerProblems', 'playerProblemsDelta'),
         attributes: updatedAttributes
@@ -319,7 +317,7 @@ function App() {
 
     // 检查游戏是否结束
     if (newMonth > 48) {
-      addLog(`🎓 大学四年结束！最终分数：${gameState.playerScore}，比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
+      addLog(`🎓 大学四年结束！比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`, 'success');
       setGameState(prev => ({
         ...prev,
         month: newMonth,
@@ -381,7 +379,6 @@ function App() {
         rating: 0,
         gpa: 4.0,
         attributes: createBaseAttributes(),
-        playerScore: 0,
         playerContests: 0,
         playerProblems: 0,
         selectedTraits: [],
@@ -487,7 +484,6 @@ function App() {
       const nextState = {
         ...prev,
         remainingAP: Math.min(prev.monthlyAP, Math.max(0, prev.remainingAP + (effects.apBonus || 0))),
-        playerScore: getFieldValue('playerScore', 'playerScoreDelta'),
         playerContests: getFieldValue('playerContests', 'playerContestsDelta'),
         playerProblems: getFieldValue('playerProblems', 'playerProblemsDelta'),
         attributes: updatedAttributes
@@ -623,7 +619,6 @@ function App() {
               rating: contestOutcome.isRated && contestOutcome.ratingSource === 'cf'
                 ? prev.rating + contestOutcome.ratingDelta
                 : prev.rating,
-              playerScore: prev.playerScore + contestOutcome.scoreDelta,
               san: Math.max(0, prev.san + contestOutcome.sanDelta),
               playerContests: prev.playerContests + 1
             }));

@@ -133,9 +133,9 @@ export const evaluateAttempt = (problem, attributes) => {
     const success = adjustedRatio >= 1;
 
     // 时间消耗与难度相关，能力越强耗时越少
-    const baseTime = 8 + problem.trickiness * 20;
-    const timeMultiplier = Math.max(0.6, 1.2 - avgRatio * 0.3);
-    const timeCost = Math.max(18, Math.round(baseTime * timeMultiplier));
+    const baseTime = 5 + problem.trickiness * 20;
+    const timeMultiplier = Math.max(0.5, 1.2 - avgRatio * 0.3);
+    const timeCost = Math.min(30, Math.round(baseTime * timeMultiplier));
 
     return {
         success,
