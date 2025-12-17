@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 function PlayerPanel({
   attributes,
+  balance,
   remainingAP,
   monthlyAP,
   san,
@@ -12,7 +13,7 @@ function PlayerPanel({
 
   const generalAttributes = [
     { key: 'coding', name: '💻 编程', short: '编程' },
-    { key: 'algorithm', name: '🧮 算法', short: '算法' },
+    { key: 'algorithm', name: '🧠 思维', short: '思维' },
     { key: 'speed', name: '🏃 速度', short: '速度' },
     { key: 'stress', name: '🧘 抗压', short: '抗压' },
     { key: 'teamwork', name: '🤝 协作', short: '协作' },
@@ -42,8 +43,8 @@ function PlayerPanel({
           <h3 className="panel-title">我的状态</h3>
           <div className="player-info">
             <div className="info-item">
-              <span className="info-label">行动点</span>
-              <span className="info-value ap">{remainingAP}/{monthlyAP}</span>
+              <span className="info-label">余额</span>
+              <span className="info-value balance">¥{balance}</span>
             </div>
             <div className="info-item">
               <span className="info-label">SAN值</span>
