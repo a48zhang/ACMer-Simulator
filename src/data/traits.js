@@ -51,7 +51,7 @@ export const TRAITS = [
     name: '数学天才',
     type: TRAIT_TYPES.POSITIVE,
     cost: 8,
-    description: '数学和几何能力大幅提升，数学建模不在话下。',
+    description: '你是CMO省一。数学和几何能力大幅提升。',
     effects: {
       initialStats: {
         math: 5,
@@ -89,7 +89,7 @@ export const TRAITS = [
     name: '夜猫子',
     type: TRAIT_TYPES.POSITIVE,
     cost: 4,
-    description: '深夜思绪活跃，编程和速度属性提升。由于比赛在白天举行，属性会有微妙的下降。',
+    description: '深夜思绪活跃，编程和速度属性提升。由于正式比赛往往在白天举行，正式比赛属性会有微妙的下降。',
     effects: {
       initialStats: {
         coding: 2,
@@ -101,7 +101,7 @@ export const TRAITS = [
   // ========== 负面特性 (Negative Traits) ==========
   {
     id: 'trait_stress',
-    name: '抑郁症',
+    name: '玉玉症',
     type: TRAIT_TYPES.NEGATIVE,
     cost: -5,
     description: 'SAN值上限降低，抗压能力减弱。',
@@ -113,22 +113,10 @@ export const TRAITS = [
     }
   },
   {
-    id: 'trait_lone_wolf',
-    name: '独狼',
-    type: TRAIT_TYPES.NEGATIVE,
-    cost: -3,
-    description: '不善于团队协作，团队协作能力无法提升。',
-    effects: {
-      initialStats: {
-        teamwork: -5 // 直接降低，实际游戏中可以考虑锁定为0
-      }
-    }
-  },
-  {
-    id: 'trait_biased',
+    id: 'trait_weak_english',
     name: '英语四级424',
     type: TRAIT_TYPES.NEGATIVE,
-    cost: -4,
+    cost: -3,
     description: '英语能力较弱，理解题目会更困难。小心挂科。',
     effects: {
       initialStats: {
@@ -137,30 +125,39 @@ export const TRAITS = [
     }
   },
   {
-    id: 'trait_slow_learner',
-    name: '熬夜',
+    id: 'trait_introvert',
+    name: 'i人',
     type: TRAIT_TYPES.NEGATIVE,
-    cost: -4,
-    description: '速度和算法思维降低。',
+    cost: -3,
+    description: '社交能力降低。',
     effects: {
       initialStats: {
-        speed: -2,
-        algorithm: -2
+        teamwork: -3
       },
-      sanPenalty: 4
     }
   },
   {
     id: 'trait_distracted',
     name: '注意力涣散',
     type: TRAIT_TYPES.NEGATIVE,
-    cost: -4,
+    cost: -5,
     description: 'attention is all you need？思维属性下降。',
     effects: {
       initialStats: {
         algorithm: -3
       },
       sanPenalty: 5
+    }
+  },
+  {
+    id: 'trait_LGBTQ+',
+    name: 'MTF Trans',
+    type: TRAIT_TYPES.NEGATIVE,
+    cost: -5,
+    description: '鱼板人？属性下降。可能会解锁特殊事件。',
+    effects: {
+      sanPenalty: 20,
+      moneyPenalty: 500 // 初始资金减少500
     }
   }
 ];
@@ -170,6 +167,7 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
   const result = { ...baseAttributes };
   let totalRandomBonus = 0;
   let sanPenalty = 0;
+  let moneyPenalty = 0;
 
   // 应用所有选中的特性效果
   selectedTraits.forEach(traitId => {
@@ -192,6 +190,11 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
     if (trait.effects.sanPenalty) {
       sanPenalty += trait.effects.sanPenalty;
     }
+
+    // 累计资金惩罚
+    if (trait.effects.moneyPenalty) {
+      moneyPenalty += trait.effects.moneyPenalty;
+    }
   });
 
   // 随机分配额外属性点
@@ -213,7 +216,8 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
 
   return {
     attributes: result,
-    sanPenalty
+    sanPenalty,
+    moneyPenalty,
   };
 }
 

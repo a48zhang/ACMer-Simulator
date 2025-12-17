@@ -12,6 +12,8 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
     return `大学 ${year} 年 ${monthInYear} 月`;
   };
 
+  const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
+
   return (
     <section className="game-start-section">
       <h2>游戏控制</h2>
@@ -30,10 +32,10 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
         >
           {gameState.isPaused ? '继续游戏' : '暂停游戏'}
         </button>
-        <button 
+        <button
           className="btn btn-success"
           onClick={onAdvanceMonth}
-          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 48}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 48 || hasPendingEvents}
         >
           下一月 ➡️
         </button>
@@ -45,6 +47,9 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
         <p>状态: <span>{getStatusText()}</span></p>
         <p>时间: <span>{getYearMonth()}</span></p>
         <p>剩余行动点: <span className="ap-display">{gameState.remainingAP}</span> / {gameState.monthlyAP} AP</p>
+        {hasPendingEvents && (
+          <p>事件: <span>当月待处理 {gameState.pendingEvents.length} 项</span></p>
+        )}
       </div>
     </section>
   );

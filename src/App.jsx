@@ -5,9 +5,12 @@ import GlobalStatistics from './components/GlobalStatistics'
 import Notification from './components/Notification'
 import TraitSelectionDialog from './components/TraitSelectionDialog'
 import ActivityPanel from './components/ActivityPanel'
+import EventPanel from './components/EventPanel'
+import EventDialog from './components/EventDialog'
 import LogPanel from './components/LogPanel'
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
+import { scheduleMonthlyEvents } from './data/events'
 
 // 游戏常量
 const MAX_ATTRIBUTE_VALUE = 10;
@@ -64,7 +67,11 @@ function App() {
     playerScore: 0,
     playerContests: 0,
     playerProblems: 0,
-    selectedTraits: [] // 已选择的特性
+    selectedTraits: [], // 已选择的特性
+    pendingEvents: [],
+    resolvedEvents: [],
+    worldFlags: {},
+    eventGraph: {}
   });
 
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -72,6 +79,8 @@ function App() {
   const [showTraitDialog, setShowTraitDialog] = useState(false);
   const [traitsSelected, setTraitsSelected] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [showEventDialog, setShowEventDialog] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -173,13 +182,16 @@ function App() {
       return;
     }
 
-    // 重置行动点
-    addLog(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月`, 'info');
+    // 生成当月事件并重置行动点
+    const events = scheduleMonthlyEvents(gameState, newMonth);
+    addLog(`📅 进入大学 ${Math.ceil(newMonth / 12)} 年 ${((newMonth - 1) % 12) + 1} 月（待处理事件 ${events.length}）`, 'info');
 
     setGameState(prev => ({
       ...prev,
       month: newMonth,
-      remainingAP: prev.monthlyAP
+      remainingAP: prev.monthlyAP,
+      pendingEvents: events,
+      resolvedEvents: []
     }));
   };
 
@@ -220,40 +232,128 @@ function App() {
         remainingAP: 30,
         balance: INITIAL_BALANCE,
         san: INITIAL_SAN,
-        rating: 1500,
+        rating: 0,
         gpa: 4.0,
         attributes: createBaseAttributes(),
         playerScore: 0,
         playerContests: 0,
         playerProblems: 0,
-        selectedTraits: []
+        selectedTraits: [],
+        pendingEvents: [],
+        resolvedEvents: [],
+        worldFlags: {},
+        eventGraph: {}
       });
       setTraitsSelected(false);
       setLogs([]);
       addLog('🔄 游戏已重置', 'warning');
     }
   };
+
   // 确认特性选择
   const handleTraitConfirm = (selectedTraitIds) => {
     // 初始属性全为0
     const baseAttributes = createBaseAttributes();
 
     // 应用特性效果
-    const { attributes, sanPenalty } = applyTraitEffects(selectedTraitIds, baseAttributes);
+    const { attributes, sanPenalty, moneyPenalty } = applyTraitEffects(selectedTraitIds, baseAttributes);
 
     setGameState(prev => ({
       ...prev,
       attributes: attributes,
       san: Math.max(0, INITIAL_SAN - sanPenalty),
+      balance: Math.max(0, INITIAL_BALANCE - moneyPenalty),
       selectedTraits: selectedTraitIds,
       isRunning: true,
       isPaused: false,
       month: 1,
-      remainingAP: 30
+      remainingAP: 30,
+      pendingEvents: scheduleMonthlyEvents(prev, 1),
+      resolvedEvents: [],
+      worldFlags: {},
+      eventGraph: {}
     }));
     setShowTraitDialog(false);
     setTraitsSelected(true);
     setNotification('🎮 游戏开始！你现在是大学一年级的学生，开始你的ACM之旅吧！');
+  };
+
+  // 事件处理：打开事件对话框
+  const openEventDialog = (eventId) => {
+    const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
+    if (!ev) return;
+    setCurrentEvent(ev);
+    setShowEventDialog(true);
+  };
+
+  // 事件选择应用
+  const applyEventChoice = (eventId, choiceId) => {
+    const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
+    if (!ev) return;
+    const choice = ev.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+    const effects = choice.effects || {};
+    const setFlags = choice.setFlags || {};
+
+    // 记录日志
+    addLog(`🗳️ 事件处理：${ev.title} → ${choice.label}`, 'info');
+
+    setGameState(prev => {
+      const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
+
+      const getFieldValue = (field, deltaField) => {
+        if (effects[field] !== undefined) return effects[field];
+        if (effects[deltaField] !== undefined) return prev[field] + effects[deltaField];
+        return prev[field];
+      };
+
+      const nextState = {
+        ...prev,
+        remainingAP: Math.min(prev.monthlyAP, Math.max(0, prev.remainingAP + (effects.apBonus || 0))),
+        playerScore: getFieldValue('playerScore', 'playerScoreDelta'),
+        playerContests: getFieldValue('playerContests', 'playerContestsDelta'),
+        playerProblems: getFieldValue('playerProblems', 'playerProblemsDelta'),
+        attributes: updatedAttributes
+      };
+
+      if (effects.balance !== undefined) {
+        nextState.balance = effects.balance;
+      } else if (effects.balanceDelta !== undefined) {
+        nextState.balance = Math.max(0, prev.balance + effects.balanceDelta);
+      }
+
+      if (effects.san !== undefined) {
+        nextState.san = Math.max(0, effects.san);
+      } else if (effects.sanDelta !== undefined) {
+        nextState.san = Math.max(0, prev.san + effects.sanDelta);
+      }
+
+      if (effects.rating !== undefined) {
+        nextState.rating = effects.rating;
+      } else if (effects.ratingDelta !== undefined) {
+        nextState.rating = prev.rating + effects.ratingDelta;
+      }
+
+      if (effects.gpa !== undefined) {
+        nextState.gpa = clampGPA(effects.gpa);
+      } else if (effects.gpaDelta !== undefined) {
+        nextState.gpa = clampGPA(prev.gpa + effects.gpaDelta);
+      }
+
+      // 更新 flags
+      nextState.worldFlags = { ...(prev.worldFlags || {}), ...setFlags };
+
+      // 从 pendingEvents 移除该事件，追加到 resolvedEvents
+      const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
+      const resolvedItem = { id: ev.id, choiceId, time: Date.now() };
+      nextState.pendingEvents = remaining;
+      nextState.resolvedEvents = [...(prev.resolvedEvents || []), resolvedItem];
+
+      return nextState;
+    });
+
+    setShowEventDialog(false);
+    setCurrentEvent(null);
   };
 
   return (
@@ -285,6 +385,12 @@ function App() {
 
           <LogPanel logs={logs} />
 
+          <EventPanel
+            pendingEvents={gameState.pendingEvents || []}
+            onOpenEvent={openEventDialog}
+            canAdvance={(gameState.pendingEvents || []).length === 0}
+          />
+
           <ActivityPanel
             activities={activities}
             remainingAP={gameState.remainingAP}
@@ -310,6 +416,14 @@ function App() {
       {showTraitDialog && !traitsSelected && (
         <TraitSelectionDialog
           onConfirm={handleTraitConfirm}
+        />
+      )}
+
+      {showEventDialog && currentEvent && (
+        <EventDialog
+          event={currentEvent}
+          onSelectChoice={applyEventChoice}
+          onClose={() => { setShowEventDialog(false); setCurrentEvent(null); }}
         />
       )}
     </div>
