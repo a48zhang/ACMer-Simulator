@@ -36,10 +36,14 @@ export const EVENTS = [
     {
         id: 'club_intro',
         title: 'ACM社团招新',
-        description: 'ACM算法社团正在招新，是否加入？',
+        description: 'ACM算法社团正在招新，是否加入？本月不选择将自动过期。',
         mandatory: true,
-        monthConstraints: { start: 1, end: 2 }, // 游戏月1-2（大一9-10月）
-        conditions: (state) => !hasFlag(state.worldFlags, 'joinedClub'),
+        conditions: (state) => {
+            // 只在每年9月和6月刷新，且未加入社团
+            if (hasFlag(state.worldFlags, 'joinedClub')) return false;
+            const { month } = getSchoolMonth(state.month);
+            return month === 9 || month === 6;
+        },
         choices: [
             {
                 id: 'join',
@@ -66,9 +70,11 @@ export const EVENTS = [
     {
         id: 'march_invitational_signup',
         title: '3月邀请赛名额抢夺',
-        description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
+        description: '邀请赛开始报名，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month } = getSchoolMonth(state.month);
             return month === 3; // 3月
         },
@@ -77,10 +83,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -5
+                    sanDelta: -5,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { marchInvitationalParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: '3月邀请赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 5, 7, 8, 10, 12, 15, 18, 20],
+                    isRated: true,
+                    ratingSource: 'invitational'
+                },
+                setFlags: { marchInvitationalParticipating: true }
             },
             {
                 id: 'skip',
@@ -96,9 +110,11 @@ export const EVENTS = [
     {
         id: 'april_provincial',
         title: '4月XCPC省赛',
-        description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
+        description: '省级竞赛即将举行，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month } = getSchoolMonth(state.month);
             return month === 4; // 4月
         },
@@ -107,10 +123,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -10
+                    sanDelta: -10,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { aprilProvincialParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: 'XCPC省赛',
+                    problemCount: [10, 12],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25],
+                    isRated: true,
+                    ratingSource: 'provincial'
+                },
+                setFlags: { aprilProvincialParticipating: true }
             },
             {
                 id: 'skip',
@@ -126,9 +150,11 @@ export const EVENTS = [
     {
         id: 'may_invitational',
         title: '5月邀请赛',
-        description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
+        description: '又一场邀请赛来临，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month } = getSchoolMonth(state.month);
             return month === 5; // 5月
         },
@@ -137,10 +163,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -5
+                    sanDelta: -5,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { mayInvitationalParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: '5月邀请赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 5, 7, 8, 10, 12, 15, 18, 20],
+                    isRated: true,
+                    ratingSource: 'invitational'
+                },
+                setFlags: { mayInvitationalParticipating: true }
             },
             {
                 id: 'skip',
@@ -155,8 +189,8 @@ export const EVENTS = [
     // 6月期末周事件（每年）
     {
         id: 'june_finals_week',
-        title: '6月期末周',
-        description: '期末考试周到了，进行学业审核...',
+        title: '6月期末考试',
+        description: '期末考试周到了...',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -207,9 +241,11 @@ export const EVENTS = [
     {
         id: 'september_online_qualifier',
         title: '9月网络预选赛',
-        description: '为区域赛做准备的网络预选赛，是否参加？',
+        description: '为区域赛做准备的网络预选赛，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month, year } = getSchoolMonth(state.month);
             return month === 9 && year > 1; // 9月，但不是大一9月
         },
@@ -218,7 +254,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -10
+                    sanDelta: -10,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '网络预选赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 15, 18, 20, 22],
+                    isRated: true,
+                    ratingSource: 'qualifier'
                 },
                 setFlags: { septemberQualifierParticipating: true }
             },
@@ -236,9 +281,11 @@ export const EVENTS = [
     {
         id: 'october_regional',
         title: '10月区域赛站点',
-        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
+        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month, year } = getSchoolMonth(state.month);
             // 10月，大二及以上，30%概率刷出
             return month === 10 && year >= 2 && Math.random() < 0.3;
@@ -248,7 +295,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '10月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { octoberRegionalParticipating: true }
             },
@@ -265,9 +321,11 @@ export const EVENTS = [
     {
         id: 'november_regional',
         title: '11月区域赛站点',
-        description: '又有区域赛赛站了！是否继续争抢？',
+        description: '又有区域赛赛站了！是否继续争抢？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month, year } = getSchoolMonth(state.month);
             // 11月，大二及以上，30%概率刷出
             return month === 11 && year >= 2 && Math.random() < 0.3;
@@ -277,7 +335,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '11月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { novemberRegionalParticipating: true }
             },
@@ -294,9 +361,11 @@ export const EVENTS = [
     {
         id: 'december_regional',
         title: '12月区域赛站点',
-        description: '区域赛季的最后机会！是否参加？',
+        description: '区域赛季的最后机会！是否参加？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
+            // 只有加入社团才会刷出
+            if (!hasFlag(state.worldFlags, 'joinedClub')) return false;
             const { month, year } = getSchoolMonth(state.month);
             // 12月，大二及以上，30%概率刷出
             return month === 12 && year >= 2 && Math.random() < 0.3;
@@ -306,7 +375,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '12月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { decemberRegionalParticipating: true }
             },
@@ -323,8 +401,8 @@ export const EVENTS = [
     // 1月期末周事件（每年）
     {
         id: 'january_finals_week',
-        title: '1月期末周',
-        description: '寒假前的期末考试周，再次进行学业审核...',
+        title: '1月期末考试',
+        description: '寒假前的期末考试周...',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -338,6 +416,97 @@ export const EVENTS = [
                     // GPA审核在这里进行
                 },
                 setFlags: { januaryFinalsReviewed: true }
+            }
+        ]
+    },
+    // 随机校赛/新生赛事件
+    {
+        id: 'random_school_contest',
+        title: '校内编程比赛',
+        description: '学校举办了一场编程竞赛，难度和形式都是随机的，是否参加？',
+        mandatory: false,
+        conditions: (state) => {
+            // 20%概率刷出，任意月份
+            return Math.random() < 0.2;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加比赛',
+                effects: (state) => ({
+                    specialAction: 'START_CONTEST',
+                    sanDelta: -5
+                }),
+                // 动态生成比赛配置
+                contestConfig: () => {
+                    const isTeam = Math.random() < 0.5;
+                    const difficultyLevel = Math.floor(Math.random() * 3); // 0=简单, 1=中等, 2=困难
+                    const problemCounts = [[3, 5], [5, 7], [7, 9]];
+                    const difficultyDistributions = [
+                        [1, 2, 3, 4, 5], // 简单
+                        [2, 3, 5, 7, 8], // 中等
+                        [3, 5, 8, 10, 12, 15] // 困难
+                    ];
+                    
+                    return {
+                        name: isTeam ? '校内团队赛' : '校内个人赛',
+                        problemCount: problemCounts[difficultyLevel],
+                        durationMinutes: isTeam ? 180 : 120,
+                        difficulties: difficultyDistributions[difficultyLevel],
+                        isRated: false,
+                        ratingSource: null
+                    };
+                },
+                setFlags: { participatedSchoolContest: true }
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 1
+                },
+                setFlags: { skippedSchoolContest: true }
+            }
+        ]
+    },
+    {
+        id: 'freshman_contest',
+        title: '新生编程赛',
+        description: '面向新生的编程竞赛开始报名，这是一个很好的练习机会！',
+        mandatory: false,
+        conditions: (state) => {
+            // 只在大一和大二，15%概率刷出
+            const { year } = getSchoolMonth(state.month);
+            return (year === 1 || year === 2) && Math.random() < 0.15;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加新生赛',
+                effects: (state) => ({
+                    specialAction: 'START_CONTEST',
+                    sanDelta: -3
+                }),
+                contestConfig: () => {
+                    // 新生赛通常是个人赛，难度较低
+                    return {
+                        name: '新生编程赛',
+                        problemCount: [4, 6],
+                        durationMinutes: 120,
+                        difficulties: [1, 2, 2, 3, 4, 5],
+                        isRated: false,
+                        ratingSource: null
+                    };
+                },
+                setFlags: { participatedFreshmanContest: true }
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 1
+                },
+                setFlags: { skippedFreshmanContest: true }
             }
         ]
     },

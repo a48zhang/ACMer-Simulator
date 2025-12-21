@@ -185,8 +185,8 @@ export const ACTIVITIES = [
         description: '猛猛学',
         effects: (state) => ({
             sanDelta: -5,
-            gpaDelta: 0.03,
-            log: '📚 认真上课，GPA+0.03',
+            gpaDelta: 0.08,
+            log: '📚 认真上课，GPA+0.08',
             logType: 'info',
             setFlags: { attendedClassThisMonth: true }
         }),
