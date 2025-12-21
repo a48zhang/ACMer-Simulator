@@ -352,21 +352,22 @@ function App() {
     // 2、7、8月为假期，不上课不会掉GPA
     const isVacation = calendarMonth === 2 || calendarMonth === 7 || calendarMonth === 8;
     
-    const baseGpaDeduction = 0.05; // 每月基础扣除（增大）
-    let gpaDeduction = baseGpaDeduction;
+    let gpaDeduction = 0;
     
-    // 如果一个月没有上课，额外扣除GPA（检查上课活动是否执行）
-    // 但假期期间不会因为没上课而扣除GPA
-    const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
-    if (!isVacation && !attendedClass && Math.random() < 0.3) {
-      gpaDeduction += 0.1; // 30%概率额外扣除平时分（增大）
-      addLog('⚠️ 本月未上课，GPA额外扣除！', 'warning');
-    }
-    
-    // 假期期间不扣除基础GPA
+    // 假期期间不扣除GPA
     if (isVacation) {
-      gpaDeduction = 0;
       addLog('🏖️ 假期月份，GPA不会下降', 'info');
+    } else {
+      // 非假期月份才计算GPA扣除
+      const baseGpaDeduction = 0.05; // 每月基础扣除（增大）
+      gpaDeduction = baseGpaDeduction;
+      
+      // 如果一个月没有上课，额外扣除GPA（检查上课活动是否执行）
+      const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
+      if (!attendedClass && Math.random() < 0.3) {
+        gpaDeduction += 0.1; // 30%概率额外扣除平时分（增大）
+        addLog('⚠️ 本月未上课，GPA额外扣除！', 'warning');
+      }
     }
 
     const newGpa = clampGPA(gameState.gpa - gpaDeduction);
@@ -702,7 +703,7 @@ function App() {
     }
 
     // 处理特殊动作：启动比赛
-    if (choice.specialAction === 'START_CONTEST') {
+    if (effects.specialAction === 'START_CONTEST') {
       if (gameState.remainingAP < 10) {
         addLog('❌ 行动点不足！参加比赛需要 10 AP', 'error');
         return;
