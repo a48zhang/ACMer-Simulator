@@ -23,8 +23,8 @@ const INITIAL_BALANCE = 3000;
 const MIN_GPA = 0;
 const MAX_GPA = 4.0;
 const INITIAL_GPA = 3.2;
-const START_MONTH = 1; // 游戏从第1个月开始
-const END_MONTH = 34; // 游戏在第34个月结束（大一9月到大四6月，共34个月）
+const START_MONTH = 1; // 游戏从第1个月开始（大一9月）
+const END_MONTH = 46; // 游戏在第46个月结束（大四6月，即第五年6月）
 
 const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -359,15 +359,27 @@ function App() {
     // 生成当月事件并重置行动点
     const events = scheduleMonthlyEvents(gameState, newMonth);
     
-    // 计算年级和月份（gameMonth 1 = 大一9月）
+    // 计算学年和月份（gameMonth 1 = 大一9月）
     const monthsSinceStart = newMonth - 1;
     const startCalendarMonth = 9;
     const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
-    const yearOffset = Math.floor((totalCalendarMonth - 1) / 12);
-    const year = yearOffset + 1;
-    const monthInYear = ((totalCalendarMonth - 1) % 12) + 1;
+    const calendarMonth = ((totalCalendarMonth - 1) % 12) + 1;
     
-    addLog(`📅 进入大学 ${year} 年 ${monthInYear} 月（待处理事件 ${events.length}）`, 'info');
+    // 计算学年（大一、大二、大三、大四）
+    let academicYear;
+    if (newMonth <= 4) {
+      academicYear = 1;
+    } else {
+      const monthsAfterFirstSemester = newMonth - 5;
+      const completedYears = Math.floor(monthsAfterFirstSemester / 12);
+      if (calendarMonth < 9) {
+        academicYear = completedYears + 1;
+      } else {
+        academicYear = completedYears + 2;
+      }
+    }
+    
+    addLog(`📅 进入大学 ${academicYear} 年 ${calendarMonth} 月（待处理事件 ${events.length}）`, 'info');
 
     setGameState(prev => ({
       ...prev,

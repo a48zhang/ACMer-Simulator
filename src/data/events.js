@@ -5,14 +5,29 @@
 const hasFlag = (flags, key) => !!(flags && flags[key]);
 const getFlag = (flags, key, def = 0) => (flags && typeof flags[key] === 'number' ? flags[key] : def);
 
-// 将游戏月份转换为学年月份（gameMonth 1 = 大一9月）
+// 将游戏月份转换为学年和日历月份（gameMonth 1 = 大一9月）
 const getSchoolMonth = (gameMonth) => {
     const monthsSinceStart = gameMonth - 1; // 0-based
     const startCalendarMonth = 9; // September
     const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
-    const yearOffset = Math.floor((totalCalendarMonth - 1) / 12);
-    const year = yearOffset + 1;
     const month = ((totalCalendarMonth - 1) % 12) + 1; // Calendar month 1-12
+    
+    // 计算学年（大一、大二、大三、大四）
+    // 学年在每年9月递增
+    let year;
+    if (gameMonth <= 4) {
+      // 前4个月（9-12月）属于大一
+      year = 1;
+    } else {
+      const monthsAfterFirstSemester = gameMonth - 5;
+      const completedYears = Math.floor(monthsAfterFirstSemester / 12);
+      if (month < 9) {
+        year = completedYears + 1;
+      } else {
+        year = completedYears + 2;
+      }
+    }
+    
     return { year, month };
 };
 
