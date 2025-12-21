@@ -23,8 +23,8 @@ const INITIAL_BALANCE = 3000;
 const MIN_GPA = 0;
 const MAX_GPA = 4.0;
 const INITIAL_GPA = 3.2;
-const START_MONTH = 9; // 大一9月开始
-const END_MONTH = 57; // 游戏结束月份 (月份9到57，共48个月，覆盖大一9月到大五6月)
+const START_MONTH = 1; // 游戏从第1个月开始
+const END_MONTH = 46; // 游戏在第46个月结束（大一9月到大五6月，共46个月）
 
 const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -121,7 +121,7 @@ function App() {
     }
 
     // 检查游戏是否结束
-    if (gameState.month > 48) {
+    if (gameState.month > END_MONTH) {
       addLog('❌ 游戏已结束！', 'error');
       return;
     }
@@ -359,10 +359,13 @@ function App() {
     // 生成当月事件并重置行动点
     const events = scheduleMonthlyEvents(gameState, newMonth);
     
-    // 计算年级和月份（从大一9月开始）
-    const totalMonthsPassed = newMonth - START_MONTH;
-    const year = Math.floor(totalMonthsPassed / 12) + 1;
-    const monthInYear = (totalMonthsPassed % 12) + 1;
+    // 计算年级和月份（gameMonth 1 = 大一9月）
+    const monthsSinceStart = newMonth - 1;
+    const startCalendarMonth = 9;
+    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
+    const yearOffset = Math.floor((totalCalendarMonth - 1) / 12);
+    const year = yearOffset + 1;
+    const monthInYear = ((totalCalendarMonth - 1) % 12) + 1;
     
     addLog(`📅 进入大学 ${year} 年 ${monthInYear} 月（待处理事件 ${events.length}）`, 'info');
 

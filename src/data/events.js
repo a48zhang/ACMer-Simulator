@@ -5,12 +5,14 @@
 const hasFlag = (flags, key) => !!(flags && flags[key]);
 const getFlag = (flags, key, def = 0) => (flags && typeof flags[key] === 'number' ? flags[key] : def);
 
-// 将绝对月份转换为学年月份（从大一9月开始）
-const getSchoolMonth = (absoluteMonth) => {
-    const START_MONTH = 9;
-    const monthsPassed = absoluteMonth - START_MONTH;
-    const year = Math.floor(monthsPassed / 12) + 1;
-    const month = (monthsPassed % 12) + 1;
+// 将游戏月份转换为学年月份（gameMonth 1 = 大一9月）
+const getSchoolMonth = (gameMonth) => {
+    const monthsSinceStart = gameMonth - 1; // 0-based
+    const startCalendarMonth = 9; // September
+    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
+    const yearOffset = Math.floor((totalCalendarMonth - 1) / 12);
+    const year = yearOffset + 1;
+    const month = ((totalCalendarMonth - 1) % 12) + 1; // Calendar month 1-12
     return { year, month };
 };
 
@@ -21,7 +23,7 @@ export const EVENTS = [
         title: 'ACM社团招新',
         description: 'ACM算法社团正在招新，是否加入？',
         mandatory: true,
-        monthConstraints: { start: 9, end: 10 }, // 9-10月（大一开学）
+        monthConstraints: { start: 1, end: 2 }, // 游戏月1-2（大一9-10月）
         conditions: (state) => !hasFlag(state.worldFlags, 'joinedClub'),
         choices: [
             {
@@ -53,7 +55,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 7; // 3月对应第7个月（9,10,11,12,1,2,3）
+            return month === 3; // 3月
         },
         choices: [
             {
@@ -83,7 +85,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 8; // 4月对应第8个月
+            return month === 4; // 4月
         },
         choices: [
             {
@@ -113,7 +115,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 9; // 5月对应第9个月
+            return month === 5; // 5月
         },
         choices: [
             {
@@ -143,7 +145,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 10; // 6月对应第10个月
+            return month === 6; // 6月
         },
         choices: [
             {
@@ -164,7 +166,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 11; // 7月对应第11个月
+            return month === 7; // 7月
         },
         choices: [
             {
@@ -193,8 +195,8 @@ export const EVENTS = [
         description: '为区域赛做准备的网络预选赛，是否参加？',
         mandatory: true,
         conditions: (state) => {
-            const { month } = getSchoolMonth(state.month);
-            return month === 1 && getSchoolMonth(state.month).year > 1; // 9月（第1个月），但不是大一9月
+            const { month, year } = getSchoolMonth(state.month);
+            return month === 9 && year > 1; // 9月，但不是大一9月
         },
         choices: [
             {
@@ -223,8 +225,8 @@ export const EVENTS = [
         mandatory: false,
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 10月（第2个月），大二及以上，30%概率刷出
-            return month === 2 && year >= 2 && Math.random() < 0.3;
+            // 10月，大二及以上，30%概率刷出
+            return month === 10 && year >= 2 && Math.random() < 0.3;
         },
         choices: [
             {
@@ -252,8 +254,8 @@ export const EVENTS = [
         mandatory: false,
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 11月（第3个月），大二及以上，30%概率刷出
-            return month === 3 && year >= 2 && Math.random() < 0.3;
+            // 11月，大二及以上，30%概率刷出
+            return month === 11 && year >= 2 && Math.random() < 0.3;
         },
         choices: [
             {
@@ -281,8 +283,8 @@ export const EVENTS = [
         mandatory: false,
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 12月（第4个月），大二及以上，30%概率刷出
-            return month === 4 && year >= 2 && Math.random() < 0.3;
+            // 12月，大二及以上，30%概率刷出
+            return month === 12 && year >= 2 && Math.random() < 0.3;
         },
         choices: [
             {
@@ -311,7 +313,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 5; // 1月对应第5个月
+            return month === 1; // 1月
         },
         choices: [
             {

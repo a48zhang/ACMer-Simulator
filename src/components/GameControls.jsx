@@ -2,16 +2,18 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
   const getStatusText = () => {
     if (!gameState.isRunning) return '未开始';
     if (gameState.isPaused) return '已暂停';
-    if (gameState.month > 57) return '已结束';
+    if (gameState.month > 46) return '已结束';
     return '进行中';
   };
 
   const getYearMonth = () => {
-    // 从大一9月开始 (month = 9)
-    const START_MONTH = 9;
-    const totalMonthsPassed = gameState.month - START_MONTH;
-    const year = Math.floor(totalMonthsPassed / 12) + 1;
-    const monthInYear = (totalMonthsPassed % 12) + 1;
+    // gameState.month 从 1 开始，对应大一9月
+    const monthsSinceStart = gameState.month - 1; // 0-based
+    const startCalendarMonth = 9; // 9月（September）
+    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
+    const yearOffset = Math.floor((totalCalendarMonth - 1) / 12);
+    const year = yearOffset + 1;
+    const monthInYear = ((totalCalendarMonth - 1) % 12) + 1;
     return `大学 ${year} 年 ${monthInYear} 月`;
   };
 
@@ -32,14 +34,14 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
         <button
           className="btn btn-secondary"
           onClick={onTogglePause}
-          disabled={!gameState.isRunning || gameState.month > 57}
+          disabled={!gameState.isRunning || gameState.month > 46}
         >
           {gameState.isPaused ? '继续游戏' : '暂停游戏'}
         </button>
         <button
           className="btn btn-success"
           onClick={onAdvanceMonth}
-          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 57 || hasPendingEvents || hasActiveContest}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest}
         >
           下一月 ➡️
         </button>
