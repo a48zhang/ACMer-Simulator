@@ -638,7 +638,7 @@ function App() {
       return;
     }
 
-    let effects = { ...(choice.effects || {}) };
+    let effects = typeof choice.effects === 'function' ? choice.effects(gameState) : { ...(choice.effects || {}) };
     const setFlags = choice.setFlags || {};
 
     // 特殊处理：期末考试GPA审核
