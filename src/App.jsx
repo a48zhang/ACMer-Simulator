@@ -344,26 +344,35 @@ function App() {
     }
 
     // 月度GPA扣除
-    const baseGpaDeduction = 0.02; // 每月基础扣除
+    const monthsSinceStart = newMonth - 1;
+    const startCalendarMonth = 9;
+    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
+    const calendarMonth = ((totalCalendarMonth - 1) % 12) + 1;
+    
+    // 2、7、8月为假期，不上课不会掉GPA
+    const isVacation = calendarMonth === 2 || calendarMonth === 7 || calendarMonth === 8;
+    
+    const baseGpaDeduction = 0.05; // 每月基础扣除（增大）
     let gpaDeduction = baseGpaDeduction;
     
     // 如果一个月没有上课，额外扣除GPA（检查上课活动是否执行）
+    // 但假期期间不会因为没上课而扣除GPA
     const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
-    if (!attendedClass && Math.random() < 0.3) {
-      gpaDeduction += 0.05; // 30%概率额外扣除平时分
+    if (!isVacation && !attendedClass && Math.random() < 0.3) {
+      gpaDeduction += 0.1; // 30%概率额外扣除平时分（增大）
       addLog('⚠️ 本月未上课，GPA额外扣除！', 'warning');
+    }
+    
+    // 假期期间不扣除基础GPA
+    if (isVacation) {
+      gpaDeduction = 0;
+      addLog('🏖️ 假期月份，GPA不会下降', 'info');
     }
 
     const newGpa = clampGPA(gameState.gpa - gpaDeduction);
 
     // 生成当月事件并重置行动点
     const events = scheduleMonthlyEvents(gameState, newMonth);
-    
-    // 计算学年和月份（gameMonth 1 = 大一9月）
-    const monthsSinceStart = newMonth - 1;
-    const startCalendarMonth = 9;
-    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
-    const calendarMonth = ((totalCalendarMonth - 1) % 12) + 1;
     
     // 计算学年（大一、大二、大三、大四）
     let academicYear;
@@ -379,7 +388,9 @@ function App() {
       }
     }
     
-    addLog(`📅 进入大学 ${academicYear} 年 ${calendarMonth} 月（待处理事件 ${events.length}）`, 'info');
+    if (!isVacation || events.length > 0) {
+      addLog(`📅 进入大学 ${academicYear} 年 ${calendarMonth} 月（待处理事件 ${events.length}）`, 'info');
+    }
 
     setGameState(prev => ({
       ...prev,
@@ -630,7 +641,7 @@ function App() {
     let effects = { ...(choice.effects || {}) };
     const setFlags = choice.setFlags || {};
 
-    // 特殊处理：期末周GPA审核
+    // 特殊处理：期末考试GPA审核
     if (eventId === 'june_finals_week' || eventId === 'january_finals_week') {
       const currentGpa = gameState.gpa;
       const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
@@ -684,9 +695,9 @@ function App() {
       } else if (currentGpa >= 3.7) {
         // GPA >= 3.7: 获得奖学金
         addLog(`🎓 优秀！GPA达到3.7以上，获得奖学金！`, 'success');
-        effects.balanceDelta = 2000;
+        effects.balanceDelta = 3000;
       } else {
-        addLog(`✅ 期末审核通过，GPA正常`, 'info');
+        addLog(`✅ 期末考试通过，GPA正常`, 'info');
       }
     }
 
@@ -701,8 +712,26 @@ function App() {
         return;
       }
 
-      const session = createContestSession();
-      addLog(`🏁 开始Codeforces比赛（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+      // 获取比赛配置（可能是函数或静态对象）
+      let contestConfig = choice.contestConfig;
+      if (typeof contestConfig === 'function') {
+        contestConfig = contestConfig();
+      }
+      
+      // 如果配置不存在，使用默认配置
+      if (!contestConfig) {
+        contestConfig = {
+          name: 'Contest',
+          problemCount: [5, 7],
+          durationMinutes: 120,
+          difficulties: [1, 2, 3, 5, 8, 10, 15],
+          isRated: false,
+          ratingSource: null
+        };
+      }
+
+      const session = createContestSession(contestConfig);
+      addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
 
       setGameState(prev => ({
         ...prev,
