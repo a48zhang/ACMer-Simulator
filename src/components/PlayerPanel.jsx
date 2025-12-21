@@ -7,7 +7,8 @@ function PlayerPanel({
   monthlyAP,
   san,
   rating,
-  gpa
+  gpa,
+  buffs
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -58,6 +59,16 @@ function PlayerPanel({
               <span className="info-label">GPA</span>
               <span className="info-value gpa">{gpa.toFixed(2)}</span>
             </div>
+            {buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0) && (
+              <div className="info-item buffs-display">
+                {buffs.failedCourses > 0 && (
+                  <span className="buff-item warning">📉 挂科×{buffs.failedCourses}</span>
+                )}
+                {buffs.academicWarnings > 0 && (
+                  <span className="buff-item danger">⚠️ 学业警告×{buffs.academicWarnings}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

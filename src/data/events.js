@@ -5,6 +5,32 @@
 const hasFlag = (flags, key) => !!(flags && flags[key]);
 const getFlag = (flags, key, def = 0) => (flags && typeof flags[key] === 'number' ? flags[key] : def);
 
+// 将游戏月份转换为学年和日历月份（gameMonth 1 = 大一9月）
+const getSchoolMonth = (gameMonth) => {
+    const monthsSinceStart = gameMonth - 1; // 0-based
+    const startCalendarMonth = 9; // September
+    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
+    const month = ((totalCalendarMonth - 1) % 12) + 1; // Calendar month 1-12
+    
+    // 计算学年（大一、大二、大三、大四）
+    // 学年在每年9月递增
+    let year;
+    if (gameMonth <= 4) {
+      // 前4个月（9-12月）属于大一
+      year = 1;
+    } else {
+      const monthsAfterFirstSemester = gameMonth - 5;
+      const completedYears = Math.floor(monthsAfterFirstSemester / 12);
+      if (month < 9) {
+        year = completedYears + 1;
+      } else {
+        year = completedYears + 2;
+      }
+    }
+    
+    return { year, month };
+};
+
 // 事件库（可扩展）
 export const EVENTS = [
     {
@@ -12,7 +38,7 @@ export const EVENTS = [
         title: 'ACM社团招新',
         description: 'ACM算法社团正在招新，是否加入？',
         mandatory: true,
-        monthConstraints: { start: 1, end: 2 },
+        monthConstraints: { start: 1, end: 2 }, // 游戏月1-2（大一9-10月）
         conditions: (state) => !hasFlag(state.worldFlags, 'joinedClub'),
         choices: [
             {
@@ -33,6 +59,285 @@ export const EVENTS = [
                     sanDelta: 1
                 },
                 setFlags: { joinedClub: false }
+            }
+        ]
+    },
+    // 3月邀请赛抢名额事件（每年）
+    {
+        id: 'march_invitational_signup',
+        title: '3月邀请赛名额抢夺',
+        description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 3; // 3月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加',
+                effects: {
+                    sanDelta: -5
+                },
+                setFlags: { marchInvitationalParticipating: true },
+                requiresTeamSelection: true
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 2
+                },
+                setFlags: { marchInvitationalParticipating: false }
+            }
+        ]
+    },
+    // 4月省赛事件（每年）
+    {
+        id: 'april_provincial',
+        title: '4月XCPC省赛',
+        description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 4; // 4月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加',
+                effects: {
+                    sanDelta: -10
+                },
+                setFlags: { aprilProvincialParticipating: true },
+                requiresTeamSelection: true
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 3
+                },
+                setFlags: { aprilProvincialParticipating: false }
+            }
+        ]
+    },
+    // 5月邀请赛事件（每年）
+    {
+        id: 'may_invitational',
+        title: '5月邀请赛',
+        description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 5; // 5月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加',
+                effects: {
+                    sanDelta: -5
+                },
+                setFlags: { mayInvitationalParticipating: true },
+                requiresTeamSelection: true
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 2
+                },
+                setFlags: { mayInvitationalParticipating: false }
+            }
+        ]
+    },
+    // 6月期末周事件（每年）
+    {
+        id: 'june_finals_week',
+        title: '6月期末周',
+        description: '期末考试周到了，进行学业审核...',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 6; // 6月
+        },
+        choices: [
+            {
+                id: 'review',
+                label: '确认',
+                effects: {
+                    // GPA审核在这里进行
+                },
+                setFlags: { juneFinalsReviewed: true }
+            }
+        ]
+    },
+    // 7月多校集训事件（每年）
+    {
+        id: 'july_summer_training',
+        title: '7月多校集训比赛',
+        description: '暑期多校集训系列比赛开始，这是提升实力的好机会！',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 7; // 7月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加集训',
+                effects: {
+                    attributeChanges: { algorithm: 1, coding: 1 },
+                    sanDelta: -15
+                },
+                setFlags: { julySummerTrainingParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '跳过，回家休息',
+                effects: {
+                    sanDelta: 20
+                },
+                setFlags: { julySummerTrainingParticipating: false }
+            }
+        ]
+    },
+    // 9月网络预选赛事件（每年）
+    {
+        id: 'september_online_qualifier',
+        title: '9月网络预选赛',
+        description: '为区域赛做准备的网络预选赛，是否参加？',
+        mandatory: true,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            return month === 9 && year > 1; // 9月，但不是大一9月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加',
+                effects: {
+                    sanDelta: -10
+                },
+                setFlags: { septemberQualifierParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 5
+                },
+                setFlags: { septemberQualifierParticipating: false }
+            }
+        ]
+    },
+    // 10月-12月亚洲区域赛事件（每年，概率刷出）
+    {
+        id: 'october_regional',
+        title: '10月区域赛站点',
+        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 10月，大二及以上，30%概率刷出
+            return month === 10 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { octoberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { octoberRegionalParticipating: false }
+            }
+        ]
+    },
+    {
+        id: 'november_regional',
+        title: '11月区域赛站点',
+        description: '又有区域赛赛站了！是否继续争抢？',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 11月，大二及以上，30%概率刷出
+            return month === 11 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { novemberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { novemberRegionalParticipating: false }
+            }
+        ]
+    },
+    {
+        id: 'december_regional',
+        title: '12月区域赛站点',
+        description: '区域赛季的最后机会！是否参加？',
+        mandatory: false,
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 12月，大二及以上，30%概率刷出
+            return month === 12 && year >= 2 && Math.random() < 0.3;
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '争抢名额',
+                effects: {
+                    sanDelta: -15
+                },
+                setFlags: { decemberRegionalParticipating: true }
+            },
+            {
+                id: 'skip',
+                label: '放弃',
+                effects: {
+                    sanDelta: 0
+                },
+                setFlags: { decemberRegionalParticipating: false }
+            }
+        ]
+    },
+    // 1月期末周事件（每年）
+    {
+        id: 'january_finals_week',
+        title: '1月期末周',
+        description: '寒假前的期末考试周，再次进行学业审核...',
+        mandatory: true,
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            return month === 1; // 1月
+        },
+        choices: [
+            {
+                id: 'review',
+                label: '确认',
+                effects: {
+                    // GPA审核在这里进行
+                },
+                setFlags: { januaryFinalsReviewed: true }
             }
         ]
     },
