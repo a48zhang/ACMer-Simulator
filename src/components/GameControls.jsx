@@ -2,7 +2,7 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
   const getStatusText = () => {
     if (!gameState.isRunning) return '未开始';
     if (gameState.isPaused) return '已暂停';
-    if (gameState.month > 46) return '已结束';
+    if (gameState.month > 34) return '已结束';
     return '进行中';
   };
 
@@ -34,14 +34,14 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
         <button
           className="btn btn-secondary"
           onClick={onTogglePause}
-          disabled={!gameState.isRunning || gameState.month > 46}
+          disabled={!gameState.isRunning || gameState.month > 34}
         >
           {gameState.isPaused ? '继续游戏' : '暂停游戏'}
         </button>
         <button
           className="btn btn-success"
           onClick={onAdvanceMonth}
-          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 34 || hasPendingEvents || hasActiveContest}
         >
           下一月 ➡️
         </button>

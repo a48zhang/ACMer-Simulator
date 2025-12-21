@@ -24,7 +24,7 @@ const MIN_GPA = 0;
 const MAX_GPA = 4.0;
 const INITIAL_GPA = 3.2;
 const START_MONTH = 1; // 游戏从第1个月开始
-const END_MONTH = 46; // 游戏在第46个月结束（大一9月到大五6月，共46个月）
+const END_MONTH = 34; // 游戏在第34个月结束（大一9月到大四6月，共34个月）
 
 const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
 
