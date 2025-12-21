@@ -70,7 +70,7 @@ export const EVENTS = [
     {
         id: 'march_invitational_signup',
         title: '3月邀请赛名额抢夺',
-        description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
+        description: '邀请赛开始报名，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -83,10 +83,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -5
+                    sanDelta: -5,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { marchInvitationalParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: '3月邀请赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 5, 7, 8, 10, 12, 15, 18, 20],
+                    isRated: true,
+                    ratingSource: 'invitational'
+                },
+                setFlags: { marchInvitationalParticipating: true }
             },
             {
                 id: 'skip',
@@ -102,7 +110,7 @@ export const EVENTS = [
     {
         id: 'april_provincial',
         title: '4月XCPC省赛',
-        description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
+        description: '省级竞赛即将举行，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -115,10 +123,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -10
+                    sanDelta: -10,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { aprilProvincialParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: 'XCPC省赛',
+                    problemCount: [10, 12],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25],
+                    isRated: true,
+                    ratingSource: 'provincial'
+                },
+                setFlags: { aprilProvincialParticipating: true }
             },
             {
                 id: 'skip',
@@ -134,7 +150,7 @@ export const EVENTS = [
     {
         id: 'may_invitational',
         title: '5月邀请赛',
-        description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
+        description: '又一场邀请赛来临，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -147,10 +163,18 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -5
+                    sanDelta: -5,
+                    specialAction: 'START_CONTEST'
                 },
-                setFlags: { mayInvitationalParticipating: true },
-                requiresTeamSelection: true
+                contestConfig: {
+                    name: '5月邀请赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 5, 7, 8, 10, 12, 15, 18, 20],
+                    isRated: true,
+                    ratingSource: 'invitational'
+                },
+                setFlags: { mayInvitationalParticipating: true }
             },
             {
                 id: 'skip',
@@ -217,7 +241,7 @@ export const EVENTS = [
     {
         id: 'september_online_qualifier',
         title: '9月网络预选赛',
-        description: '为区域赛做准备的网络预选赛，是否参加？',
+        description: '为区域赛做准备的网络预选赛，是否参加？参加后将立即进入比赛模式。',
         mandatory: true,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -230,7 +254,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '参加',
                 effects: {
-                    sanDelta: -10
+                    sanDelta: -10,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '网络预选赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 15, 18, 20, 22],
+                    isRated: true,
+                    ratingSource: 'qualifier'
                 },
                 setFlags: { septemberQualifierParticipating: true }
             },
@@ -248,7 +281,7 @@ export const EVENTS = [
     {
         id: 'october_regional',
         title: '10月区域赛站点',
-        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
+        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -262,7 +295,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '10月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { octoberRegionalParticipating: true }
             },
@@ -279,7 +321,7 @@ export const EVENTS = [
     {
         id: 'november_regional',
         title: '11月区域赛站点',
-        description: '又有区域赛赛站了！是否继续争抢？',
+        description: '又有区域赛赛站了！是否继续争抢？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -293,7 +335,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '11月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { novemberRegionalParticipating: true }
             },
@@ -310,7 +361,7 @@ export const EVENTS = [
     {
         id: 'december_regional',
         title: '12月区域赛站点',
-        description: '区域赛季的最后机会！是否参加？',
+        description: '区域赛季的最后机会！是否参加？参加后将立即进入比赛模式。',
         mandatory: false,
         conditions: (state) => {
             // 只有加入社团才会刷出
@@ -324,7 +375,16 @@ export const EVENTS = [
                 id: 'participate',
                 label: '争抢名额',
                 effects: {
-                    sanDelta: -15
+                    sanDelta: -15,
+                    specialAction: 'START_CONTEST'
+                },
+                contestConfig: {
+                    name: '12月区域赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [3, 5, 7, 8, 10, 12, 13, 15, 18, 20, 22, 25, 28],
+                    isRated: true,
+                    ratingSource: 'regional'
                 },
                 setFlags: { decemberRegionalParticipating: true }
             },
