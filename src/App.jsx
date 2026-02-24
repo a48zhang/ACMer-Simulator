@@ -11,6 +11,7 @@ import EventDialog from './components/EventDialog'
 import ContestInProgress from './components/ContestInProgress'
 import ContestResultDialog from './components/ContestResultDialog'
 import ConfirmDialog from './components/ConfirmDialog'
+import GameOverDialog from './components/GameOverDialog'
 import LogPanel from './components/LogPanel'
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
@@ -102,6 +103,7 @@ function App() {
   const [showTeammateDialog, setShowTeammateDialog] = useState(false);
   const [pendingEventChoice, setPendingEventChoice] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
+  const [gameOverReason, setGameOverReason] = useState(null); // null | 'graduation' | string (dismissal reason)
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -196,9 +198,9 @@ function App() {
       }
 
       if (effects.san !== undefined) {
-        nextState.san = Math.max(0, effects.san);
+        nextState.san = clampValue(effects.san, 0, INITIAL_SAN);
       } else if (effects.sanDelta !== undefined) {
-        nextState.san = Math.max(0, prev.san + effects.sanDelta);
+        nextState.san = clampValue(prev.san + effects.sanDelta, 0, INITIAL_SAN);
       }
 
       if (effects.rating !== undefined) {
@@ -289,7 +291,7 @@ function App() {
         playerProblems: attempt.success ? prev.playerProblems + 1 : prev.playerProblems
       };
 
-      addLog(`🧩 尝试 ${problem.title}：${attempt.success ? '通过' : '未通过'}，耗时 ${attempt.timeCost} 分钟`, attempt.success ? 'success' : 'warning');
+      addLog(`🧩 尝试题目 ${problem.letter}：${attempt.success ? '通过' : '未通过'}，耗时 ${attempt.timeCost} 分钟`, attempt.success ? 'success' : 'warning');
 
       if (shouldFinish) {
         const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
@@ -322,6 +324,7 @@ function App() {
         month: newMonth,
         isRunning: false
       }));
+      setGameOverReason('graduation');
       return;
     }
 
@@ -430,6 +433,7 @@ function App() {
       message: '确定要重置游戏吗？所有进度将被清除！',
       onConfirm: () => {
         setConfirmDialog(null);
+        setGameOverReason(null);
         setGameState({
           isRunning: false,
           isPaused: false,
@@ -463,6 +467,39 @@ function App() {
         addLog('🔄 游戏已重置', 'warning');
       }
     });
+  };
+
+  // 游戏结束后重新开始（无需确认）
+  const handleGameOverRestart = () => {
+    setGameOverReason(null);
+    setGameState({
+      isRunning: false,
+      isPaused: false,
+      month: START_MONTH,
+      monthlyAP: 30,
+      remainingAP: 30,
+      balance: INITIAL_BALANCE,
+      monthlyAllowance: 1500,
+      san: INITIAL_SAN,
+      rating: 0,
+      gpa: INITIAL_GPA,
+      attributes: createBaseAttributes(),
+      playerContests: 0,
+      playerProblems: 0,
+      selectedTraits: [],
+      pendingEvents: [],
+      resolvedEvents: [],
+      worldFlags: {},
+      eventGraph: {},
+      activeContest: null,
+      contestTimeRemaining: 0,
+      teammates: [],
+      selectedTeam: null,
+      buffs: { failedCourses: 0, academicWarnings: 0 }
+    });
+    setTraitsSelected(false);
+    setLogs([]);
+    addLog('🔄 游戏已重置', 'warning');
   };
 
   // 确认特性选择
@@ -568,7 +605,7 @@ function App() {
         setGameState(prev => {
           const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
           const nextSan = effects.sanDelta !== undefined
-            ? Math.max(0, prev.san + effects.sanDelta)
+            ? clampValue(prev.san + effects.sanDelta, 0, INITIAL_SAN)
             : prev.san;
 
           const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
@@ -617,9 +654,9 @@ function App() {
         }
         
         if (effects.san !== undefined) {
-          nextState.san = Math.max(0, effects.san);
+          nextState.san = clampValue(effects.san, 0, INITIAL_SAN);
         } else if (effects.sanDelta !== undefined) {
-          nextState.san = Math.max(0, prev.san + effects.sanDelta);
+          nextState.san = clampValue(prev.san + effects.sanDelta, 0, INITIAL_SAN);
         }
         
         if (effects.rating !== undefined) {
@@ -692,6 +729,7 @@ function App() {
           }));
           setShowEventDialog(false);
           setCurrentEvent(null);
+          setGameOverReason(`GPA长期低于2.5，累计获得${newWarnings}次学业警告，被迫退学。`);
           return;
         }
         
@@ -717,6 +755,7 @@ function App() {
             }));
             setShowEventDialog(false);
             setCurrentEvent(null);
+            setGameOverReason(`GPA长期低于3.0，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`);
             return;
           }
           
@@ -746,15 +785,13 @@ function App() {
       }
 
       // 先应用事件效果（sanDelta 等）
-      const effects = { ...(choice.effects || {}) };
-      const setFlags = choice.setFlags || {};
       const session = createContestSession(contestConfig);
       addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
 
       setGameState(prev => {
         const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
         const nextSan = effects.sanDelta !== undefined
-          ? Math.max(0, prev.san + effects.sanDelta)
+          ? clampValue(prev.san + effects.sanDelta, 0, INITIAL_SAN)
           : prev.san;
         const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
         const resolvedItem = { id: ev.id, choiceId, time: Date.now() };
@@ -802,9 +839,9 @@ function App() {
       }
 
       if (effects.san !== undefined) {
-        nextState.san = Math.max(0, effects.san);
+        nextState.san = clampValue(effects.san, 0, INITIAL_SAN);
       } else if (effects.sanDelta !== undefined) {
-        nextState.san = Math.max(0, prev.san + effects.sanDelta);
+        nextState.san = clampValue(prev.san + effects.sanDelta, 0, INITIAL_SAN);
       }
 
       if (effects.rating !== undefined) {
@@ -936,13 +973,12 @@ function App() {
               rating: contestOutcome.isRated && contestOutcome.ratingSource === 'cf'
                 ? prev.rating + contestOutcome.ratingDelta
                 : prev.rating,
-              san: Math.max(0, prev.san + contestOutcome.sanDelta),
+              san: clampValue(prev.san + contestOutcome.sanDelta, 0, INITIAL_SAN),
               playerContests: prev.playerContests + 1
             }));
             setShowContestResult(false);
             setContestOutcome(null);
           }}
-          onClose={() => { setShowContestResult(false); setContestOutcome(null); }}
         />
       )}
 
@@ -952,6 +988,18 @@ function App() {
           onConfirm={handleTeammateConfirm}
           onCancel={handleTeammateCancel}
           contestName={currentEvent?.title}
+        />
+      )}
+      {gameOverReason && (
+        <GameOverDialog
+          reason={gameOverReason}
+          stats={{
+            playerContests: gameState.playerContests,
+            playerProblems: gameState.playerProblems,
+            rating: gameState.rating,
+            gpa: gameState.gpa
+          }}
+          onRestart={handleGameOverRestart}
         />
       )}
       {confirmDialog && (
