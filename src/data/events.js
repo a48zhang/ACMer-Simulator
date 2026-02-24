@@ -50,7 +50,8 @@ export const EVENTS = [
                 effects: {
                     attributeChanges: { teamwork: 1, english: 1 },
                     apBonus: 2,
-                    playerScoreDelta: 5
+                    log: '🎉 加入了ACM算法社团！团队协作+1，英语+1，本月额外获得2AP。',
+                    logType: 'success'
                 },
                 setFlags: { joinedClub: true },
                 eventPath: 'club'
@@ -59,9 +60,11 @@ export const EVENTS = [
                 id: 'skip',
                 label: '不了',
                 effects: {
-                    sanDelta: 1
-                },
-                setFlags: { joinedClub: false }
+                    sanDelta: 1,
+                    log: '😌 暂时不加入社团。',
+                    logType: 'info'
+                }
+                // 不设 setFlags，让事件在下次符合条件时继续出现
             }
         ]
     },
@@ -97,7 +100,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 2
+                    sanDelta: 2,
+                    log: '😌 选择跳过3月邀请赛，稍作休息。',
+                    logType: 'info'
                 },
                 setFlags: { marchInvitationalParticipating: false }
             }
@@ -135,7 +140,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 3
+                    sanDelta: 3,
+                    log: '😌 选择跳过4月省赛，稍作休息。',
+                    logType: 'info'
                 },
                 setFlags: { aprilProvincialParticipating: false }
             }
@@ -173,7 +180,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 2
+                    sanDelta: 2,
+                    log: '😌 选择跳过5月邀请赛，稍作休息。',
+                    logType: 'info'
                 },
                 setFlags: { mayInvitationalParticipating: false }
             }
@@ -216,7 +225,9 @@ export const EVENTS = [
                 label: '参加集训',
                 effects: {
                     attributeChanges: { algorithm: 1, coding: 1 },
-                    sanDelta: -15
+                    sanDelta: -15,
+                    log: '🔥 参加了暑期多校集训！算法+1，代码+1，SAN-15。',
+                    logType: 'success'
                 },
                 setFlags: { julySummerTrainingParticipating: true }
             },
@@ -224,7 +235,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过，回家休息',
                 effects: {
-                    sanDelta: 20
+                    sanDelta: 20,
+                    log: '🏠 选择回家休息，放松身心，SAN+20。',
+                    logType: 'info'
                 },
                 setFlags: { julySummerTrainingParticipating: false }
             }
@@ -234,7 +247,7 @@ export const EVENTS = [
     {
         id: 'september_online_qualifier',
         title: '9月网络预选赛',
-        description: '为区域赛做准备的网络预选赛，是否参加？',
+        description: '为区域赛做准备的网络预选赛，是否参加？个人赛，成绩影响区域赛入场资格。',
         mandatory: true,
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
@@ -247,13 +260,23 @@ export const EVENTS = [
                 effects: {
                     sanDelta: -10
                 },
-                setFlags: { septemberQualifierParticipating: true }
+                setFlags: { septemberQualifierParticipating: true },
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: '9月网络预选赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 180,
+                    difficulties: [2, 3, 4, 5, 5, 6, 7, 8, 9, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 5
+                    sanDelta: 5,
+                    log: '😌 选择休息，跳过了网络预选赛。',
+                    logType: 'info'
                 },
                 setFlags: { septemberQualifierParticipating: false }
             }
@@ -263,7 +286,7 @@ export const EVENTS = [
     {
         id: 'october_regional',
         title: '10月区域赛站点',
-        description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
+        description: '区域赛季开始了！本月有一个赛站，是否组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出，由 scheduleMonthlyEvents 负责掷骰
         conditions: (state) => {
@@ -273,17 +296,28 @@ export const EVENTS = [
         choices: [
             {
                 id: 'participate',
-                label: '争抢名额',
+                label: '组队参赛',
                 effects: {
                     sanDelta: -15
                 },
-                setFlags: { octoberRegionalParticipating: true }
+                setFlags: { octoberRegionalParticipating: true },
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: 'XCPC区域赛（10月站）',
+                    problemCount: [11, 13],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
                 label: '放弃',
                 effects: {
-                    sanDelta: 0
+                    sanDelta: 0,
+                    log: '😔 放弃了10月区域赛站点。',
+                    logType: 'info'
                 },
                 setFlags: { octoberRegionalParticipating: false }
             }
@@ -292,7 +326,7 @@ export const EVENTS = [
     {
         id: 'november_regional',
         title: '11月区域赛站点',
-        description: '又有区域赛赛站了！是否继续争抢？',
+        description: '又有区域赛赛站了！是否继续组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出
         conditions: (state) => {
@@ -302,17 +336,28 @@ export const EVENTS = [
         choices: [
             {
                 id: 'participate',
-                label: '争抢名额',
+                label: '组队参赛',
                 effects: {
                     sanDelta: -15
                 },
-                setFlags: { novemberRegionalParticipating: true }
+                setFlags: { novemberRegionalParticipating: true },
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: 'XCPC区域赛（11月站）',
+                    problemCount: [11, 13],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
                 label: '放弃',
                 effects: {
-                    sanDelta: 0
+                    sanDelta: 0,
+                    log: '😔 放弃了11月区域赛站点。',
+                    logType: 'info'
                 },
                 setFlags: { novemberRegionalParticipating: false }
             }
@@ -321,7 +366,7 @@ export const EVENTS = [
     {
         id: 'december_regional',
         title: '12月区域赛站点',
-        description: '区域赛季的最后机会！是否参加？',
+        description: '区域赛季的最后机会！是否组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出
         conditions: (state) => {
@@ -331,17 +376,28 @@ export const EVENTS = [
         choices: [
             {
                 id: 'participate',
-                label: '争抢名额',
+                label: '组队参赛',
                 effects: {
                     sanDelta: -15
                 },
-                setFlags: { decemberRegionalParticipating: true }
+                setFlags: { decemberRegionalParticipating: true },
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: 'XCPC区域赛（12月站）',
+                    problemCount: [11, 13],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
                 label: '放弃',
                 effects: {
-                    sanDelta: 0
+                    sanDelta: 0,
+                    log: '😔 放弃了12月区域赛站点。',
+                    logType: 'info'
                 },
                 setFlags: { decemberRegionalParticipating: false }
             }
@@ -400,7 +456,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 3
+                    sanDelta: 3,
+                    log: '😌 选择跳过新生程序设计大赛，休息一下。',
+                    logType: 'info'
                 },
                 setFlags: { freshmanContestParticipated: false }
             }
@@ -440,7 +498,9 @@ export const EVENTS = [
                 id: 'skip',
                 label: '跳过',
                 effects: {
-                    sanDelta: 2
+                    sanDelta: 2,
+                    log: '😌 选择跳过校内程序设计大赛，休息一下。',
+                    logType: 'info'
                 },
                 setFlags: { schoolContestParticipating: false }
             }

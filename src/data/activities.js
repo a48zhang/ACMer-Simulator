@@ -59,7 +59,7 @@ export const ACTIVITIES = [
     {
         id: 'practice',
         name: '刷题',
-        cost: 20,
+        cost: 12,
         description: '进行日常刷题训练，提升解题能力',
         effects: (state) => {
             const attempts = Math.floor(Math.random() * 5) + 8;
