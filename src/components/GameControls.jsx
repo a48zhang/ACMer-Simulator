@@ -69,18 +69,18 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
           下一月 ➡️
         </button>
         <button className="btn btn-danger" onClick={onReset}>
-          重置游戏
+          重置
         </button>
       </div>
       <div className="game-status">
-        <p>状态: <span>{getStatusText()}</span></p>
-        <p>时间: <span>{getYearMonth()}</span></p>
-        <p>剩余行动点: <span className="ap-display">{gameState.remainingAP}</span> / {gameState.monthlyAP} AP</p>
+        <span className="status-chip">📌 <strong>{getStatusText()}</strong></span>
+        <span className="status-chip">📅 <strong>{getYearMonth()}</strong></span>
+        <span className="status-chip ap">⚡ <strong>{gameState.remainingAP}</strong> / {gameState.monthlyAP} AP</span>
         {hasPendingEvents && (
-          <p>事件: <span>当月待处理 {gameState.pendingEvents.length} 项</span></p>
+          <span className="status-chip alert">🔔 待处理事件 <strong>{gameState.pendingEvents.length}</strong></span>
         )}
         {hasActiveContest && (
-          <p>比赛: <span>进行中，剩余 {gameState.contestTimeRemaining} 分钟</span></p>
+          <span className="status-chip alert">⏱️ 比赛剩余 <strong>{gameState.contestTimeRemaining}</strong> 分钟</span>
         )}
       </div>
     </section>
