@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-function EventPanel({ pendingEvents, onOpenEvent, canAdvance }) {
+function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }) {
     const count = pendingEvents?.length || 0;
     const sorted = useMemo(() => pendingEvents || [], [pendingEvents]);
 
@@ -14,21 +14,51 @@ function EventPanel({ pendingEvents, onOpenEvent, canAdvance }) {
             </div>
 
             <div className="event-list">
-                {sorted.map((ev) => (
-                    <div key={ev.id} className="event-card" onClick={() => onOpenEvent(ev.id)}>
-                        <div className="event-card-icon">📩</div>
-                        <div className="event-card-content">
-                            <div className="event-card-header">
-                                <h3 className="event-card-title">{ev.title}</h3>
-                                {ev.mandatory && <span className="tag-mandatory">必做</span>}
+                {sorted.map((ev) => {
+                    const isSimple = ev.choices?.length === 2 &&
+                        ev.choices.every(c => !c.requiresTeamSelection && !c.specialAction);
+                    return (
+                        <div
+                            key={ev.id}
+                            className="event-card"
+                            onClick={isSimple ? undefined : () => onOpenEvent(ev.id)}
+                            style={isSimple ? { cursor: 'default' } : undefined}
+                        >
+                            <div className="event-card-icon">📩</div>
+                            <div className="event-card-content">
+                                <div className="event-card-header">
+                                    <h3 className="event-card-title">{ev.title}</h3>
+                                    {ev.mandatory && <span className="tag-mandatory">必做</span>}
+                                </div>
+                                <p className="event-card-desc">{ev.description}</p>
+                                {isSimple && (
+                                    <div className="event-inline-choices">
+                                        {ev.choices.map((choice) => (
+                                            <button
+                                                key={choice.id}
+                                                className="btn-inline-choice"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDirectChoice(ev.id, choice.id);
+                                                }}
+                                            >
+                                                {choice.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <p className="event-card-desc">{ev.description}</p>
+                            {!isSimple && (
+                                <button
+                                    className="btn-event-action"
+                                    onClick={(e) => { e.stopPropagation(); onOpenEvent(ev.id); }}
+                                >
+                                    处理 →
+                                </button>
+                            )}
                         </div>
-                        <button className="btn-event-action" onClick={(e) => { e.stopPropagation(); onOpenEvent(ev.id); }}>
-                            处理 →
-                        </button>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {!canAdvance && (
