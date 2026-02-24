@@ -156,7 +156,7 @@ export const ACTIVITIES = [
             name: 'Codeforces Div.2',
             problemCount: [7, 8],
             durationMinutes: 120,
-            difficulties: [1, 2, 3, 5, 8, 10, 15, 15],
+            difficulties: [1, 2, 3, 5, 7, 8, 10, 10],
             isRated: true,
             ratingSource: 'cf'
         },
@@ -173,7 +173,8 @@ export const ACTIVITIES = [
         cost: 3,
         description: '放松休息，恢复状态',
         effects: () => ({
-            log: '😌 休息了一段时间，精神状态恢复！',
+            sanDelta: 15,
+            log: '😌 休息了一段时间，SAN值+15！',
             logType: 'info'
         }),
         repeatable: true
@@ -185,8 +186,8 @@ export const ACTIVITIES = [
         description: '猛猛学',
         effects: (state) => ({
             sanDelta: -5,
-            gpaDelta: 0.03,
-            log: '📚 认真上课，GPA+0.03',
+            gpaDelta: 0.1,
+            log: '📚 认真上课，GPA+0.1',
             logType: 'info',
             setFlags: { attendedClassThisMonth: true }
         }),

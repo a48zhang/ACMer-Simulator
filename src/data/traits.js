@@ -1,7 +1,7 @@
 // 特性系统数据定义
 // Trait system data definitions
 
-export const INITIAL_TRAIT_POINTS = 5;
+export const INITIAL_TRAIT_POINTS = 8;
 
 // 特性类型
 export const TRAIT_TYPES = {

@@ -10,7 +10,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish }) {
         <section className="contest-in-progress">
             <div className="contest-header">
                 <div className="contest-title-row">
-                    <h2>🏁 Codeforces 比赛进行中</h2>
+                    <h2>🏁 {contest.name} 进行中</h2>
                     <span className="contest-badge">{solvedCount}/{totalCount} 已解</span>
                 </div>
                 <div className="contest-meta">

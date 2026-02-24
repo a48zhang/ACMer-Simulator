@@ -10,6 +10,7 @@ import EventPanel from './components/EventPanel'
 import EventDialog from './components/EventDialog'
 import ContestInProgress from './components/ContestInProgress'
 import ContestResultDialog from './components/ContestResultDialog'
+import ConfirmDialog from './components/ConfirmDialog'
 import LogPanel from './components/LogPanel'
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
@@ -67,6 +68,7 @@ function App() {
     monthlyAP: 30, // 每月行动点
     remainingAP: 30, // 剩余行动点
     balance: INITIAL_BALANCE, // 余额（金钱）
+    monthlyAllowance: 1500, // 每月家里打的生活费（固定值，可被事件改变）
     san: INITIAL_SAN, // SAN值 (理智值)
     rating: 0, // Rating
     gpa: INITIAL_GPA, // GPA (初始3.2)
@@ -99,6 +101,7 @@ function App() {
   const [contestOutcome, setContestOutcome] = useState(null);
   const [showTeammateDialog, setShowTeammateDialog] = useState(false);
   const [pendingEventChoice, setPendingEventChoice] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -214,27 +217,6 @@ function App() {
     });
   };
 
-  // 比赛：开始一场模拟赛
-  const startContest = () => {
-    if (gameState.remainingAP < 10) {
-      addLog('❌ 行动点不足！开始比赛需要 10 AP', 'error');
-      return;
-    }
-    if (gameState.activeContest) {
-      addLog('⚠️ 已有正在进行的比赛', 'warning');
-      return;
-    }
-
-    const session = createContestSession();
-    addLog(`🏁 开始Codeforces Div.2 比赛（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
-    setGameState(prev => ({
-      ...prev,
-      remainingAP: Math.max(0, prev.remainingAP - 10),
-      activeContest: session,
-      contestTimeRemaining: session.timeRemaining
-    }));
-  };
-
   const finishContest = (force = false) => {
     setGameState(prev => {
       const session = prev.activeContest;
@@ -343,27 +325,50 @@ function App() {
       return;
     }
 
+    // 计算本月日历月份（提前计算，用于假期判定）
+    const monthsSinceStartEarly = newMonth - 1;
+    const totalCalMonthEarly = 9 + monthsSinceStartEarly;
+    const calendarMonthForGpa = ((totalCalMonthEarly - 1) % 12) + 1;
+
+    // 假期月份（2月寒假、7-8月暑假）不上课、不掉GPA
+    const isHolidayMonth = calendarMonthForGpa === 2 || calendarMonthForGpa === 7 || calendarMonthForGpa === 8;
+
     // 月度GPA扣除
-    const baseGpaDeduction = 0.02; // 每月基础扣除
-    let gpaDeduction = baseGpaDeduction;
-    
-    // 如果一个月没有上课，额外扣除GPA（检查上课活动是否执行）
-    const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
-    if (!attendedClass && Math.random() < 0.3) {
-      gpaDeduction += 0.05; // 30%概率额外扣除平时分
-      addLog('⚠️ 本月未上课，GPA额外扣除！', 'warning');
+    let gpaDeduction = 0;
+    if (!isHolidayMonth) {
+      const baseGpaDeduction = 0.05; // 每月基础扣除（已增大）
+      gpaDeduction = baseGpaDeduction;
+      // 如果一个月没有上课，额外扣除GPA（检查上课活动是否执行）
+      const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
+      if (!attendedClass && Math.random() < 0.3) {
+        gpaDeduction += 0.15; // 30%概率额外扣除平时分（已增大）
+        addLog('⚠️ 本月未上课，GPA额外扣除！', 'warning');
+      }
+    } else {
+      addLog(`🏖️ 假期月，无需上课，GPA不扣除`, 'info');
     }
 
     const newGpa = clampGPA(gameState.gpa - gpaDeduction);
 
+    // 月度经济结算：家里打生活费 + 随机生活支出
+    const allowance = gameState.monthlyAllowance || 1500;
+    const expense = Math.floor(Math.random() * 701) + 800; // 800-1500 随机支出
+    const netBalance = Math.max(0, gameState.balance + allowance - expense);
+    addLog(`💰 家里打生活费 +${allowance}，本月支出 -${expense}，余额：${netBalance}`, 'info');
+
+    // SAN=0 惩罚：下月AP减半
+    const sanWasBurntOut = gameState.san <= 0;
+    const baseMonthlyAP = gameState.monthlyAP;
+    const nextMonthlyAP = sanWasBurntOut ? Math.floor(baseMonthlyAP / 2) : baseMonthlyAP;
+    if (sanWasBurntOut) {
+      addLog('😵 SAN值耗尽！本月精力大幅下降，行动点减半！', 'error');
+    }
+
     // 生成当月事件并重置行动点
     const events = scheduleMonthlyEvents(gameState, newMonth);
     
-    // 计算学年和月份（gameMonth 1 = 大一9月）
-    const monthsSinceStart = newMonth - 1;
-    const startCalendarMonth = 9;
-    const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
-    const calendarMonth = ((totalCalendarMonth - 1) % 12) + 1;
+    // 复用已计算的日历月份（上方已算出 calendarMonthForGpa）
+    const calendarMonth = calendarMonthForGpa;
     
     // 计算学年（大一、大二、大三、大四）
     let academicYear;
@@ -385,7 +390,8 @@ function App() {
       ...prev,
       month: newMonth,
       gpa: newGpa,
-      remainingAP: prev.monthlyAP,
+      balance: netBalance,
+      remainingAP: nextMonthlyAP,
       pendingEvents: events,
       resolvedEvents: [],
       worldFlags: { ...(prev.worldFlags || {}), attendedClassThisMonth: false } // 重置上课标记
@@ -420,38 +426,43 @@ function App() {
 
   // 重置游戏
   const resetGame = () => {
-    if (confirm('确定要重置游戏吗？所有进度将被清除！')) {
-      setGameState({
-        isRunning: false,
-        isPaused: false,
-        month: START_MONTH,
-        monthlyAP: 30,
-        remainingAP: 30,
-        balance: INITIAL_BALANCE,
-        san: INITIAL_SAN,
-        rating: 0,
-        gpa: INITIAL_GPA,
-        attributes: createBaseAttributes(),
-        playerContests: 0,
-        playerProblems: 0,
-        selectedTraits: [],
-        pendingEvents: [],
-        resolvedEvents: [],
-        worldFlags: {},
-        eventGraph: {},
-        activeContest: null,
-        contestTimeRemaining: 0,
-        teammates: [],
-        selectedTeam: null,
-        buffs: {
-          failedCourses: 0,
-          academicWarnings: 0
-        }
-      });
-      setTraitsSelected(false);
-      setLogs([]);
-      addLog('🔄 游戏已重置', 'warning');
-    }
+    setConfirmDialog({
+      message: '确定要重置游戏吗？所有进度将被清除！',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        setGameState({
+          isRunning: false,
+          isPaused: false,
+          month: START_MONTH,
+          monthlyAP: 30,
+          remainingAP: 30,
+          balance: INITIAL_BALANCE,
+          monthlyAllowance: 1500,
+          san: INITIAL_SAN,
+          rating: 0,
+          gpa: INITIAL_GPA,
+          attributes: createBaseAttributes(),
+          playerContests: 0,
+          playerProblems: 0,
+          selectedTraits: [],
+          pendingEvents: [],
+          resolvedEvents: [],
+          worldFlags: {},
+          eventGraph: {},
+          activeContest: null,
+          contestTimeRemaining: 0,
+          teammates: [],
+          selectedTeam: null,
+          buffs: {
+            failedCourses: 0,
+            academicWarnings: 0
+          }
+        });
+        setTraitsSelected(false);
+        setLogs([]);
+        addLog('🔄 游戏已重置', 'warning');
+      }
+    });
   };
 
   // 确认特性选择
@@ -528,12 +539,6 @@ function App() {
     if (pendingEventChoice) {
       const { eventId, choiceId } = pendingEventChoice;
       
-      // 保存选择的队友
-      setGameState(prev => ({
-        ...prev,
-        selectedTeam: selectedTeammateIds
-      }));
-      
       addLog(`👥 组队成功！队友：${selectedTeammateIds.map(id => {
         const tm = gameState.teammates.find(t => t.id === id);
         return tm ? tm.name : id;
@@ -541,14 +546,52 @@ function App() {
       
       // 继续处理事件选择
       const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
-      if (!ev) return;
+      if (!ev) { setPendingEventChoice(null); return; }
       const choice = ev.choices.find(c => c.id === choiceId);
-      if (!choice) return;
+      if (!choice) { setPendingEventChoice(null); return; }
       
-      let effects = { ...(choice.effects || {}) };
+      const effects = { ...(choice.effects || {}) };
       const setFlags = choice.setFlags || {};
+
+      // 如果该选择需要启动比赛，先保存队伍并启动比赛，然后解决事件
+      if (choice.specialAction === 'START_CONTEST') {
+        const contestConfig = choice.contestConfig;
+        if (!contestConfig) {
+          addLog('❌ 比赛配置错误', 'error');
+          setPendingEventChoice(null);
+          return;
+        }
+
+        const session = createContestSession(contestConfig);
+        addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+
+        setGameState(prev => {
+          const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
+          const nextSan = effects.sanDelta !== undefined
+            ? Math.max(0, prev.san + effects.sanDelta)
+            : prev.san;
+
+          const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
+          const resolvedItem = { id: ev.id, choiceId, time: Date.now() };
+
+          return {
+            ...prev,
+            attributes: updatedAttributes,
+            san: nextSan,
+            selectedTeam: selectedTeammateIds,
+            worldFlags: { ...(prev.worldFlags || {}), ...setFlags },
+            activeContest: session,
+            contestTimeRemaining: session.timeRemaining,
+            pendingEvents: remaining,
+            resolvedEvents: [...(prev.resolvedEvents || []), resolvedItem]
+          };
+        });
+
+        setPendingEventChoice(null);
+        return;
+      }
       
-      // 应用事件效果（简化版，不再重复GPA审核逻辑）
+      // 应用事件效果（无 START_CONTEST 的普通选择）
       setGameState(prev => {
         const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
         
@@ -686,14 +729,15 @@ function App() {
         addLog(`🎓 优秀！GPA达到3.7以上，获得奖学金！`, 'success');
         effects.balanceDelta = 2000;
       } else {
-        addLog(`✅ 期末审核通过，GPA正常`, 'info');
+        addLog(`✅ 期末考试通过，GPA正常`, 'info');
       }
     }
 
-    // 处理特殊动作：启动比赛
+    // 处理特殊动作：启动比赛（不需要队友选择的直接参赛路径）
     if (choice.specialAction === 'START_CONTEST') {
-      if (gameState.remainingAP < 10) {
-        addLog('❌ 行动点不足！参加比赛需要 10 AP', 'error');
+      const contestConfig = choice.contestConfig;
+      if (!contestConfig) {
+        addLog('❌ 比赛配置错误', 'error');
         return;
       }
       if (gameState.activeContest) {
@@ -701,16 +745,30 @@ function App() {
         return;
       }
 
-      const session = createContestSession();
-      addLog(`🏁 开始Codeforces比赛（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+      // 先应用事件效果（sanDelta 等）
+      const effects = { ...(choice.effects || {}) };
+      const setFlags = choice.setFlags || {};
+      const session = createContestSession(contestConfig);
+      addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
 
-      setGameState(prev => ({
-        ...prev,
-        remainingAP: Math.max(0, prev.remainingAP - 10),
-        activeContest: session,
-        contestTimeRemaining: session.timeRemaining,
-        pendingEvents: (prev.pendingEvents || []).filter(e => e.id !== eventId)
-      }));
+      setGameState(prev => {
+        const updatedAttributes = applyAttributeChanges(prev.attributes, effects.attributeChanges);
+        const nextSan = effects.sanDelta !== undefined
+          ? Math.max(0, prev.san + effects.sanDelta)
+          : prev.san;
+        const remaining = (prev.pendingEvents || []).filter(e => e.id !== eventId);
+        const resolvedItem = { id: ev.id, choiceId, time: Date.now() };
+        return {
+          ...prev,
+          attributes: updatedAttributes,
+          san: nextSan,
+          worldFlags: { ...(prev.worldFlags || {}), ...setFlags },
+          activeContest: session,
+          contestTimeRemaining: session.timeRemaining,
+          pendingEvents: remaining,
+          resolvedEvents: [...(prev.resolvedEvents || []), resolvedItem]
+        };
+      });
 
       setShowEventDialog(false);
       setCurrentEvent(null);
@@ -819,6 +877,7 @@ function App() {
           <EventPanel
             pendingEvents={gameState.pendingEvents || []}
             onOpenEvent={openEventDialog}
+            onDirectChoice={applyEventChoice}
             canAdvance={(gameState.pendingEvents || []).length === 0}
           />
 
@@ -893,6 +952,13 @@ function App() {
           onConfirm={handleTeammateConfirm}
           onCancel={handleTeammateCancel}
           contestName={currentEvent?.title}
+        />
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
         />
       )}
     </div>

@@ -36,10 +36,13 @@ export const EVENTS = [
     {
         id: 'club_intro',
         title: 'ACM社团招新',
-        description: 'ACM算法社团正在招新，是否加入？',
-        mandatory: true,
-        monthConstraints: { start: 1, end: 2 }, // 游戏月1-2（大一9-10月）
-        conditions: (state) => !hasFlag(state.worldFlags, 'joinedClub'),
+        description: 'ACM算法社团正在招新，是否加入？本月不选择将自动跳过。',
+        mandatory: false, // 可选，当月未选择自动过期
+        conditions: (state) => {
+            const { month } = getSchoolMonth(state.month);
+            // 每年9月（新生入学）和6月（社团纳新）刷出，且尚未加入过社团
+            return (month === 9 || month === 6) && !hasFlag(state.worldFlags, 'joinedClub');
+        },
         choices: [
             {
                 id: 'join',
@@ -54,7 +57,7 @@ export const EVENTS = [
             },
             {
                 id: 'skip',
-                label: '不了，先看课程',
+                label: '不了',
                 effects: {
                     sanDelta: 1
                 },
@@ -70,7 +73,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 3; // 3月
+            return month === 3 && hasFlag(state.worldFlags, 'joinedClub'); // 3月，且已加入社团
         },
         choices: [
             {
@@ -80,7 +83,15 @@ export const EVENTS = [
                     sanDelta: -5
                 },
                 setFlags: { marchInvitationalParticipating: true },
-                requiresTeamSelection: true
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: '3月邀请赛',
+                    problemCount: [10, 12],
+                    durationMinutes: 300,
+                    difficulties: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
@@ -100,7 +111,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 4; // 4月
+            return month === 4 && hasFlag(state.worldFlags, 'joinedClub'); // 4月，且已加入社团
         },
         choices: [
             {
@@ -110,7 +121,15 @@ export const EVENTS = [
                     sanDelta: -10
                 },
                 setFlags: { aprilProvincialParticipating: true },
-                requiresTeamSelection: true
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: 'XCPC省赛',
+                    problemCount: [10, 13],
+                    durationMinutes: 300,
+                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
@@ -130,7 +149,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
-            return month === 5; // 5月
+            return month === 5 && hasFlag(state.worldFlags, 'joinedClub'); // 5月，且已加入社团
         },
         choices: [
             {
@@ -140,7 +159,15 @@ export const EVENTS = [
                     sanDelta: -5
                 },
                 setFlags: { mayInvitationalParticipating: true },
-                requiresTeamSelection: true
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: '5月邀请赛',
+                    problemCount: [10, 12],
+                    durationMinutes: 300,
+                    difficulties: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
+                    isRated: false
+                }
             },
             {
                 id: 'skip',
@@ -156,7 +183,7 @@ export const EVENTS = [
     {
         id: 'june_finals_week',
         title: '6月期末周',
-        description: '期末考试周到了，进行学业审核...',
+        description: '期末考试周到了，即将进行期末考试...',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -211,7 +238,7 @@ export const EVENTS = [
         mandatory: true,
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            return month === 9 && year > 1; // 9月，但不是大一9月
+            return month === 9 && year > 1 && hasFlag(state.worldFlags, 'joinedClub'); // 9月，大二及以上，且已加入社团
         },
         choices: [
             {
@@ -238,10 +265,10 @@ export const EVENTS = [
         title: '10月区域赛站点',
         description: '区域赛季开始了！本月有一个赛站，是否争抢外卡名额？赛站越多，中签概率越低。',
         mandatory: false,
+        chanceToAppear: 0.3, // 30%概率在调度时刷出，由 scheduleMonthlyEvents 负责掷骰
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 10月，大二及以上，30%概率刷出
-            return month === 10 && year >= 2 && Math.random() < 0.3;
+            return month === 10 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
         },
         choices: [
             {
@@ -267,10 +294,10 @@ export const EVENTS = [
         title: '11月区域赛站点',
         description: '又有区域赛赛站了！是否继续争抢？',
         mandatory: false,
+        chanceToAppear: 0.3, // 30%概率在调度时刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 11月，大二及以上，30%概率刷出
-            return month === 11 && year >= 2 && Math.random() < 0.3;
+            return month === 11 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
         },
         choices: [
             {
@@ -296,10 +323,10 @@ export const EVENTS = [
         title: '12月区域赛站点',
         description: '区域赛季的最后机会！是否参加？',
         mandatory: false,
+        chanceToAppear: 0.3, // 30%概率在调度时刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
-            // 12月，大二及以上，30%概率刷出
-            return month === 12 && year >= 2 && Math.random() < 0.3;
+            return month === 12 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
         },
         choices: [
             {
@@ -324,7 +351,7 @@ export const EVENTS = [
     {
         id: 'january_finals_week',
         title: '1月期末周',
-        description: '寒假前的期末考试周，再次进行学业审核...',
+        description: '寒假前的期末考试，即将进行期末考试...',
         mandatory: true,
         conditions: (state) => {
             const { month } = getSchoolMonth(state.month);
@@ -341,6 +368,84 @@ export const EVENTS = [
             }
         ]
     },
+    // 新生赛事件（大一10-11月，个人赛，随机刷出）
+    {
+        id: 'freshman_contest',
+        title: '新生程序设计大赛',
+        description: '学校举办新生程序设计大赛，这是展示自己的好机会！个人赛，难度相对较低。',
+        mandatory: false,
+        chanceToAppear: 0.4, // 40%概率刷出
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            return (month === 10 || month === 11) && year === 1; // 仅大一10-11月
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '参加',
+                effects: {
+                    sanDelta: -5
+                },
+                setFlags: { freshmanContestParticipated: true },
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: '新生程序设计大赛',
+                    problemCount: [4, 5],
+                    durationMinutes: 120,
+                    difficulties: [1, 2, 3, 4, 5],
+                    isRated: false
+                }
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 3
+                },
+                setFlags: { freshmanContestParticipated: false }
+            }
+        ]
+    },
+    // 校赛事件（每年10-12月，组队赛，随机刷出，需加入社团）
+    {
+        id: 'school_contest',
+        title: '校内程序设计大赛',
+        description: '学校举办校内程序设计比赛，需要组队参赛。',
+        mandatory: false,
+        chanceToAppear: 0.3, // 30%概率刷出
+        conditions: (state) => {
+            const { month, year } = getSchoolMonth(state.month);
+            // 10-12月，大二及以上，且已加入社团
+            return (month === 10 || month === 11 || month === 12) && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
+        },
+        choices: [
+            {
+                id: 'participate',
+                label: '组队参加',
+                effects: {
+                    sanDelta: -8
+                },
+                setFlags: { schoolContestParticipating: true },
+                requiresTeamSelection: true,
+                specialAction: 'START_CONTEST',
+                contestConfig: {
+                    name: '校内程序设计大赛',
+                    problemCount: [8, 10],
+                    durationMinutes: 240,
+                    difficulties: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    isRated: false
+                }
+            },
+            {
+                id: 'skip',
+                label: '跳过',
+                effects: {
+                    sanDelta: 2
+                },
+                setFlags: { schoolContestParticipating: false }
+            }
+        ]
+    },
 ];
 
 // 调度器：根据月份和状态生成当月事件
@@ -354,8 +459,14 @@ export function scheduleMonthlyEvents(state, month) {
             if (typeof start === 'number') inWindow = inWindow && month >= start;
             if (typeof end === 'number') inWindow = inWindow && month <= end;
         }
+        // 条件检查（不再包含随机性）
         const ok = ev.conditions ? ev.conditions({ ...state, worldFlags: flags, month }) : true;
-        return inWindow && ok;
+        if (!inWindow || !ok) return false;
+        // 概率事件：在调度时一次性掷骰，确保结果稳定
+        if (ev.chanceToAppear !== undefined) {
+            return Math.random() < ev.chanceToAppear;
+        }
+        return true;
     });
     // 去重（按 id）并返回必须处理的事件优先
     const unique = [];
