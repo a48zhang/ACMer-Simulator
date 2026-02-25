@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TRAITS, TRAIT_TYPES, INITIAL_TRAIT_POINTS, calculateTraitCost, isTraitSelectionValid } from '../data/traits';
+import { TRAITS, TRAIT_TYPES, INITIAL_TRAIT_POINTS, calculateTraitCost, isTraitSelectionValid } from '../../data/traits';
 
 function TraitSelectionPanel({ onConfirm }) {
   const [selectedTraits, setSelectedTraits] = useState([]);
