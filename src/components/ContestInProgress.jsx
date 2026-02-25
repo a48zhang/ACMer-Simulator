@@ -1,5 +1,5 @@
 // ContestInProgress 组件 - 在比赛进行时显示并支持做题
-function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onDebug }) {
+function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onCode, onDebug }) {
   const solvedCount = contest.problems.filter(p => p.status === 'solved').length;
   const totalCount = contest.problems.length;
   const allSolved = solvedCount === totalCount;
@@ -23,8 +23,8 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
           const isCoding = p.status === 'coding';
           const isSubmittedFail = p.status === 'submitted_fail';
           const canThink = (isCoding || isSubmittedFail) && p.thinkBonus < 2;
-          const hasDebug = p.debugBonus > 0;
-          const hasBug = p.hasBug === true;
+          const canCode = (isCoding || isSubmittedFail) && !p.hasWrittenCode;
+          const canSubmit = (isCoding || isSubmittedFail) && p.hasWrittenCode;
 
           return (
             <div 
@@ -36,7 +36,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                   Problem {p.letter}
                 </div>
                 <div className="contest-problem-status">
-                  {isSolved ? '✅ Accepted' : (isPending ? '未读题' : (isSubmittedFail ? '❌ 已尝试' : '📝 可写代码'))}
+                  {isSolved ? '✅ Accepted' : (isPending ? '未读题' : (isSubmittedFail ? '❌ 已尝试' : '📝 可开始'))}
                 </div>
               </div>
 
@@ -69,8 +69,18 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                       onClick={() => onThink(p.id)}
                       disabled={!canThink || timeRemaining <= 0}
                     >
-                      写代码{!canThink ? '（已满）' : ''}
+                      思考{!canThink ? '（已满）' : ''}
                     </button>
+                    {!p.hasWrittenCode && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        type="button"
+                        onClick={() => onCode(p.id)}
+                        disabled={timeRemaining <= 0}
+                      >
+                        写代码
+                      </button>
+                    )}
                     <button
                       className="btn btn-info btn-sm"
                       type="button"
@@ -79,14 +89,16 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                     >
                       对拍
                     </button>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      type="button"
-                      onClick={() => onAttempt(p.id)}
-                      disabled={timeRemaining <= 0}
-                    >
-                      提交
-                    </button>
+                    {p.hasWrittenCode && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        type="button"
+                        onClick={() => onAttempt(p.id)}
+                        disabled={timeRemaining <= 0}
+                      >
+                        提交
+                      </button>
+                    )}
                   </>
                 )}
                 {isSolved && (
