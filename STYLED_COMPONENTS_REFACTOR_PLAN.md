@@ -67,8 +67,8 @@
 - [x] 提交: `git commit -m "refactor: ActivityPanel styled-components重构"`
 - [x] IntroPanel
 - [x] 提交: `git commit -m "refactor: IntroPanel styled-components重构"`
-- [ ] TraitSelectionPanel
-- [ ] 提交: `git commit -m "refactor: TraitSelectionPanel styled-components重构"`
+- [x] TraitSelectionPanel
+- [x] 提交: `git commit -m "refactor: TraitSelectionPanel styled-components重构"`
 - [ ] EventPanel
 - [ ] 提交: `git commit -m "refactor: EventPanel styled-components重构"`
 - [ ] GlobalStatistics
