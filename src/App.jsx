@@ -13,10 +13,13 @@ import ContestResultDialog from './components/ContestResultDialog'
 import ConfirmDialog from './components/ConfirmDialog'
 import GameOverDialog from './components/GameOverDialog'
 import LogPanel from './components/LogPanel'
+import IntroPanel from './components/IntroPanel'
+import TraitSelectionPanel from './components/TraitSelectionPanel'
+import PracticeContestSelectionDialog from './components/PracticeContestSelectionDialog'
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
 import { scheduleMonthlyEvents } from './data/events'
-import { createContestSession, evaluateAttempt, calculateContestOutcome, readProblem, thinkProblem } from './data/contests'
+import { createContestSession, evaluateAttempt, calculateContestOutcome, readProblem, thinkProblem, debugProblem } from './data/contests'
 
 // 游戏常量
 const MAX_ATTRIBUTE_VALUE = 10;
@@ -101,9 +104,11 @@ function App() {
   const [showContestResult, setShowContestResult] = useState(false);
   const [contestOutcome, setContestOutcome] = useState(null);
   const [showTeammateDialog, setShowTeammateDialog] = useState(false);
+  const [showPracticeContestDialog, setShowPracticeContestDialog] = useState(false);
   const [pendingEventChoice, setPendingEventChoice] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
   const [gameOverReason, setGameOverReason] = useState(null); // null | 'graduation' | string (dismissal reason)
+  const [gamePhase, setGamePhase] = useState('intro'); // 'intro' | 'traitSelection' | 'playing'
 
   // 添加日志
   const addLog = (message, type = 'info') => {
@@ -156,6 +161,12 @@ function App() {
         activeContest: session,
         contestTimeRemaining: session.timeRemaining
       }));
+      return;
+    }
+
+    // 处理特殊动作：打开练习赛选择对话框
+    if (effects.specialAction === 'OPEN_PRACTICE_CONTEST_DIALOG') {
+      setShowPracticeContestDialog(true);
       return;
     }
 
@@ -303,16 +314,84 @@ function App() {
       if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
       if (problem.thinkBonus >= 2) return prev; // 最多2次思考加成
 
-      const thinkTime = thinkProblem(problem);
-      addLog(`💻 思考/写代码题目 ${problem.letter}：耗时 ${thinkTime} 分钟，思考加成+1`, 'info');
+      const thinkResult = thinkProblem(problem, prev.attributes);
+      addLog(`💻 思考/写代码题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
 
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - thinkTime);
+      const timeRemaining = Math.max(0, prev.contestTimeRemaining - thinkResult.thinkTime);
+
+      const updatedProblems = session.problems.map(p => {
+        if (p.id !== problemId) return p;
+        const updatedProblem = {
+          ...p,
+          thinkBonus: thinkResult.newThinkBonus,
+          hasBug: thinkResult.hasBug
+        };
+        if (thinkResult.newTags && problem.revealedInfo) {
+          updatedProblem.revealedInfo = {
+            ...problem.revealedInfo,
+            tags: thinkResult.newTags
+          };
+        }
+        return updatedProblem;
+      });
+
+      const nextSession = {
+        ...session,
+        problems: updatedProblems,
+        timeRemaining
+      };
+
+      const baseState = {
+        ...prev,
+        activeContest: nextSession,
+        contestTimeRemaining: timeRemaining
+      };
+
+      const solvedAll = updatedProblems.every(p => p.status === 'solved');
+      const shouldFinish = solvedAll || timeRemaining <= 0;
+
+      if (shouldFinish) {
+        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
+        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+        setContestOutcome(outcome);
+        setShowContestResult(true);
+        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
+      }
+
+      return baseState;
+    });
+  };
+
+  // 对拍阶段
+  const debugContestProblem = (problemId) => {
+    setGameState(prev => {
+      const session = prev.activeContest;
+      if (!session) return prev;
+      if (prev.contestTimeRemaining <= 0) return prev;
+
+      const problem = session.problems.find(p => p.id === problemId);
+      if (!problem) return prev;
+      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
+
+      const debugResult = debugProblem(problem, prev.attributes);
+      
+      if (debugResult.foundBug) {
+        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，发现了bug！`, 'success');
+      } else if (debugResult.bonusIncrease > 0) {
+        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，获得额外加成`, 'info');
+      } else {
+        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，未发现异常`, 'info');
+      }
+
+      const timeRemaining = Math.max(0, prev.contestTimeRemaining - debugResult.debugTime);
 
       const updatedProblems = session.problems.map(p => {
         if (p.id !== problemId) return p;
         return {
           ...p,
-          thinkBonus: Math.min(2, p.thinkBonus + 1)
+          debugBonus: debugResult.newDebugBonus,
+          bugFound: p.bugFound || debugResult.foundBug,
+          thinkBonus: debugResult.bonusIncrease > 0 ? p.thinkBonus + debugResult.bonusIncrease : p.thinkBonus
         };
       });
 
@@ -353,18 +432,13 @@ function App() {
       const problem = session.problems.find(p => p.id === problemId);
       if (!problem || problem.status === 'solved') return prev;
       if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
-      // 必须先写过至少一次代码才能提交
-      if (problem.thinkBonus < 1) {
-        addLog(`❌ 请先点击「写代码」至少一次后再提交！`, 'error');
-        return prev;
-      }
 
       if (session.isOrdered) {
         const blocked = session.problems.some(p => p.order < problem.order && p.status !== 'solved');
         if (blocked) return prev;
       }
 
-      const attempt = evaluateAttempt(problem, prev.attributes, problem.thinkBonus);
+      const attempt = evaluateAttempt(problem, prev.attributes, problem.thinkBonus, problem.debugBonus || 0);
 
       const updatedProblems = session.problems.map(p => {
         if (p.id !== problemId) return p;
@@ -512,11 +586,18 @@ function App() {
 
   // 开始游戏
   const startGame = () => {
-    if (!traitsSelected) {
-      // 如果特性还未选择，显示对话框
-      setShowTraitDialog(true);
-    } else {
+    if (gamePhase === 'intro') {
+      setGamePhase('traitSelection');
+    } else if (gamePhase === 'traitSelection') {
       // 如果特性已选择，直接开始游戏
+      setGameState(prev => ({
+        ...prev,
+        isRunning: true,
+        isPaused: false
+      }));
+      addLog('🎮 游戏开始！祝你好运！', 'info');
+    } else {
+      // 继续游戏
       setGameState(prev => ({
         ...prev,
         isRunning: true,
@@ -524,6 +605,85 @@ function App() {
       }));
       addLog('🎮 游戏继续！', 'info');
     }
+  };
+
+  // 处理特性选择确认
+  const handleTraitConfirm = (selectedTraitIds) => {
+    // 应用特性效果
+    const { attributes, sanPenalty, moneyPenalty } = applyTraitEffects(selectedTraitIds, gameState.attributes);
+
+    // 初始化默认队友
+    const defaultTeammates = [
+      {
+        id: 'teammate_lu_renjia',
+        name: '陆任佳',
+        attributes: {
+          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
+          math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
+        },
+        unlocked: true
+      },
+      {
+        id: 'teammate_lu_renyi',
+        name: '路仁义',
+        attributes: {
+          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
+          math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
+        },
+        unlocked: true
+      }
+    ];
+
+    setGameState(prev => ({
+      ...prev,
+      attributes: attributes,
+      san: Math.max(0, INITIAL_SAN - sanPenalty),
+      balance: Math.max(0, INITIAL_BALANCE - moneyPenalty),
+      selectedTraits: selectedTraitIds,
+      isRunning: true,
+      isPaused: false,
+      month: START_MONTH,
+      gpa: INITIAL_GPA,
+      remainingAP: 30,
+      pendingEvents: scheduleMonthlyEvents(prev, START_MONTH),
+      resolvedEvents: [],
+      worldFlags: {},
+      eventGraph: {},
+      activeContest: null,
+      contestTimeRemaining: 0,
+      teammates: defaultTeammates,
+      selectedTeam: null,
+      buffs: {
+        failedCourses: 0,
+        academicWarnings: 0
+      }
+    }));
+    setTraitsSelected(true);
+    setGamePhase('playing');
+    setNotification('🎮 游戏开始！你现在是大学一年级的学生，开始你的ACM之旅吧！');
+  };
+
+  // 处理练习赛选择
+  const handlePracticeContestSelect = (contestConfig) => {
+    setShowPracticeContestDialog(false);
+    
+    if (gameState.activeContest) {
+      addLog('⚠️ 已有正在进行的比赛', 'warning');
+      return;
+    }
+
+    const activity = ACTIVITIES.find(a => a.id === 'practice_contest');
+    if (!activity) return;
+
+    const session = createContestSession(contestConfig);
+    addLog(`🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`, 'info');
+
+    setGameState(prev => ({
+      ...prev,
+      remainingAP: Math.max(0, prev.remainingAP - contestConfig.cost),
+      activeContest: session,
+      contestTimeRemaining: session.timeRemaining
+    }));
   };
 
   // 暂停/继续游戏
@@ -609,65 +769,6 @@ function App() {
     setTraitsSelected(false);
     setLogs([]);
     addLog('🔄 游戏已重置', 'warning');
-  };
-
-  // 确认特性选择
-  const handleTraitConfirm = (selectedTraitIds) => {
-    // 初始属性全为0
-    const baseAttributes = createBaseAttributes();
-
-    // 应用特性效果
-    const { attributes, sanPenalty, moneyPenalty } = applyTraitEffects(selectedTraitIds, baseAttributes);
-
-    // 初始化默认队友
-    const defaultTeammates = [
-      {
-        id: 'teammate_lu_renjia',
-        name: '陆任佳',
-        attributes: {
-          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
-          math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
-        },
-        unlocked: true
-      },
-      {
-        id: 'teammate_lu_renyi',
-        name: '路仁义',
-        attributes: {
-          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
-          math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
-        },
-        unlocked: true
-      }
-    ];
-
-    setGameState(prev => ({
-      ...prev,
-      attributes: attributes,
-      san: Math.max(0, INITIAL_SAN - sanPenalty),
-      balance: Math.max(0, INITIAL_BALANCE - moneyPenalty),
-      selectedTraits: selectedTraitIds,
-      isRunning: true,
-      isPaused: false,
-      month: START_MONTH,
-      gpa: INITIAL_GPA,
-      remainingAP: 30,
-      pendingEvents: scheduleMonthlyEvents(prev, START_MONTH),
-      resolvedEvents: [],
-      worldFlags: {},
-      eventGraph: {},
-      activeContest: null,
-      contestTimeRemaining: 0,
-      teammates: defaultTeammates,
-      selectedTeam: null,
-      buffs: {
-        failedCourses: 0,
-        academicWarnings: 0
-      }
-    }));
-    setShowTraitDialog(false);
-    setTraitsSelected(true);
-    setNotification('🎮 游戏开始！你现在是大学一年级的学生，开始你的ACM之旅吧！');
   };
 
   // 事件处理：打开事件对话框
@@ -1010,42 +1111,56 @@ function App() {
         />
 
         <main>
-          <GameControls
-            gameState={gameState}
-            onStart={startGame}
-            onTogglePause={togglePause}
-            onReset={resetGame}
-            onAdvanceMonth={advanceMonth}
-          />
-
-          <LogPanel logs={logs} />
-
-          <EventPanel
-            pendingEvents={gameState.pendingEvents || []}
-            onOpenEvent={openEventDialog}
-            onDirectChoice={applyEventChoice}
-            canAdvance={(gameState.pendingEvents || []).length === 0}
-          />
-
-          {gameState.activeContest && (
-            <ContestInProgress
-              contest={gameState.activeContest}
-              timeRemaining={gameState.contestTimeRemaining}
-              onAttempt={attemptContestProblem}
-              onFinish={() => finishContest(true)}
-              onRead={readContestProblem}
-              onThink={thinkContestProblem}
-            />
+          {gamePhase === 'intro' && (
+            <IntroPanel onStart={startGame} />
           )}
 
-          <ActivityPanel
-            activities={activities}
-            remainingAP={gameState.remainingAP}
-            onExecuteActivity={executeActivity}
-            isRunning={gameState.isRunning}
-            isPaused={gameState.isPaused}
-            gameEnded={gameState.month > END_MONTH}
-          />
+          {gamePhase === 'traitSelection' && (
+            <TraitSelectionPanel onConfirm={handleTraitConfirm} />
+          )}
+
+          {gamePhase === 'playing' && (
+            <>
+              <GameControls
+                gameState={gameState}
+                onStart={startGame}
+                onReset={resetGame}
+                onAdvanceMonth={advanceMonth}
+              />
+
+              <LogPanel logs={logs} />
+
+              {!gameState.activeContest && (
+                <EventPanel
+                  pendingEvents={gameState.pendingEvents || []}
+                  onOpenEvent={openEventDialog}
+                  onDirectChoice={applyEventChoice}
+                  canAdvance={(gameState.pendingEvents || []).length === 0}
+                />
+              )}
+
+              {gameState.activeContest && (
+                <ContestInProgress
+                  contest={gameState.activeContest}
+                  timeRemaining={gameState.contestTimeRemaining}
+                  onAttempt={attemptContestProblem}
+                  onFinish={() => finishContest(true)}
+                  onRead={readContestProblem}
+                  onThink={thinkContestProblem}
+                  onDebug={debugContestProblem}
+                />
+              )}
+
+              <ActivityPanel
+                activities={activities}
+                remainingAP={gameState.remainingAP}
+                onExecuteActivity={executeActivity}
+                isRunning={gameState.isRunning}
+                isPaused={gameState.isPaused}
+                gameEnded={gameState.month > END_MONTH}
+              />
+            </>
+          )}
         </main>
       </div>
 
@@ -1057,12 +1172,6 @@ function App() {
         <Notification
           message={notification}
           onClose={() => setNotification(null)}
-        />
-      )}
-
-      {showTraitDialog && !traitsSelected && (
-        <TraitSelectionDialog
-          onConfirm={handleTraitConfirm}
         />
       )}
 
@@ -1101,6 +1210,14 @@ function App() {
           contestName={currentEvent?.title}
         />
       )}
+
+      {showPracticeContestDialog && (
+        <PracticeContestSelectionDialog
+          onSelect={handlePracticeContestSelect}
+          onCancel={() => setShowPracticeContestDialog(false)}
+        />
+      )}
+
       {gameOverReason && (
         <GameOverDialog
           reason={gameOverReason}

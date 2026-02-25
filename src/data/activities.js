@@ -148,21 +148,13 @@ export const ACTIVITIES = [
         repeatable: true
     },
     {
-        id: 'cf_contest',
-        name: 'Codeforces比赛',
+        id: 'practice_contest',
+        name: '参加练习赛',
         cost: 10,
-        description: '参加一场Codeforces Div.2比赛',
-        contestConfig: {
-            name: 'Codeforces Div.2',
-            problemCount: [7, 8],
-            durationMinutes: 120,
-            difficulties: [1, 2, 3, 5, 7, 8, 10, 10],
-            isRated: true,
-            ratingSource: 'cf'
-        },
+        description: '选择参加各种编程练习赛',
         effects: () => ({
-            specialAction: 'START_CONTEST',
-            log: '🏁 准备开始Codeforces Div.2比赛...',
+            specialAction: 'OPEN_PRACTICE_CONTEST_DIALOG',
+            log: '🏁 准备参加练习赛...',
             logType: 'info'
         }),
         repeatable: true

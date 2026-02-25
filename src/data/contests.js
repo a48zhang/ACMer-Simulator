@@ -45,10 +45,68 @@ export const readProblem = (problem, attributes) => {
     return { readTime, tags: tagsCn, estimatedSuccessRate };
 };
 
-// 思考/写代码阶段：返回耗时，用于计算时间消耗
-export const thinkProblem = (problem) => {
-    const thinkTime = 5 + problem.difficulty * 2;
-    return thinkTime;
+// 思考/写代码阶段：返回耗时和加成信息
+// 使用阈值机制：每次加成乘以1-2之间的随机小数，点的越多收益越低
+export const thinkProblem = (problem, attributes = {}) => {
+    const baseTime = 5 + problem.difficulty * 2;
+    const speedRatio = (attributes.speed ?? 0) / 10;
+    const timeMultiplier = Math.max(0.3, 1.0 - speedRatio * 0.7);
+    const thinkTime = Math.max(1, Math.round(baseTime * timeMultiplier));
+    
+    const bonusMultiplier = 1 + Math.random();
+    const bonusIncrease = (0.5 / (problem.thinkBonus + 1)) * bonusMultiplier;
+    const newThinkBonus = Math.min(2, problem.thinkBonus + bonusIncrease);
+    
+    let newTags = null;
+    if (problem.revealedInfo && problem.revealedInfo.tags) {
+        const currentTags = problem.revealedInfo.tags;
+        const attrKeys = Object.keys(problem.requires || {}).filter(k => SKILL_TYPES.specialized.includes(k));
+        if (attrKeys.length > currentTags.length && Math.random() < 0.3) {
+            const availableTags = attrKeys.filter(k => !currentTags.includes(ATTR_NAMES_CN[k] || k));
+            if (availableTags.length > 0) {
+                const newTag = ATTR_NAMES_CN[availableTags[Math.floor(Math.random() * availableTags.length)]] || availableTags[0];
+                newTags = [...currentTags, newTag].slice(0, 2);
+            }
+        }
+    }
+    
+    let hasBug = false;
+    if (!problem.hasBug && Math.random() < 0.25) {
+        hasBug = true;
+    }
+    
+    return { 
+        thinkTime, 
+        newThinkBonus, 
+        newTags,
+        hasBug: hasBug ? true : (problem.hasBug || false)
+    };
+};
+
+// 对拍阶段：返回对拍结果，可能获得额外加成或发现bug
+// 对拍不增加思考次数，但可能获得加成
+export const debugProblem = (problem, attributes = {}) => {
+    const baseTime = 3 + problem.difficulty;
+    const speedRatio = (attributes.speed ?? 0) / 10;
+    const timeMultiplier = Math.max(0.3, 1.0 - speedRatio * 0.7);
+    const debugTime = Math.max(1, Math.round(baseTime * timeMultiplier));
+    
+    let foundBug = false;
+    let bonusIncrease = 0;
+    
+    if (problem.hasBug && Math.random() < 0.4) {
+        foundBug = true;
+    } else if (!problem.hasBug && Math.random() < 0.2) {
+        const bonusMultiplier = 1 + Math.random();
+        bonusIncrease = (0.3 / (problem.debugBonus + 1)) * bonusMultiplier;
+    }
+    
+    return {
+        debugTime,
+        foundBug,
+        bonusIncrease,
+        newDebugBonus: problem.debugBonus + 1
+    };
 };
 
 // 根据难度生成题目
@@ -95,7 +153,10 @@ const generateProblem = (difficulty) => {
         status: 'pending', // pending | reading | coding | submitted_fail | solved
         attempts: 0,
         thinkBonus: 0, // 思考加成次数，最多 2 次，每次 +15% 成功率
-        revealedInfo: null // { tags, estimatedSuccessRate }
+        debugBonus: 0, // 对拍加成次数
+        hasBug: false, // 是否有 bug（对玩家不可见）
+        bugFound: false, // bug 是否已被发现
+        revealedInfo: null // { tags }
     };
 };
 
@@ -143,12 +204,18 @@ export const createContestSession = (config) => {
         };
     });
 
+    // 打乱题目顺序（除了用户手动配置的比赛外）
+    const shuffledProblems = [...problems].sort(() => Math.random() - 0.5).map((p, idx) => ({
+        ...p,
+        letter: String.fromCharCode(65 + idx)
+    }));
+
     return {
         id: `contest-${Date.now()}`,
         name: config.name || 'Contest',
         durationMinutes,
         timeRemaining: durationMinutes,
-        problems,
+        problems: shuffledProblems,
         attempts: [],
         startedAt: Date.now(),
         isRated: Boolean(config?.isRated),
@@ -156,7 +223,7 @@ export const createContestSession = (config) => {
     };
 };
 
-export const evaluateAttempt = (problem, attributes, thinkBonus = 0) => {
+export const evaluateAttempt = (problem, attributes, thinkBonus = 0, debugBonus = 0) => {
     const attrKeys = Object.keys(problem.requires || {});
     const randomFactor = 0.65 + Math.random() * 0.9; // 0.65 - 1.55
     let ratioSum = 0;
@@ -173,9 +240,14 @@ export const evaluateAttempt = (problem, attributes, thinkBonus = 0) => {
     });
 
     const avgRatio = ratioSum / Math.max(attrKeys.length, 1);
-    // 思考加成：每一层 +15% 成功率
+    // 思考加成：每一层 +15% 成功率（现在是小数累积）
     const thinkBonusMultiplier = 1 + thinkBonus * 0.15;
-    const adjustedRatio = avgRatio * randomFactor * (1 - problem.trickiness * 0.3) * thinkBonusMultiplier;
+    // 对拍加成：额外 +10% 成功率
+    const debugBonusMultiplier = 1 + debugBonus * 0.1;
+    // Bug 惩罚：如果有 bug 未发现，-30% 成功率
+    const bugPenalty = (problem.hasBug && !problem.bugFound) ? 0.7 : 1.0;
+    
+    const adjustedRatio = avgRatio * randomFactor * (1 - problem.trickiness * 0.3) * thinkBonusMultiplier * debugBonusMultiplier * bugPenalty;
     const success = adjustedRatio >= 1;
 
     // 时间消耗与难度相关，能力越强耗时越少

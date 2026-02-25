@@ -1,4 +1,4 @@
-function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMonth }) {
+function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
   const getStatusText = () => {
     if (!gameState.isRunning) return '未开始';
     if (gameState.isPaused) return '已暂停';
@@ -7,29 +7,19 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
   };
 
   const getYearMonth = () => {
-    // gameState.month 从 1 开始，对应大一9月
-    // 学年（大一、大二等）在每年9月变化
     const gameMonth = gameState.month;
-    const monthsSinceStart = gameMonth - 1; // 0-based
-    const startCalendarMonth = 9; // September
+    const monthsSinceStart = gameMonth - 1;
+    const startCalendarMonth = 9;
     const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
     
-    // 计算日历月份 (1-12)
     const calendarMonth = ((totalCalendarMonth - 1) % 12) + 1;
     
-    // 计算学年（大一、大二、大三、大四）
-    // 学年在每年9月递增
     let academicYear;
     if (gameMonth <= 4) {
-      // 前4个月（9-12月）属于大一
       academicYear = 1;
     } else {
-      // 之后，每过一个9月，学年递增
-      // 计算经过了多少个完整的学年周期（从第5个月开始）
-      const monthsAfterFirstSemester = gameMonth - 5; // Jan Y2开始
+      const monthsAfterFirstSemester = gameMonth - 5;
       const completedYears = Math.floor(monthsAfterFirstSemester / 12);
-      
-      // 如果当前在9月之前，还在上一学年
       if (calendarMonth < 9) {
         academicYear = completedYears + 1;
       } else {
@@ -43,6 +33,14 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
   const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
   const hasActiveContest = !!gameState.activeContest;
 
+  // AP进度条颜色
+  const getAPProgressColor = () => {
+    const ratio = gameState.remainingAP / gameState.monthlyAP;
+    if (ratio >= 0.7) return '#22c55e';
+    if (ratio >= 0.3) return '#f59e0b';
+    return '#ef4444';
+  };
+
   return (
     <section className="game-start-section">
       <h2>游戏控制</h2>
@@ -53,13 +51,6 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
           disabled={gameState.isRunning}
         >
           开始游戏
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={onTogglePause}
-          disabled={!gameState.isRunning || gameState.month > 46}
-        >
-          {gameState.isPaused ? '继续游戏' : '暂停游戏'}
         </button>
         <button
           className="btn btn-success"
@@ -75,7 +66,18 @@ function GameControls({ gameState, onStart, onTogglePause, onReset, onAdvanceMon
       <div className="game-status">
         <span className="status-chip">📌 <strong>{getStatusText()}</strong></span>
         <span className="status-chip">📅 <strong>{getYearMonth()}</strong></span>
-        <span className="status-chip ap">⚡ <strong>{gameState.remainingAP}</strong> / {gameState.monthlyAP} AP</span>
+        <span className="status-chip ap">
+          <div className="ap-bar-container">
+            <div 
+              className="ap-bar-fill" 
+              style={{ 
+                width: `${(gameState.remainingAP / gameState.monthlyAP) * 100}%`,
+                background: getAPProgressColor()
+              }}
+            ></div>
+          </div>
+          <strong>{gameState.remainingAP}</strong> / {gameState.monthlyAP} AP
+        </span>
         {hasPendingEvents && (
           <span className="status-chip alert">🔔 待处理事件 <strong>{gameState.pendingEvents.length}</strong></span>
         )}

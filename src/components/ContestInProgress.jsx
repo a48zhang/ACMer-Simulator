@@ -1,13 +1,8 @@
 // ContestInProgress 组件 - 在比赛进行时显示并支持做题
-function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink }) {
+function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onDebug }) {
   const solvedCount = contest.problems.filter(p => p.status === 'solved').length;
   const totalCount = contest.problems.length;
   const allSolved = solvedCount === totalCount;
-
-  // 难度星级
-  const getDifficultyStars = (diff) => {
-    return '★'.repeat(Math.ceil(diff / 2)) + '☆'.repeat(5 - Math.ceil(diff / 2));
-  };
 
   return (
     <section className="contest-in-progress">
@@ -28,6 +23,8 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
           const isCoding = p.status === 'coding';
           const isSubmittedFail = p.status === 'submitted_fail';
           const canThink = (isCoding || isSubmittedFail) && p.thinkBonus < 2;
+          const hasDebug = p.debugBonus > 0;
+          const hasBug = p.hasBug === true;
 
           return (
             <div 
@@ -37,9 +34,6 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
               <div className="contest-problem-top">
                 <div className="contest-problem-title">
                   Problem {p.letter}
-                  <span className="contest-problem-diff">
-                    {getDifficultyStars(p.difficulty)}
-                  </span>
                 </div>
                 <div className="contest-problem-status">
                   {isSolved ? '✅ Accepted' : (isPending ? '未读题' : (isSubmittedFail ? '❌ 已尝试' : '📝 可写代码'))}
@@ -48,18 +42,11 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
 
               {p.revealedInfo && (
                 <div className="contest-problem-info">
-                  <span className="contest-problem-tags">
-                    🏷️ {p.revealedInfo.tags.join(' | ')}
-                  </span>
-                  <span className="contest-problem-rate">
-                    🎯 预估成功率：{p.revealedInfo.estimatedSuccessRate}%
-                  </span>
-                </div>
-              )}
-
-              {p.thinkBonus > 0 && (
-                <div className="contest-problem-bonus">
-                  🧠 思考加成：×{p.thinkBonus}
+                  {p.revealedInfo.tags && p.revealedInfo.tags.length > 0 && (
+                    <span className="contest-problem-tags">
+                      🏷️ {p.revealedInfo.tags.join(' | ')}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -85,12 +72,20 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                       写代码{!canThink ? '（已满）' : ''}
                     </button>
                     <button
+                      className="btn btn-info btn-sm"
+                      type="button"
+                      onClick={() => onDebug(p.id)}
+                      disabled={timeRemaining <= 0}
+                    >
+                      对拍
+                    </button>
+                    <button
                       className="btn btn-primary btn-sm"
                       type="button"
                       onClick={() => onAttempt(p.id)}
-                      disabled={p.thinkBonus < 1 || timeRemaining <= 0}
+                      disabled={timeRemaining <= 0}
                     >
-                      提交{p.thinkBonus < 1 ? '（需先写代码）' : ''}
+                      提交
                     </button>
                   </>
                 )}
