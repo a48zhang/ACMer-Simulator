@@ -71,27 +71,56 @@ function PracticeContestSelectionDialog({ onSelect, onCancel }) {
 
     return (
         <div className="dialog-overlay">
-            <div className="dialog practice-contest-dialog">
-                <div className="dialog-header">
-                    <h2>🏆 选择练习赛</h2>
-                    <button className="dialog-close" onClick={onCancel}>&times;</button>
-                </div>
-                <div className="dialog-content">
-                    <p className="dialog-subtitle">选择你要参加的练习赛类型</p>
-                    <div className="contest-type-grid">
-                        {contestTypes.map(contest => (
-                            <div
-                                key={contest.id}
-                                className="contest-type-card"
-                                onClick={() => onSelect(contest)}
-                            >
-                                <div className="contest-type-name">{contest.name}</div>
-                                <div className="contest-type-desc">{contest.description}</div>
-                                <div className="contest-type-cost">消耗 {contest.cost} AP</div>
+            <div className="dialog-box">
+                <h2 className="dialog-title">🏆 选择练习赛</h2>
+                <p className="dialog-subtitle">选择你要参加的练习赛类型</p>
+                
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                    gap: '1rem',
+                    marginBottom: '1.5rem'
+                }}>
+                    {contestTypes.map(contest => (
+                        <div
+                            key={contest.id}
+                            style={{
+                                padding: '1rem',
+                                border: '2px solid var(--border)',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'var(--background)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--primary)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                            }}
+                            onClick={() => onSelect(contest)}
+                        >
+                            <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+                                {contest.name}
                             </div>
-                        ))}
-                    </div>
+                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                {contest.description}
+                            </div>
+                            <div style={{ 
+                                fontSize: '0.875rem', 
+                                fontWeight: 600, 
+                                color: 'var(--primary)',
+                                background: 'rgba(99, 102, 241, 0.1)',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: 'var(--radius-sm)',
+                                display: 'inline-block'
+                            }}>
+                                ⚡ {contest.cost} AP
+                            </div>
+                        </div>
+                    ))}
                 </div>
+
                 <div className="dialog-footer">
                     <button className="btn btn-secondary" onClick={onCancel}>
                         取消
