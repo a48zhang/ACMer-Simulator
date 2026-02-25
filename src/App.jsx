@@ -428,7 +428,7 @@ function App() {
       const debugResult = debugProblem(problem, prev.attributes);
       
       if (debugResult.foundBug) {
-        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，发现了bug！`, 'success');
+        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，发现了bug！需要重新写代码`, 'success');
       } else if (debugResult.bonusIncrease > 0) {
         addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，获得额外加成`, 'info');
       } else {
@@ -443,7 +443,9 @@ function App() {
           ...p,
           debugBonus: debugResult.newDebugBonus,
           bugFound: p.bugFound || debugResult.foundBug,
-          thinkBonus: debugResult.bonusIncrease > 0 ? p.thinkBonus + debugResult.bonusIncrease : p.thinkBonus
+          thinkBonus: debugResult.bonusIncrease > 0 ? p.thinkBonus + debugResult.bonusIncrease : p.thinkBonus,
+          hasBug: debugResult.foundBug ? false : p.hasBug,
+          hasWrittenCode: debugResult.foundBug ? false : p.hasWrittenCode
         };
       });
 
@@ -1206,14 +1208,16 @@ function App() {
                 />
               )}
 
-              <ActivityPanel
-                activities={activities}
-                remainingAP={gameState.remainingAP}
-                onExecuteActivity={executeActivity}
-                isRunning={gameState.isRunning}
-                isPaused={gameState.isPaused}
-                gameEnded={gameState.month > END_MONTH}
-              />
+              {!gameState.activeContest && (
+                <ActivityPanel
+                  activities={activities}
+                  remainingAP={gameState.remainingAP}
+                  onExecuteActivity={executeActivity}
+                  isRunning={gameState.isRunning}
+                  isPaused={gameState.isPaused}
+                  gameEnded={gameState.month > END_MONTH}
+                />
+              )}
             </>
           )}
         </main>

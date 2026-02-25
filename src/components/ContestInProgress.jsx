@@ -23,7 +23,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
           const isCoding = p.status === 'coding';
           const isSubmittedFail = p.status === 'submitted_fail';
           const canThink = (isCoding || isSubmittedFail) && p.thinkBonus < 2;
-          const canCode = (isCoding || isSubmittedFail) && !p.hasWrittenCode;
+          const canDebug = (isCoding || isSubmittedFail) && p.hasWrittenCode;
           const canSubmit = (isCoding || isSubmittedFail) && p.hasWrittenCode;
 
           return (
@@ -71,34 +71,30 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                     >
                       思考{!canThink ? '（已满）' : ''}
                     </button>
-                    {!p.hasWrittenCode && (
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        type="button"
-                        onClick={() => onCode(p.id)}
-                        disabled={timeRemaining <= 0}
-                      >
-                        写代码
-                      </button>
-                    )}
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      type="button"
+                      onClick={() => onCode(p.id)}
+                      disabled={p.hasWrittenCode || timeRemaining <= 0}
+                    >
+                      写代码{p.hasWrittenCode ? '（已写）' : ''}
+                    </button>
                     <button
                       className="btn btn-info btn-sm"
                       type="button"
                       onClick={() => onDebug(p.id)}
-                      disabled={timeRemaining <= 0}
+                      disabled={!canDebug || timeRemaining <= 0}
                     >
                       对拍
                     </button>
-                    {p.hasWrittenCode && (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        type="button"
-                        onClick={() => onAttempt(p.id)}
-                        disabled={timeRemaining <= 0}
-                      >
-                        提交
-                      </button>
-                    )}
+                    <button
+                      className="btn btn-primary btn-sm"
+                      type="button"
+                      onClick={() => onAttempt(p.id)}
+                      disabled={!canSubmit || timeRemaining <= 0}
+                    >
+                      提交
+                    </button>
                   </>
                 )}
                 {isSolved && (
