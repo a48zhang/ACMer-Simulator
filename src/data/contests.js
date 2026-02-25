@@ -45,10 +45,10 @@ export const readProblem = (problem, attributes) => {
     return { readTime, tags: tagsCn, estimatedSuccessRate };
 };
 
-// 思考/写代码阶段：返回耗时和加成信息
+// 思考阶段：返回耗时和加成信息
 // 使用阈值机制：每次加成乘以1-2之间的随机小数，点的越多收益越低
 export const thinkProblem = (problem, attributes = {}) => {
-    const baseTime = 5 + problem.difficulty * 2;
+    const baseTime = 4 + problem.difficulty;
     const speedRatio = (attributes.speed ?? 0) / 10;
     const timeMultiplier = Math.max(0.3, 1.0 - speedRatio * 0.7);
     const thinkTime = Math.max(1, Math.round(baseTime * timeMultiplier));
@@ -61,7 +61,7 @@ export const thinkProblem = (problem, attributes = {}) => {
     if (problem.revealedInfo && problem.revealedInfo.tags) {
         const currentTags = problem.revealedInfo.tags;
         const attrKeys = Object.keys(problem.requires || {}).filter(k => SKILL_TYPES.specialized.includes(k));
-        if (attrKeys.length > currentTags.length && Math.random() < 0.3) {
+        if (attrKeys.length > currentTags.length && Math.random() < 0.4) {
             const availableTags = attrKeys.filter(k => !currentTags.includes(ATTR_NAMES_CN[k] || k));
             if (availableTags.length > 0) {
                 const newTag = ATTR_NAMES_CN[availableTags[Math.floor(Math.random() * availableTags.length)]] || availableTags[0];
@@ -70,16 +70,34 @@ export const thinkProblem = (problem, attributes = {}) => {
         }
     }
     
-    let hasBug = false;
-    if (!problem.hasBug && Math.random() < 0.25) {
-        hasBug = true;
-    }
-    
     return { 
         thinkTime, 
         newThinkBonus, 
-        newTags,
-        hasBug: hasBug ? true : (problem.hasBug || false)
+        newTags
+    };
+};
+
+// 写代码阶段：返回耗时和可能产生的bug
+export const codeProblem = (problem, attributes = {}) => {
+    const baseTime = 6 + problem.difficulty * 1.5;
+    const speedRatio = (attributes.speed ?? 0) / 10;
+    const codingRatio = (attributes.coding ?? 0) / 10;
+    const timeMultiplier = Math.max(0.3, 1.0 - (speedRatio + codingRatio) * 0.35);
+    const codeTime = Math.max(1, Math.round(baseTime * timeMultiplier));
+    
+    let hasBug = false;
+    if (!problem.hasBug) {
+        // coding属性越高，越不容易产生bug
+        const bugChance = Math.max(0.05, 0.35 - codingRatio * 0.3);
+        if (Math.random() < bugChance) {
+            hasBug = true;
+        }
+    }
+    
+    return { 
+        codeTime, 
+        hasBug: hasBug ? true : (problem.hasBug || false),
+        hasWrittenCode: true
     };
 };
 
@@ -156,6 +174,7 @@ const generateProblem = (difficulty) => {
         debugBonus: 0, // 对拍加成次数
         hasBug: false, // 是否有 bug（对玩家不可见）
         bugFound: false, // bug 是否已被发现
+        hasWrittenCode: false, // 是否已经写过代码
         revealedInfo: null // { tags }
     };
 };

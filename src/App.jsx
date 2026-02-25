@@ -19,7 +19,7 @@ import PracticeContestSelectionDialog from './components/PracticeContestSelectio
 import { applyTraitEffects } from './data/traits'
 import { ACTIVITIES } from './data/activities'
 import { scheduleMonthlyEvents } from './data/events'
-import { createContestSession, evaluateAttempt, calculateContestOutcome, readProblem, thinkProblem, debugProblem } from './data/contests'
+import { createContestSession, evaluateAttempt, calculateContestOutcome, readProblem, thinkProblem, codeProblem, debugProblem } from './data/contests'
 
 // 游戏常量
 const MAX_ATTRIBUTE_VALUE = 10;
@@ -302,7 +302,7 @@ function App() {
     });
   };
 
-  // 思考/写代码阶段
+  // 思考阶段
   const thinkContestProblem = (problemId) => {
     setGameState(prev => {
       const session = prev.activeContest;
@@ -315,7 +315,7 @@ function App() {
       if (problem.thinkBonus >= 2) return prev; // 最多2次思考加成
 
       const thinkResult = thinkProblem(problem, prev.attributes);
-      addLog(`💻 思考/写代码题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
+      addLog(`🧠 思考题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
 
       const timeRemaining = Math.max(0, prev.contestTimeRemaining - thinkResult.thinkTime);
 
@@ -323,8 +323,7 @@ function App() {
         if (p.id !== problemId) return p;
         const updatedProblem = {
           ...p,
-          thinkBonus: thinkResult.newThinkBonus,
-          hasBug: thinkResult.hasBug
+          thinkBonus: thinkResult.newThinkBonus
         };
         if (thinkResult.newTags && problem.revealedInfo) {
           updatedProblem.revealedInfo = {
@@ -333,6 +332,59 @@ function App() {
           };
         }
         return updatedProblem;
+      });
+
+      const nextSession = {
+        ...session,
+        problems: updatedProblems,
+        timeRemaining
+      };
+
+      const baseState = {
+        ...prev,
+        activeContest: nextSession,
+        contestTimeRemaining: timeRemaining
+      };
+
+      const solvedAll = updatedProblems.every(p => p.status === 'solved');
+      const shouldFinish = solvedAll || timeRemaining <= 0;
+
+      if (shouldFinish) {
+        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
+        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+        setContestOutcome(outcome);
+        setShowContestResult(true);
+        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
+      }
+
+      return baseState;
+    });
+  };
+
+  // 写代码阶段
+  const codeContestProblem = (problemId) => {
+    setGameState(prev => {
+      const session = prev.activeContest;
+      if (!session) return prev;
+      if (prev.contestTimeRemaining <= 0) return prev;
+
+      const problem = session.problems.find(p => p.id === problemId);
+      if (!problem) return prev;
+      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
+      if (problem.hasWrittenCode) return prev;
+
+      const codeResult = codeProblem(problem, prev.attributes);
+      addLog(`💻 写代码题目 ${problem.letter}：耗时 ${codeResult.codeTime} 分钟`, 'info');
+
+      const timeRemaining = Math.max(0, prev.contestTimeRemaining - codeResult.codeTime);
+
+      const updatedProblems = session.problems.map(p => {
+        if (p.id !== problemId) return p;
+        return {
+          ...p,
+          hasWrittenCode: true,
+          hasBug: codeResult.hasBug
+        };
       });
 
       const nextSession = {
@@ -1099,18 +1151,20 @@ function App() {
       </header>
 
       <div className="app-layout">
-        <PlayerPanel
-          attributes={gameState.attributes}
-          balance={gameState.balance}
-          remainingAP={gameState.remainingAP}
-          monthlyAP={gameState.monthlyAP}
-          san={gameState.san}
-          rating={gameState.rating}
-          gpa={gameState.gpa}
-          buffs={gameState.buffs}
-        />
+        {gamePhase === 'playing' && (
+          <PlayerPanel
+            attributes={gameState.attributes}
+            balance={gameState.balance}
+            remainingAP={gameState.remainingAP}
+            monthlyAP={gameState.monthlyAP}
+            san={gameState.san}
+            rating={gameState.rating}
+            gpa={gameState.gpa}
+            buffs={gameState.buffs}
+          />
+        )}
 
-        <main>
+        <main className={gamePhase !== 'playing' ? 'full-width' : ''}>
           {gamePhase === 'intro' && (
             <IntroPanel onStart={startGame} />
           )}
@@ -1147,6 +1201,7 @@ function App() {
                   onFinish={() => finishContest(true)}
                   onRead={readContestProblem}
                   onThink={thinkContestProblem}
+                  onCode={codeContestProblem}
                   onDebug={debugContestProblem}
                 />
               )}
