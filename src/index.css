@@ -824,11 +824,9 @@ main {
   border-radius: var(--radius-md);
   padding: 0.6rem 0.75rem;
   background: var(--background);
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  /* 左中右：题目 | 状态 | 提交 */
-  align-items: center;
-  column-gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   box-shadow: var(--shadow-sm);
 }
 
@@ -837,15 +835,21 @@ main {
   background: linear-gradient(135deg, #ecfdf3 0%, #ffffff 100%);
 }
 
+.contest-problem-card.coding,
+.contest-problem-card.submitted_fail {
+  border-color: #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
 .contest-problem-card.attempted {
   border-color: #fde68a;
   background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
 }
 
-.contest-problem-head {
+.contest-problem-top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -853,34 +857,63 @@ main {
   font-weight: 700;
   color: var(--text-main);
   font-size: 0.95rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contest-problem-diff {
+  font-size: 0.75rem;
+  color: #f59e0b;
+  letter-spacing: 0.05rem;
 }
 
 .contest-problem-status {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  text-align: center;
-  justify-self: center;
 }
 
-.contest-problem-desc {
-  font-size: 0.85rem;
+.contest-problem-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  margin: 0;
+}
+
+.contest-problem-tags {
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: var(--radius-sm);
+}
+
+.contest-problem-rate {
+  padding: 0.25rem 0.5rem;
+  background: #eff6ff;
+  border-radius: var(--radius-sm);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.contest-problem-bonus {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  font-weight: 600;
+  padding-left: 0.25rem;
 }
 
 .contest-problem-actions {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
-.contest-problem-card .btn-sm {
-  padding: 0.3rem 0.6rem;
+.contest-problem-solved {
   font-size: 0.8rem;
-  justify-self: end;
+  font-weight: 600;
+  color: #22c55e;
 }
 
 .contest-block-hint {

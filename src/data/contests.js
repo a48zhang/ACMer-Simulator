@@ -9,6 +9,48 @@ const SKILL_TYPES = {
     specialized: ['math', 'dp', 'graph', 'dataStructure', 'string', 'search', 'greedy', 'geometry']
 };
 
+// 中文属性名映射
+const ATTR_NAMES_CN = {
+    algorithm: '算法', coding: '代码', speed: '速度', stress: '抗压',
+    teamwork: '团队', english: '英语', math: '数学',
+    dp: '动态规划', graph: '图论', dataStructure: '数据结构',
+    string: '字符串', search: '搜索', greedy: '贪心', geometry: '计算几何'
+};
+
+// 读题阶段：返回读题耗时、揭露的标签、预估成功率
+export const readProblem = (problem, attributes) => {
+    const readTime = 3 + Math.max(0, problem.difficulty - 2);
+
+    // 从 requires 中提取主要算法标签（取前2个非通用属性，或通用属性）
+    const tags = [];
+    const attrKeys = Object.keys(problem.requires || {});
+    const specializedKeys = attrKeys.filter(k => SKILL_TYPES.specialized.includes(k));
+    if (specializedKeys.length > 0) {
+        tags.push(...specializedKeys.slice(0, 2));
+    } else {
+        tags.push(...attrKeys.slice(0, 2));
+    }
+    const tagsCn = tags.map(k => ATTR_NAMES_CN[k] || k);
+
+    // 计算预估成功率（不包含随机和 trickiness，只看平均属性比）
+    let ratioSum = 0;
+    attrKeys.forEach(key => {
+        const playerVal = (attributes?.[key] ?? 0) + 1;
+        const reqVal = (problem.requires[key] ?? 0) + 1;
+        ratioSum += playerVal / reqVal;
+    });
+    const avgRatio = ratioSum / Math.max(1, attrKeys.length);
+    let estimatedSuccessRate = Math.round(Math.min(95, Math.max(5, avgRatio * 100)));
+
+    return { readTime, tags: tagsCn, estimatedSuccessRate };
+};
+
+// 思考/写代码阶段：返回耗时，用于计算时间消耗
+export const thinkProblem = (problem) => {
+    const thinkTime = 5 + problem.difficulty * 2;
+    return thinkTime;
+};
+
 // 根据难度生成题目
 const generateProblem = (difficulty) => {
     // difficulty: 1-10
@@ -50,8 +92,10 @@ const generateProblem = (difficulty) => {
         difficulty,
         requires,
         trickiness,
-        status: 'pending',
-        attempts: 0
+        status: 'pending', // pending | reading | coding | submitted_fail | solved
+        attempts: 0,
+        thinkBonus: 0, // 思考加成次数，最多 2 次，每次 +15% 成功率
+        revealedInfo: null // { tags, estimatedSuccessRate }
     };
 };
 
@@ -112,7 +156,7 @@ export const createContestSession = (config) => {
     };
 };
 
-export const evaluateAttempt = (problem, attributes) => {
+export const evaluateAttempt = (problem, attributes, thinkBonus = 0) => {
     const attrKeys = Object.keys(problem.requires || {});
     const randomFactor = 0.65 + Math.random() * 0.9; // 0.65 - 1.55
     let ratioSum = 0;
@@ -129,7 +173,9 @@ export const evaluateAttempt = (problem, attributes) => {
     });
 
     const avgRatio = ratioSum / Math.max(attrKeys.length, 1);
-    const adjustedRatio = avgRatio * randomFactor * (1 - problem.trickiness * 0.3);
+    // 思考加成：每一层 +15% 成功率
+    const thinkBonusMultiplier = 1 + thinkBonus * 0.15;
+    const adjustedRatio = avgRatio * randomFactor * (1 - problem.trickiness * 0.3) * thinkBonusMultiplier;
     const success = adjustedRatio >= 1;
 
     // 时间消耗与难度相关，能力越强耗时越少
