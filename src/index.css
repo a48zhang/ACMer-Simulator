@@ -1381,26 +1381,26 @@ footer {
 
 /* Trait Selection Dialog Styles */
 .trait-dialog {
-  max-width: 900px;
+  max-width: 950px;
 }
 
 .trait-points {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .tp-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .tp-info span:first-child {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
@@ -1423,29 +1423,33 @@ footer {
 .trait-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 .positive-title {
   color: var(--secondary);
   border-bottom-color: var(--secondary);
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
 }
 
 .negative-title {
   color: var(--warning);
   border-bottom-color: var(--warning);
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
 }
 
 .trait-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
 }
 
 .trait-card {
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
@@ -1479,19 +1483,19 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .trait-name {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   color: var(--text-main);
 }
 
 .trait-cost {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.25rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   border-radius: var(--radius-md);
   background: var(--background);
 }
@@ -1505,19 +1509,19 @@ footer {
 }
 
 .trait-description {
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .trait-selected-badge {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.35rem;
+  right: 0.35rem;
   background: var(--primary);
   color: white;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.35rem;
   border-radius: var(--radius-md);
   font-weight: 600;
 }
