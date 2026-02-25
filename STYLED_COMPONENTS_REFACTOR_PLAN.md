@@ -63,8 +63,8 @@
 - [x] 提交: `git commit -m "refactor: LogPanel styled-components重构"`
 - [ ] PlayerPanel (中等复杂度)
 - [ ] 提交: `git commit -m "refactor: PlayerPanel styled-components重构"`
-- [ ] ActivityPanel
-- [ ] 提交: `git commit -m "refactor: ActivityPanel styled-components重构"`
+- [x] ActivityPanel
+- [x] 提交: `git commit -m "refactor: ActivityPanel styled-components重构"`
 - [ ] IntroPanel
 - [ ] 提交: `git commit -m "refactor: IntroPanel styled-components重构"`
 - [ ] TraitSelectionPanel
