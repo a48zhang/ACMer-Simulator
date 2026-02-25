@@ -88,9 +88,9 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                       className="btn btn-primary btn-sm"
                       type="button"
                       onClick={() => onAttempt(p.id)}
-                      disabled={timeRemaining <= 0}
+                      disabled={p.thinkBonus < 1 || timeRemaining <= 0}
                     >
-                      提交
+                      提交{p.thinkBonus < 1 ? '（需先写代码）' : ''}
                     </button>
                   </>
                 )}

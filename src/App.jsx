@@ -353,6 +353,11 @@ function App() {
       const problem = session.problems.find(p => p.id === problemId);
       if (!problem || problem.status === 'solved') return prev;
       if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
+      // 必须先写过至少一次代码才能提交
+      if (problem.thinkBonus < 1) {
+        addLog(`❌ 请先点击「写代码」至少一次后再提交！`, 'error');
+        return prev;
+      }
 
       if (session.isOrdered) {
         const blocked = session.problems.some(p => p.order < problem.order && p.status !== 'solved');
