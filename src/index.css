@@ -96,7 +96,7 @@ main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--background);
 }
 
@@ -402,17 +402,37 @@ main {
   background-color: var(--danger-hover);
 }
 
+/* Main content layout with log sidebar */
+.main-content-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 0;
+}
+
+.main-content-left {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
 /* Log Panel */
 .log-panel {
   background-color: var(--surface);
   border-radius: var(--radius-lg);
   padding: 0.875rem 1rem;
   box-shadow: var(--shadow-sm);
-  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
-  height: 180px;
+  height: 100%;
   border: 1px solid var(--border);
+  width: 320px;
+  flex-shrink: 0;
 }
 
 .log-header {

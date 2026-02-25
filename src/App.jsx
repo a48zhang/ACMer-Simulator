@@ -230,323 +230,320 @@ function App() {
     });
   };
 
+
+
   const finishContest = (force = false) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
 
-      const outcome = calculateContestOutcome(session, prev.contestTimeRemaining, prev.rating);
-
-      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-
-      // 展示结算窗口，等待用户确认后再应用结算
-      setContestOutcome(outcome);
-      setShowContestResult(true);
-
-      return {
-        ...prev,
-        activeContest: null,
-        contestTimeRemaining: 0
-      };
-    });
+    const outcome = calculateContestOutcome(session, gameState.contestTimeRemaining, gameState.rating);
+    addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+    
+    setContestOutcome(outcome);
+    setShowContestResult(true);
+    
+    setGameState(prev => ({
+      ...prev,
+      activeContest: null,
+      contestTimeRemaining: 0
+    }));
   };
 
   // 读题阶段
   const readContestProblem = (problemId) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
-      if (prev.contestTimeRemaining <= 0) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
+    if (gameState.contestTimeRemaining <= 0) return;
 
-      const problem = session.problems.find(p => p.id === problemId);
-      if (!problem || problem.status !== 'pending') return prev;
+    const problem = session.problems.find(p => p.id === problemId);
+    if (!problem || problem.status !== 'pending') return;
 
-      const readResult = readProblem(problem, prev.attributes);
-      addLog(`📖 阅读题目 ${problem.letter}：耗时 ${readResult.readTime} 分钟，揭露标签 ${readResult.tags.join('、')}`, 'info');
+    const readResult = readProblem(problem, gameState.attributes);
+    addLog(`📖 阅读题目 ${problem.letter}：耗时 ${readResult.readTime} 分钟，揭露标签 ${readResult.tags.join('、')}`, 'info');
 
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - readResult.readTime);
+    const timeRemaining = Math.max(0, gameState.contestTimeRemaining - readResult.readTime);
 
-      const updatedProblems = session.problems.map(p => {
-        if (p.id !== problemId) return p;
-        return {
-          ...p,
-          status: 'coding',
-          revealedInfo: readResult
-        };
-      });
-
-      const nextSession = {
-        ...session,
-        problems: updatedProblems,
-        timeRemaining
+    const updatedProblems = session.problems.map(p => {
+      if (p.id !== problemId) return p;
+      return {
+        ...p,
+        status: 'coding',
+        revealedInfo: readResult
       };
+    });
 
-      const baseState = {
+    const nextSession = {
+      ...session,
+      problems: updatedProblems,
+      timeRemaining
+    };
+
+    const solvedAll = updatedProblems.every(p => p.status === 'solved');
+    const shouldFinish = solvedAll || timeRemaining <= 0;
+
+    if (shouldFinish) {
+      const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+      
+      setGameState(prev => ({
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0
+      }));
+    } else {
+      setGameState(prev => ({
         ...prev,
         activeContest: nextSession,
         contestTimeRemaining: timeRemaining
-      };
-
-      const solvedAll = updatedProblems.every(p => p.status === 'solved');
-      const shouldFinish = solvedAll || timeRemaining <= 0;
-
-      if (shouldFinish) {
-        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
-        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-        setContestOutcome(outcome);
-        setShowContestResult(true);
-        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
-      }
-
-      return baseState;
-    });
+      }));
+    }
   };
 
   // 思考阶段
   const thinkContestProblem = (problemId) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
-      if (prev.contestTimeRemaining <= 0) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
+    if (gameState.contestTimeRemaining <= 0) return;
 
-      const problem = session.problems.find(p => p.id === problemId);
-      if (!problem) return prev;
-      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
-      if (problem.thinkBonus >= 2) return prev; // 最多2次思考加成
+    const problem = session.problems.find(p => p.id === problemId);
+    if (!problem) return;
+    if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return;
+    if (problem.thinkBonus >= 2) return; // 最多2次思考加成
 
-      const thinkResult = thinkProblem(problem, prev.attributes);
-      addLog(`🧠 思考题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
+    const thinkResult = thinkProblem(problem, gameState.attributes);
+    addLog(`🧠 思考题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
 
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - thinkResult.thinkTime);
+    const timeRemaining = Math.max(0, gameState.contestTimeRemaining - thinkResult.thinkTime);
 
-      const updatedProblems = session.problems.map(p => {
-        if (p.id !== problemId) return p;
-        const updatedProblem = {
-          ...p,
-          thinkBonus: thinkResult.newThinkBonus
-        };
-        if (thinkResult.newTags && problem.revealedInfo) {
-          updatedProblem.revealedInfo = {
-            ...problem.revealedInfo,
-            tags: thinkResult.newTags
-          };
-        }
-        return updatedProblem;
-      });
-
-      const nextSession = {
-        ...session,
-        problems: updatedProblems,
-        timeRemaining
+    const updatedProblems = session.problems.map(p => {
+      if (p.id !== problemId) return p;
+      const updatedProblem = {
+        ...p,
+        thinkBonus: thinkResult.newThinkBonus
       };
+      if (thinkResult.newTags && problem.revealedInfo) {
+        updatedProblem.revealedInfo = {
+          ...problem.revealedInfo,
+          tags: thinkResult.newTags
+        };
+      }
+      return updatedProblem;
+    });
 
-      const baseState = {
+    const nextSession = {
+      ...session,
+      problems: updatedProblems,
+      timeRemaining
+    };
+
+    const solvedAll = updatedProblems.every(p => p.status === 'solved');
+    const shouldFinish = solvedAll || timeRemaining <= 0;
+
+    if (shouldFinish) {
+      const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+      
+      setGameState(prev => ({
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0
+      }));
+    } else {
+      setGameState(prev => ({
         ...prev,
         activeContest: nextSession,
         contestTimeRemaining: timeRemaining
-      };
-
-      const solvedAll = updatedProblems.every(p => p.status === 'solved');
-      const shouldFinish = solvedAll || timeRemaining <= 0;
-
-      if (shouldFinish) {
-        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
-        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-        setContestOutcome(outcome);
-        setShowContestResult(true);
-        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
-      }
-
-      return baseState;
-    });
+      }));
+    }
   };
 
   // 写代码阶段
   const codeContestProblem = (problemId) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
-      if (prev.contestTimeRemaining <= 0) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
+    if (gameState.contestTimeRemaining <= 0) return;
 
-      const problem = session.problems.find(p => p.id === problemId);
-      if (!problem) return prev;
-      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
-      if (problem.hasWrittenCode) return prev;
+    const problem = session.problems.find(p => p.id === problemId);
+    if (!problem) return;
+    if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return;
+    if (problem.hasWrittenCode) return;
 
-      const codeResult = codeProblem(problem, prev.attributes);
-      addLog(`💻 写代码题目 ${problem.letter}：耗时 ${codeResult.codeTime} 分钟`, 'info');
+    const codeResult = codeProblem(problem, gameState.attributes);
+    addLog(`💻 写代码题目 ${problem.letter}：耗时 ${codeResult.codeTime} 分钟`, 'info');
 
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - codeResult.codeTime);
+    const timeRemaining = Math.max(0, gameState.contestTimeRemaining - codeResult.codeTime);
 
-      const updatedProblems = session.problems.map(p => {
-        if (p.id !== problemId) return p;
-        return {
-          ...p,
-          hasWrittenCode: true,
-          hasBug: codeResult.hasBug
-        };
-      });
-
-      const nextSession = {
-        ...session,
-        problems: updatedProblems,
-        timeRemaining
+    const updatedProblems = session.problems.map(p => {
+      if (p.id !== problemId) return p;
+      return {
+        ...p,
+        hasWrittenCode: true,
+        hasBug: codeResult.hasBug
       };
+    });
 
-      const baseState = {
+    const nextSession = {
+      ...session,
+      problems: updatedProblems,
+      timeRemaining
+    };
+
+    const solvedAll = updatedProblems.every(p => p.status === 'solved');
+    const shouldFinish = solvedAll || timeRemaining <= 0;
+
+    if (shouldFinish) {
+      const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+      
+      setGameState(prev => ({
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0
+      }));
+    } else {
+      setGameState(prev => ({
         ...prev,
         activeContest: nextSession,
         contestTimeRemaining: timeRemaining
-      };
-
-      const solvedAll = updatedProblems.every(p => p.status === 'solved');
-      const shouldFinish = solvedAll || timeRemaining <= 0;
-
-      if (shouldFinish) {
-        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
-        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-        setContestOutcome(outcome);
-        setShowContestResult(true);
-        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
-      }
-
-      return baseState;
-    });
+      }));
+    }
   };
 
   // 对拍阶段
   const debugContestProblem = (problemId) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
-      if (prev.contestTimeRemaining <= 0) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
+    if (gameState.contestTimeRemaining <= 0) return;
 
-      const problem = session.problems.find(p => p.id === problemId);
-      if (!problem) return prev;
-      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
+    const problem = session.problems.find(p => p.id === problemId);
+    if (!problem) return;
+    if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return;
 
-      const debugResult = debugProblem(problem, prev.attributes);
-      
-      if (debugResult.foundBug) {
-        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，发现了bug！需要重新写代码`, 'success');
-      } else if (debugResult.bonusIncrease > 0) {
-        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，获得额外加成`, 'info');
-      } else {
-        addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，未发现异常`, 'info');
-      }
+    const debugResult = debugProblem(problem, gameState.attributes);
+    
+    if (debugResult.foundBug) {
+      addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，发现了bug！需要重新写代码`, 'success');
+    } else if (debugResult.bonusIncrease > 0) {
+      addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，获得额外加成`, 'info');
+    } else {
+      addLog(`🔍 对拍题目 ${problem.letter}：耗时 ${debugResult.debugTime} 分钟，未发现异常`, 'info');
+    }
 
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - debugResult.debugTime);
+    const timeRemaining = Math.max(0, gameState.contestTimeRemaining - debugResult.debugTime);
 
-      const updatedProblems = session.problems.map(p => {
-        if (p.id !== problemId) return p;
-        return {
-          ...p,
-          debugBonus: debugResult.newDebugBonus,
-          bugFound: p.bugFound || debugResult.foundBug,
-          thinkBonus: debugResult.bonusIncrease > 0 ? p.thinkBonus + debugResult.bonusIncrease : p.thinkBonus,
-          hasBug: debugResult.foundBug ? false : p.hasBug,
-          hasWrittenCode: debugResult.foundBug ? false : p.hasWrittenCode
-        };
-      });
-
-      const nextSession = {
-        ...session,
-        problems: updatedProblems,
-        timeRemaining
+    const updatedProblems = session.problems.map(p => {
+      if (p.id !== problemId) return p;
+      return {
+        ...p,
+        debugBonus: debugResult.newDebugBonus,
+        bugFound: p.bugFound || debugResult.foundBug,
+        thinkBonus: debugResult.bonusIncrease > 0 ? p.thinkBonus + debugResult.bonusIncrease : p.thinkBonus,
+        hasBug: debugResult.foundBug ? false : p.hasBug,
+        hasWrittenCode: debugResult.foundBug ? false : p.hasWrittenCode
       };
+    });
 
-      const baseState = {
+    const nextSession = {
+      ...session,
+      problems: updatedProblems,
+      timeRemaining
+    };
+
+    const solvedAll = updatedProblems.every(p => p.status === 'solved');
+    const shouldFinish = solvedAll || timeRemaining <= 0;
+
+    if (shouldFinish) {
+      const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+      
+      setGameState(prev => ({
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0
+      }));
+    } else {
+      setGameState(prev => ({
         ...prev,
         activeContest: nextSession,
         contestTimeRemaining: timeRemaining
-      };
-
-      const solvedAll = updatedProblems.every(p => p.status === 'solved');
-      const shouldFinish = solvedAll || timeRemaining <= 0;
-
-      if (shouldFinish) {
-        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
-        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-        setContestOutcome(outcome);
-        setShowContestResult(true);
-        return { ...baseState, activeContest: null, contestTimeRemaining: 0 };
-      }
-
-      return baseState;
-    });
+      }));
+    }
   };
 
   // 尝试比赛题目
   const attemptContestProblem = (problemId) => {
-    setGameState(prev => {
-      const session = prev.activeContest;
-      if (!session) return prev;
-      if (prev.contestTimeRemaining <= 0) return prev;
+    const session = gameState.activeContest;
+    if (!session) return;
+    if (gameState.contestTimeRemaining <= 0) return;
 
-      const problem = session.problems.find(p => p.id === problemId);
-      if (!problem || problem.status === 'solved') return prev;
-      if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return prev;
+    const problem = session.problems.find(p => p.id === problemId);
+    if (!problem || problem.status === 'solved') return;
+    if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return;
 
-      if (session.isOrdered) {
-        const blocked = session.problems.some(p => p.order < problem.order && p.status !== 'solved');
-        if (blocked) return prev;
-      }
+    if (session.isOrdered) {
+      const blocked = session.problems.some(p => p.order < problem.order && p.status !== 'solved');
+      if (blocked) return;
+    }
 
-      const attempt = evaluateAttempt(problem, prev.attributes, problem.thinkBonus, problem.debugBonus || 0);
+    const attempt = evaluateAttempt(problem, gameState.attributes, problem.thinkBonus, problem.debugBonus || 0);
 
-      const updatedProblems = session.problems.map(p => {
-        if (p.id !== problemId) return p;
-        return {
-          ...p,
-          status: attempt.success ? 'solved' : 'submitted_fail',
-          attempts: (p.attempts || 0) + 1
-        };
-      });
-
-      const timeRemaining = Math.max(0, prev.contestTimeRemaining - attempt.timeCost);
-      const attemptLog = {
-        problemId,
-        success: attempt.success,
-        timeCost: attempt.timeCost,
-        weakestAttr: attempt.weakestAttr
+    const updatedProblems = session.problems.map(p => {
+      if (p.id !== problemId) return p;
+      return {
+        ...p,
+        status: attempt.success ? 'solved' : 'submitted_fail',
+        attempts: (p.attempts || 0) + 1
       };
+    });
 
-      const nextSession = {
-        ...session,
-        problems: updatedProblems,
-        attempts: [...(session.attempts || []), attemptLog],
-        timeRemaining
-      };
+    const timeRemaining = Math.max(0, gameState.contestTimeRemaining - attempt.timeCost);
+    const attemptLog = {
+      problemId,
+      success: attempt.success,
+      timeCost: attempt.timeCost,
+      weakestAttr: attempt.weakestAttr
+    };
 
-      const solvedAll = updatedProblems.every(p => p.status === 'solved');
-      const shouldFinish = solvedAll || timeRemaining <= 0;
+    const nextSession = {
+      ...session,
+      problems: updatedProblems,
+      attempts: [...(session.attempts || []), attemptLog],
+      timeRemaining
+    };
 
-      const baseState = {
+    addLog(`🧩 尝试题目 ${problem.letter}：${attempt.success ? '通过' : '未通过'}，耗时 ${attempt.timeCost} 分钟`, attempt.success ? 'success' : 'warning');
+
+    const solvedAll = updatedProblems.every(p => p.status === 'solved');
+    const shouldFinish = solvedAll || timeRemaining <= 0;
+
+    if (shouldFinish) {
+      const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
+      addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
+      setContestOutcome(outcome);
+      setShowContestResult(true);
+      
+      setGameState(prev => ({
+        ...prev,
+        activeContest: null,
+        contestTimeRemaining: 0,
+        playerProblems: attempt.success ? prev.playerProblems + 1 : prev.playerProblems
+      }));
+    } else {
+      setGameState(prev => ({
         ...prev,
         activeContest: nextSession,
         contestTimeRemaining: timeRemaining,
         playerProblems: attempt.success ? prev.playerProblems + 1 : prev.playerProblems
-      };
-
-      addLog(`🧩 尝试题目 ${problem.letter}：${attempt.success ? '通过' : '未通过'}，耗时 ${attempt.timeCost} 分钟`, attempt.success ? 'success' : 'warning');
-
-      if (shouldFinish) {
-        const outcome = calculateContestOutcome(nextSession, timeRemaining, prev.rating);
-        addLog(`📊 比赛结束：解出 ${outcome.solved}/${outcome.total} 题，用时 ${outcome.timeUsed} 分钟`, 'success');
-
-        // 展示结算窗口，等待用户确认后再应用结算
-        setContestOutcome(outcome);
-        setShowContestResult(true);
-
-        return {
-          ...baseState,
-          activeContest: null,
-          contestTimeRemaining: 0
-        };
-      }
-
-      return baseState;
-    });
+      }));
+    }
   };
 
   // 推进到下一月
@@ -1176,49 +1173,50 @@ function App() {
           )}
 
           {gamePhase === 'playing' && (
-            <>
-              <GameControls
-                gameState={gameState}
-                onStart={startGame}
-                onReset={resetGame}
-                onAdvanceMonth={advanceMonth}
-              />
+            <div className="main-content-layout">
+              <div className="main-content-left">
+                <GameControls
+                  gameState={gameState}
+                  onStart={startGame}
+                  onReset={resetGame}
+                  onAdvanceMonth={advanceMonth}
+                />
 
+                {!gameState.activeContest && (
+                  <EventPanel
+                    pendingEvents={gameState.pendingEvents || []}
+                    onOpenEvent={openEventDialog}
+                    onDirectChoice={applyEventChoice}
+                    canAdvance={(gameState.pendingEvents || []).length === 0}
+                  />
+                )}
+
+                {gameState.activeContest && (
+                  <ContestInProgress
+                    contest={gameState.activeContest}
+                    timeRemaining={gameState.contestTimeRemaining}
+                    onAttempt={attemptContestProblem}
+                    onFinish={() => finishContest(true)}
+                    onRead={readContestProblem}
+                    onThink={thinkContestProblem}
+                    onCode={codeContestProblem}
+                    onDebug={debugContestProblem}
+                  />
+                )}
+
+                {!gameState.activeContest && (
+                  <ActivityPanel
+                    activities={activities}
+                    remainingAP={gameState.remainingAP}
+                    onExecuteActivity={executeActivity}
+                    isRunning={gameState.isRunning}
+                    isPaused={gameState.isPaused}
+                    gameEnded={gameState.month > END_MONTH}
+                  />
+                )}
+              </div>
               <LogPanel logs={logs} />
-
-              {!gameState.activeContest && (
-                <EventPanel
-                  pendingEvents={gameState.pendingEvents || []}
-                  onOpenEvent={openEventDialog}
-                  onDirectChoice={applyEventChoice}
-                  canAdvance={(gameState.pendingEvents || []).length === 0}
-                />
-              )}
-
-              {gameState.activeContest && (
-                <ContestInProgress
-                  contest={gameState.activeContest}
-                  timeRemaining={gameState.contestTimeRemaining}
-                  onAttempt={attemptContestProblem}
-                  onFinish={() => finishContest(true)}
-                  onRead={readContestProblem}
-                  onThink={thinkContestProblem}
-                  onCode={codeContestProblem}
-                  onDebug={debugContestProblem}
-                />
-              )}
-
-              {!gameState.activeContest && (
-                <ActivityPanel
-                  activities={activities}
-                  remainingAP={gameState.remainingAP}
-                  onExecuteActivity={executeActivity}
-                  isRunning={gameState.isRunning}
-                  isPaused={gameState.isPaused}
-                  gameEnded={gameState.month > END_MONTH}
-                />
-              )}
-            </>
+            </div>
           )}
         </main>
       </div>
