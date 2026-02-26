@@ -1,4 +1,192 @@
 import { useState } from 'react';
+import styled from 'styled-components';
+
+const PlayerPanelWrapper = styled.aside`
+  width: 268px;
+  background: #ffffff;
+  border-right: 1px solid ${props => props.theme.colors.border};
+  overflow-y: auto;
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: ${props => props.theme.colors.textMain};
+
+  ${props => props.$collapsed && `
+    width: 40px;
+  `}
+`;
+
+const PanelToggle = styled.div`
+  padding: 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+  color: ${props => props.theme.colors.textSecondary};
+  background: ${props => props.theme.colors.background};
+  font-size: 0.75rem;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${props => props.theme.colors.border};
+  }
+`;
+
+const ToggleIcon = styled.span`
+  display: inline-block;
+`;
+
+const PanelContent = styled.div`
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  ${props => props.$collapsed && `
+    display: none;
+  `}
+`;
+
+const PanelSection = styled.div``;
+
+const PanelTitle = styled.h3`
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+`;
+
+const PlayerInfo = styled.div`
+  display: grid;
+  gap: 0.35rem;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.65rem;
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.md};
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: #c7d2fe;
+  }
+`;
+
+const InfoLabel = styled.span`
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const InfoValue = styled.span`
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const BuffsDisplay = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
+`;
+
+const BuffItem = styled.span`
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: ${props => props.theme.radius.md};
+
+  ${props => props.$warning && `
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+  `}
+
+  ${props => props.$danger && `
+    color: ${props => props.theme.colors.danger};
+    background: rgba(239, 68, 68, 0.1);
+  `}
+`;
+
+const AttrCategory = styled.div`
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+`;
+
+const CategoryLabel = styled.div`
+  font-size: 0.63rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  padding-left: 2px;
+`;
+
+const AttrGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+`;
+
+const AttrCard = styled.div`
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 6px;
+  padding: 0.42rem 0.5rem;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+  }
+`;
+
+const AttrHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const AttrLabel = styled.span`
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const AttrValueText = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+`;
+
+const AttrProgressBg = styled.div`
+  height: 3px;
+  background: ${props => props.theme.colors.border};
+  border-radius: 2px;
+  overflow: hidden;
+`;
+
+const AttrProgressFill = styled.div`
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  width: ${props => props.$width}%;
+
+  ${props => props.$primary && `
+    background: linear-gradient(90deg, ${props.theme.colors.primary}, #818cf8);
+  `}
+
+  ${props => props.$secondary && `
+    background: linear-gradient(90deg, ${props.theme.colors.secondary}, #34d399);
+  `}
+`;
 
 function PlayerPanel({
   attributes,
@@ -33,93 +221,89 @@ function PlayerPanel({
   ];
 
   return (
-    <aside className={`player-panel ${isExpanded ? 'expanded' : 'collapsed'}`}>
-      <div className="panel-toggle" onClick={() => setIsExpanded(!isExpanded)}>
-        <span className="toggle-icon">{isExpanded ? '◀' : '▶'}</span>
-      </div>
+    <PlayerPanelWrapper $collapsed={!isExpanded}>
+      <PanelToggle onClick={() => setIsExpanded(!isExpanded)}>
+        <ToggleIcon>{isExpanded ? '◀' : '▶'}</ToggleIcon>
+      </PanelToggle>
 
-      <div className="panel-content">
-        {/* Player Status */}
-        <div className="panel-section">
-          <h3 className="panel-title">我的状态</h3>
-          <div className="player-info">
-            <div className="info-item">
-              <span className="info-label">余额</span>
-              <span className="info-value balance">¥{balance}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">SAN值</span>
-              <span className="info-value san">{san}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Rating</span>
-              <span className="info-value rating">{rating}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">GPA</span>
-              <span className="info-value gpa">{gpa.toFixed(2)}</span>
-            </div>
+      <PanelContent $collapsed={!isExpanded}>
+        <PanelSection>
+          <PanelTitle>我的状态</PanelTitle>
+          <PlayerInfo>
+            <InfoItem>
+              <InfoLabel>余额</InfoLabel>
+              <InfoValue>¥{balance}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>SAN值</InfoLabel>
+              <InfoValue>{san}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Rating</InfoLabel>
+              <InfoValue>{rating}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>GPA</InfoLabel>
+              <InfoValue>{gpa.toFixed(2)}</InfoValue>
+            </InfoItem>
             {buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0) && (
-              <div className="info-item buffs-display">
+              <BuffsDisplay>
                 {buffs.failedCourses > 0 && (
-                  <span className="buff-item warning">📉 挂科×{buffs.failedCourses}</span>
+                  <BuffItem $warning>📉 挂科×{buffs.failedCourses}</BuffItem>
                 )}
                 {buffs.academicWarnings > 0 && (
-                  <span className="buff-item danger">⚠️ 学业警告×{buffs.academicWarnings}</span>
+                  <BuffItem $danger>⚠️ 学业警告×{buffs.academicWarnings}</BuffItem>
                 )}
-              </div>
+              </BuffsDisplay>
             )}
-          </div>
-        </div>
+          </PlayerInfo>
+        </PanelSection>
 
-        {/* Attributes */}
-        <div className="panel-section">
-          <h3 className="panel-title">我的属性</h3>
+        <PanelSection>
+          <PanelTitle>我的属性</PanelTitle>
 
-          {/* General Attributes */}
-          <div className="attr-category">
-            <div className="category-label">通用能力</div>
-            <div className="attr-grid">
+          <AttrCategory>
+            <CategoryLabel>通用能力</CategoryLabel>
+            <AttrGrid>
               {generalAttributes.map(({ key, name, short }) => (
-                <div key={key} className="attr-card">
-                  <div className="attr-header">
-                    <span className="attr-label" title={name}>{short}</span>
-                    <span className="attr-value-text">{attributes[key]}</span>
-                  </div>
-                  <div className="attr-progress-bg">
-                    <div
-                      className="attr-progress-fill primary"
-                      style={{ width: `${Math.min(attributes[key] * 10, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
+                <AttrCard key={key}>
+                  <AttrHeader>
+                    <AttrLabel title={name}>{short}</AttrLabel>
+                    <AttrValueText>{attributes[key]}</AttrValueText>
+                  </AttrHeader>
+                  <AttrProgressBg>
+                    <AttrProgressFill
+                      $primary
+                      $width={Math.min(attributes[key] * 10, 100)}
+                    />
+                  </AttrProgressBg>
+                </AttrCard>
               ))}
-            </div>
-          </div>
+            </AttrGrid>
+          </AttrCategory>
 
-          {/* Specialized Attributes */}
-          <div className="attr-category">
-            <div className="category-label">专业知识</div>
-            <div className="attr-grid">
+          <AttrCategory>
+            <CategoryLabel>专业知识</CategoryLabel>
+            <AttrGrid>
               {specializedAttributes.map(({ key, name, short }) => (
-                <div key={key} className="attr-card">
-                  <div className="attr-header">
-                    <span className="attr-label" title={name}>{short}</span>
-                    <span className="attr-value-text">{attributes[key]}</span>
-                  </div>
-                  <div className="attr-progress-bg">
-                    <div
-                      className="attr-progress-fill secondary"
-                      style={{ width: `${Math.min(attributes[key] * 10, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
+                <AttrCard key={key}>
+                  <AttrHeader>
+                    <AttrLabel title={name}>{short}</AttrLabel>
+                    <AttrValueText>{attributes[key]}</AttrValueText>
+                  </AttrHeader>
+                  <AttrProgressBg>
+                    <AttrProgressFill
+                      $secondary
+                      $width={Math.min(attributes[key] * 10, 100)}
+                    />
+                  </AttrProgressBg>
+                </AttrCard>
               ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
+            </AttrGrid>
+          </AttrCategory>
+        </PanelSection>
+      </PanelContent>
+    </PlayerPanelWrapper>
   );
 }
 
