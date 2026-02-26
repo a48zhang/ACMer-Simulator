@@ -169,6 +169,12 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
   let sanPenalty = 0;
   let moneyPenalty = 0;
 
+  // 定义有效的属性列表
+  const validAttributes = [
+    'coding', 'algorithm', 'speed', 'stress',
+    'math', 'dp', 'graph', 'dataStructure', 'string', 'search', 'greedy', 'geometry'
+  ];
+
   // 应用所有选中的特性效果
   selectedTraits.forEach(traitId => {
     const trait = TRAITS.find(t => t.id === traitId);
@@ -177,7 +183,10 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
     // 应用固定属性加成
     if (trait.effects.initialStats) {
       Object.entries(trait.effects.initialStats).forEach(([attr, value]) => {
-        result[attr] = Math.max(0, (result[attr] || 0) + value);
+        // 只对有效属性进行操作
+        if (validAttributes.includes(attr)) {
+          result[attr] = Math.max(0, (result[attr] || 0) + value);
+        }
       });
     }
 
@@ -199,12 +208,13 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
 
   // 随机分配额外属性点
   if (totalRandomBonus > 0) {
-    const attributeKeys = Object.keys(result);
+    // 只使用有效的属性进行随机分配
+    const attributeKeys = validAttributes.filter(attr => result.hasOwnProperty(attr));
     let remainingBonus = totalRandomBonus;
     let attempts = 0;
     const maxAttempts = totalRandomBonus * 100; // Prevent infinite loop
 
-    while (remainingBonus > 0 && attempts < maxAttempts) {
+    while (remainingBonus > 0 && attempts < maxAttempts && attributeKeys.length > 0) {
       const randomAttr = attributeKeys[Math.floor(Math.random() * attributeKeys.length)];
       result[randomAttr] = (result[randomAttr] || 0) + 1;
       remainingBonus--;
