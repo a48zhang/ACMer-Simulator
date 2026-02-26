@@ -1,10 +1,128 @@
 import { useState } from 'react';
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const DialogOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const DialogBox = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 1.5rem;
+  box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.colors.border};
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
+const DialogTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+  margin-bottom: 0.5rem;
+`;
+
+const DialogSubtitle = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+`;
+
+const TeammateSelection = styled.div``;
+
+const SelectionStatus = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background: ${props => props.theme.colors.background};
+  border-radius: ${props => props.theme.radius.md};
+  display: inline-block;
+`;
+
+const TeammateList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+`;
+
+const TeammateCard = styled.div`
+  background: ${props => props.theme.colors.background};
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.md};
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+  }
+
+  ${props => props.$selected && `
+    border-color: ${props.theme.colors.primary};
+    background: rgba(99, 102, 241, 0.05);
+  `}
+`;
+
+const TeammateHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+`;
+
+const TeammateName = styled.span`
+  font-weight: 600;
+  font-size: 1rem;
+  color: ${props => props.theme.colors.textMain};
+`;
+
+const SelectedBadge = styled.span`
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: ${props => props.theme.radius.md};
+  font-weight: 600;
+`;
+
+const TeammateAttributes = styled.div``;
+
+const AttrSummary = styled.div`
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const AttrItem = styled.span`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const DialogActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+`;
 
 function TeammateSelectionDialog({ teammates, onConfirm, onCancel, contestName }) {
   const [selectedTeammates, setSelectedTeammates] = useState([]);
 
   const unlockedTeammates = teammates.filter(t => t.unlocked);
-  const maxTeamSize = 3; // 包括玩家自己，需要选2个队友
+  const maxTeamSize = 3;
 
   const toggleTeammate = (teammateId) => {
     setSelectedTeammates(prev => {
@@ -12,7 +130,6 @@ function TeammateSelectionDialog({ teammates, onConfirm, onCancel, contestName }
         return prev.filter(id => id !== teammateId);
       } else {
         if (prev.length >= 2) {
-          // 最多选2个队友
           return prev;
         }
         return [...prev, teammateId];
@@ -23,62 +140,59 @@ function TeammateSelectionDialog({ teammates, onConfirm, onCancel, contestName }
   const canConfirm = selectedTeammates.length === 2;
 
   return (
-    <div className="dialog-overlay">
-      <div className="dialog-box teammate-dialog">
-        <h2 className="dialog-title">👥 选择队友</h2>
-        <p className="dialog-subtitle">
+    <DialogOverlay>
+      <DialogBox>
+        <DialogTitle>👥 选择队友</DialogTitle>
+        <DialogSubtitle>
           {contestName ? `即将参加${contestName}，` : ''}请选择2位队友组队
-        </p>
+        </DialogSubtitle>
         
-        <div className="teammate-selection">
-          <div className="selection-status">
+        <TeammateSelection>
+          <SelectionStatus>
             已选择: {selectedTeammates.length} / 2
-          </div>
+          </SelectionStatus>
           
-          <div className="teammate-list">
+          <TeammateList>
             {unlockedTeammates.map(teammate => {
               const isSelected = selectedTeammates.includes(teammate.id);
               return (
-                <div
+                <TeammateCard
                   key={teammate.id}
-                  className={`teammate-card ${isSelected ? 'selected' : ''}`}
+                  $selected={isSelected}
                   onClick={() => toggleTeammate(teammate.id)}
                 >
-                  <div className="teammate-header">
-                    <span className="teammate-name">{teammate.name}</span>
-                    {isSelected && <span className="selected-badge">✓</span>}
-                  </div>
-                  <div className="teammate-attributes">
-                    <div className="attr-summary">
-                      <span>💻 {teammate.attributes.coding}</span>
-                      <span>🧠 {teammate.attributes.algorithm}</span>
-                      <span>🏃 {teammate.attributes.speed}</span>
-                      <span>🧘 {teammate.attributes.stress}</span>
-                    </div>
-                  </div>
-                </div>
+                  <TeammateHeader>
+                    <TeammateName>{teammate.name}</TeammateName>
+                    {isSelected && <SelectedBadge>✓</SelectedBadge>}
+                  </TeammateHeader>
+                  <TeammateAttributes>
+                    <AttrSummary>
+                      <AttrItem>💻 {teammate.attributes.coding}</AttrItem>
+                      <AttrItem>🧠 {teammate.attributes.algorithm}</AttrItem>
+                      <AttrItem>🏃 {teammate.attributes.speed}</AttrItem>
+                      <AttrItem>🧘 {teammate.attributes.stress}</AttrItem>
+                    </AttrSummary>
+                  </TeammateAttributes>
+                </TeammateCard>
               );
             })}
-          </div>
-        </div>
+          </TeammateList>
+        </TeammateSelection>
 
-        <div className="dialog-actions">
-          <button
-            className="btn btn-secondary"
-            onClick={onCancel}
-          >
+        <DialogActions>
+          <Button variant="secondary" onClick={onCancel}>
             取消
-          </button>
-          <button
-            className="btn btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             onClick={() => onConfirm(selectedTeammates)}
             disabled={!canConfirm}
           >
             确认组队
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogActions>
+      </DialogBox>
+    </DialogOverlay>
   );
 }
 
