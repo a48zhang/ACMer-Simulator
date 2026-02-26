@@ -1,4 +1,93 @@
-// PracticeContestSelectionDialog 组件 - 选择练习赛类型
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const DialogOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const DialogBox = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 1.5rem;
+  box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.colors.border};
+  max-width: 700px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+`;
+
+const DialogTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+  margin-bottom: 0.5rem;
+`;
+
+const DialogSubtitle = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+`;
+
+const ContestGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ContestCard = styled.div`
+  padding: 1rem;
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.md};
+  background: ${props => props.theme.colors.background};
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const ContestName = styled.div`
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: ${props => props.theme.colors.textMain};
+  margin-bottom: 0.25rem;
+`;
+
+const ContestDesc = styled.div`
+  font-size: 0.8125rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.5rem;
+`;
+
+const ContestCost = styled.div`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.primary};
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: ${props => props.theme.radius.sm};
+  display: inline-block;
+`;
+
+const DialogFooter = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+`;
+
 function PracticeContestSelectionDialog({ onSelect, onCancel }) {
     const contestTypes = [
         {
@@ -70,64 +159,31 @@ function PracticeContestSelectionDialog({ onSelect, onCancel }) {
     ];
 
     return (
-        <div className="dialog-overlay">
-            <div className="dialog-box">
-                <h2 className="dialog-title">🏆 选择练习赛</h2>
-                <p className="dialog-subtitle">选择你要参加的练习赛类型</p>
+        <DialogOverlay>
+            <DialogBox>
+                <DialogTitle>🏆 选择练习赛</DialogTitle>
+                <DialogSubtitle>选择你要参加的练习赛类型</DialogSubtitle>
                 
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                    gap: '1rem',
-                    marginBottom: '1.5rem'
-                }}>
+                <ContestGrid>
                     {contestTypes.map(contest => (
-                        <div
+                        <ContestCard
                             key={contest.id}
-                            style={{
-                                padding: '1rem',
-                                border: '2px solid var(--border)',
-                                borderRadius: 'var(--radius-md)',
-                                background: 'var(--background)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--primary)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--border)';
-                            }}
                             onClick={() => onSelect(contest)}
                         >
-                            <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-                                {contest.name}
-                            </div>
-                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                {contest.description}
-                            </div>
-                            <div style={{ 
-                                fontSize: '0.875rem', 
-                                fontWeight: 600, 
-                                color: 'var(--primary)',
-                                background: 'rgba(99, 102, 241, 0.1)',
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: 'var(--radius-sm)',
-                                display: 'inline-block'
-                            }}>
-                                ⚡ {contest.cost} AP
-                            </div>
-                        </div>
+                            <ContestName>{contest.name}</ContestName>
+                            <ContestDesc>{contest.description}</ContestDesc>
+                            <ContestCost>⚡ {contest.cost} AP</ContestCost>
+                        </ContestCard>
                     ))}
-                </div>
+                </ContestGrid>
 
-                <div className="dialog-footer">
-                    <button className="btn btn-secondary" onClick={onCancel}>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={onCancel}>
                         取消
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogBox>
+        </DialogOverlay>
     );
 }
 
