@@ -75,8 +75,8 @@
 - [ ] 提交: `git commit -m "refactor: GlobalStatistics styled-components重构"`
 
 ### 阶段4: 对话框组件重构
-- [ ] ConfirmDialog
-- [ ] 提交: `git commit -m "refactor: ConfirmDialog styled-components重构"`
+- [x] ConfirmDialog
+- [x] 提交: `git commit -m "refactor: ConfirmDialog styled-components重构"`
 - [ ] Notification
 - [ ] 提交: `git commit -m "refactor: Notification styled-components重构"`
 - [ ] ContestResultDialog
