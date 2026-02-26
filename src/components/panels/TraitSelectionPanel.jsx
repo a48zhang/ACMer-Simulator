@@ -296,22 +296,29 @@ const TraitCard = styled.div`
     }
   }
 
-  ${props => props.$selected && `
-    border-color: ${props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
-    background: ${props.$negative ? 'rgba(245, 158, 11, 0.06)' : 'rgba(99, 102, 241, 0.06)'};
-    box-shadow: ${props.$negative ? '0 0 0 3px rgba(245, 158, 11, 0.15)' : '0 0 0 3px rgba(99, 102, 241, 0.15)'};
-    animation: ${pulseGlow} 2s ease-in-out infinite;
+  /* Selected state - separated to avoid nested interpolation issues */
+  border-color: ${props => props.$selected
+    ? (props.$negative ? props.theme.colors.warning : props.theme.colors.primary)
+    : props.theme.colors.border};
+  background: ${props => props.$selected
+    ? (props.$negative ? 'rgba(245, 158, 11, 0.06)' : 'rgba(99, 102, 241, 0.06)')
+    : props.theme.colors.surface};
+  box-shadow: ${props => props.$selected
+    ? (props.$negative ? '0 0 0 3px rgba(245, 158, 11, 0.15)' : '0 0 0 3px rgba(99, 102, 241, 0.15)')
+    : 'none'};
+  animation: ${props => props.$selected ? pulseGlow : 'none'} 2s ease-in-out infinite;
 
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: ${props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
-    }
-  `}
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => props.$selected
+      ? (props.$negative ? props.theme.colors.warning : props.theme.colors.primary)
+      : 'transparent'};
+  }
 `;
 
 const TraitCardHeader = styled.div`
