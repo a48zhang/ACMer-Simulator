@@ -1,43 +1,120 @@
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const DialogOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const DialogBox = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 2rem;
+  box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.colors.border};
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+`;
+
+const GameOverIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+`;
+
+const DialogTitle = styled.h3`
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+  margin-bottom: 0.75rem;
+`;
+
+const DialogMessage = styled.p`
+  margin: 0.75rem 0 1.25rem;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.7;
+  font-size: 0.95rem;
+`;
+
+const ContestResultGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ResultItem = styled.div`
+  background: ${props => props.theme.colors.background};
+  border-radius: ${props => props.theme.radius.md};
+  padding: 1rem;
+`;
+
+const ResultLabel = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.25rem;
+`;
+
+const ResultValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const DialogActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+`;
+
 function GameOverDialog({ reason, stats, onRestart }) {
     return (
-        <div className="dialog-overlay">
-            <div className="dialog-box" style={{ maxWidth: '480px', textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+        <DialogOverlay>
+            <DialogBox>
+                <GameOverIcon>
                     {reason === 'graduation' ? '🎓' : '💀'}
-                </div>
-                <h3 className="dialog-title">
+                </GameOverIcon>
+                <DialogTitle>
                     {reason === 'graduation' ? '游戏结束 — 毕业！' : '游戏结束 — 退学'}
-                </h3>
-                <p style={{ margin: '0.75rem 0 1.25rem', color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                </DialogTitle>
+                <DialogMessage>
                     {reason === 'graduation'
                         ? '恭喜你完成了四年的ACM旅程！'
                         : reason}
-                </p>
+                </DialogMessage>
 
-                <div className="contest-result-grid" style={{ marginBottom: '1.5rem' }}>
-                    <div className="result-item">
-                        <div className="result-label">参赛次数</div>
-                        <div className="result-value">{stats.playerContests}</div>
-                    </div>
-                    <div className="result-item">
-                        <div className="result-label">解题总数</div>
-                        <div className="result-value">{stats.playerProblems}</div>
-                    </div>
-                    <div className="result-item">
-                        <div className="result-label">最终 Rating</div>
-                        <div className="result-value">{stats.rating}</div>
-                    </div>
-                    <div className="result-item">
-                        <div className="result-label">最终 GPA</div>
-                        <div className="result-value">{stats.gpa?.toFixed(2)}</div>
-                    </div>
-                </div>
+                <ContestResultGrid>
+                    <ResultItem>
+                        <ResultLabel>参赛次数</ResultLabel>
+                        <ResultValue>{stats.playerContests}</ResultValue>
+                    </ResultItem>
+                    <ResultItem>
+                        <ResultLabel>解题总数</ResultLabel>
+                        <ResultValue>{stats.playerProblems}</ResultValue>
+                    </ResultItem>
+                    <ResultItem>
+                        <ResultLabel>最终 Rating</ResultLabel>
+                        <ResultValue>{stats.rating}</ResultValue>
+                    </ResultItem>
+                    <ResultItem>
+                        <ResultLabel>最终 GPA</ResultLabel>
+                        <ResultValue>{stats.gpa?.toFixed(2)}</ResultValue>
+                    </ResultItem>
+                </ContestResultGrid>
 
-                <div className="dialog-actions" style={{ justifyContent: 'center' }}>
-                    <button className="btn btn-primary" onClick={onRestart}>重新开始</button>
-                </div>
-            </div>
-        </div>
+                <DialogActions>
+                    <Button variant="primary" onClick={onRestart}>重新开始</Button>
+                </DialogActions>
+            </DialogBox>
+        </DialogOverlay>
     );
 }
 
