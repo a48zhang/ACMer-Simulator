@@ -1,3 +1,86 @@
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const DialogOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const DialogBox = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 1.5rem;
+  box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.colors.border};
+  max-width: 500px;
+  width: 90%;
+`;
+
+const DialogTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+  margin-bottom: 0.5rem;
+`;
+
+const DialogSubtitle = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+`;
+
+const ContestResultGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ResultItem = styled.div`
+  background: ${props => props.theme.colors.background};
+  border-radius: ${props => props.theme.radius.md};
+  padding: 1rem;
+  text-align: center;
+`;
+
+const ResultLabel = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.5rem;
+`;
+
+const ResultValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const DialogHint = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+
+  strong {
+    color: ${props => props.theme.colors.textMain};
+    font-weight: 600;
+  }
+`;
+
+const DialogActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+`;
+
 function ContestResultDialog({ outcome, onConfirm }) {
     if (!outcome) return null;
     const { total, solved, attempts, ratingDelta, scoreDelta, sanDelta, timeUsed, performanceRating, weakAttr } = outcome;
@@ -13,43 +96,43 @@ function ContestResultDialog({ outcome, onConfirm }) {
     };
 
     return (
-        <div className="dialog-overlay">
-            <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
-                <h3 className="dialog-title">📊 比赛结算</h3>
-                <p className="dialog-subtitle">本次比赛用时 {timeUsed} 分钟，解出 {solved}/{total} 题</p>
+        <DialogOverlay>
+            <DialogBox onClick={(e) => e.stopPropagation()}>
+                <DialogTitle>📊 比赛结算</DialogTitle>
+                <DialogSubtitle>本次比赛用时 {timeUsed} 分钟，解出 {solved}/{total} 题</DialogSubtitle>
 
-                <div className="contest-result-grid">
-                    <div className="result-item">
-                        <div className="result-label">Rating 变化</div>
-                        <div className="result-value">{ratingText}</div>
-                    </div>
+                <ContestResultGrid>
+                    <ResultItem>
+                        <ResultLabel>Rating 变化</ResultLabel>
+                        <ResultValue>{ratingText}</ResultValue>
+                    </ResultItem>
                     {performanceRating != null && (
-                        <div className="result-item">
-                            <div className="result-label">表现分</div>
-                            <div className="result-value">{performanceRating}</div>
-                        </div>
+                        <ResultItem>
+                            <ResultLabel>表现分</ResultLabel>
+                            <ResultValue>{performanceRating}</ResultValue>
+                        </ResultItem>
                     )}
-                    <div className="result-item">
-                        <div className="result-label">SAN 变化</div>
-                        <div className="result-value">{sanText}</div>
-                    </div>
-                    <div className="result-item">
-                        <div className="result-label">尝试次数</div>
-                        <div className="result-value">{attempts}</div>
-                    </div>
-                </div>
+                    <ResultItem>
+                        <ResultLabel>SAN 变化</ResultLabel>
+                        <ResultValue>{sanText}</ResultValue>
+                    </ResultItem>
+                    <ResultItem>
+                        <ResultLabel>尝试次数</ResultLabel>
+                        <ResultValue>{attempts}</ResultValue>
+                    </ResultItem>
+                </ContestResultGrid>
 
                 {weakAttr && (
-                    <p className="dialog-hint">
+                    <DialogHint>
                         💡 本场最弱项：<strong>{attrNames[weakAttr] || weakAttr}</strong>，建议加强训练。
-                    </p>
+                    </DialogHint>
                 )}
 
-                <div className="dialog-actions">
-                    <button className="btn btn-primary" onClick={onConfirm}>确认结算</button>
-                </div>
-            </div>
-        </div>
+                <DialogActions>
+                    <Button variant="primary" onClick={onConfirm}>确认结算</Button>
+                </DialogActions>
+            </DialogBox>
+        </DialogOverlay>
     );
 }
 

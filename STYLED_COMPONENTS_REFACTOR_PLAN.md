@@ -79,8 +79,8 @@
 - [x] 提交: `git commit -m "refactor: ConfirmDialog styled-components重构"`
 - [x] Notification
 - [x] 提交: `git commit -m "refactor: Notification styled-components重构"`
-- [ ] ContestResultDialog
-- [ ] 提交: `git commit -m "refactor: ContestResultDialog styled-components重构"`
+- [x] ContestResultDialog
+- [x] 提交: `git commit -m "refactor: ContestResultDialog styled-components重构"`
 - [ ] TeammateSelectionDialog
 - [ ] 提交: `git commit -m "refactor: TeammateSelectionDialog styled-components重构"`
 - [ ] TraitSelectionDialog
