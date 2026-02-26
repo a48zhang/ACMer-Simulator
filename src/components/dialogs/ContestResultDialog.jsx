@@ -90,7 +90,7 @@ function ContestResultDialog({ outcome, onConfirm }) {
 
     const attrNames = {
         algorithm: '算法思维', coding: '代码能力', speed: '速度', stress: '抗压',
-        teamwork: '团队配合', english: '英语', math: '数学', dp: '动态规划',
+        math: '数学', dp: '动态规划',
         graph: '图论', dataStructure: '数据结构', string: '字符串',
         search: '搜索', greedy: '贪心', geometry: '计算几何'
     };

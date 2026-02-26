@@ -31,6 +31,7 @@ const ActivityCard = styled.div`
   border: 1px solid ${props => props.theme.colors.border};
   display: flex;
   flex-direction: column;
+  min-height: 160px;
 
   &:hover {
     transform: translateY(-2px);
@@ -80,6 +81,7 @@ const ActivityButton = styled.button`
   transition: all 0.15s;
   background-color: ${props => props.theme.colors.secondary};
   color: white;
+  margin-top: auto;
 
   &:disabled {
     opacity: 0.5;

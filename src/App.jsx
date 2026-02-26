@@ -22,7 +22,6 @@ import { scheduleMonthlyEvents } from './data/events'
 import { createContestSession, evaluateAttempt, calculateContestOutcome, readProblem, thinkProblem, codeProblem, debugProblem } from './data/contests'
 
 // 游戏常量
-const MAX_ATTRIBUTE_VALUE = 10;
 const INITIAL_SAN = 100;
 const INITIAL_BALANCE = 3000;
 const MIN_GPA = 0;
@@ -38,7 +37,7 @@ const applyAttributeChanges = (currentAttributes, changes) => {
   const updated = { ...currentAttributes };
   Object.entries(changes).forEach(([attr, delta]) => {
     if (updated[attr] === undefined) return;
-    updated[attr] = clampValue(updated[attr] + delta, 0, MAX_ATTRIBUTE_VALUE);
+    updated[attr] = Math.max(0, updated[attr] + delta);
   });
   return updated;
 };
@@ -52,8 +51,6 @@ const createBaseAttributes = () => ({
   algorithm: randomStarterValue(),
   speed: randomStarterValue(),
   stress: randomStarterValue(),
-  teamwork: randomStarterValue(),
-  english: randomStarterValue(),
   math: randomStarterValue(),
   dp: 0,
   graph: 0,
@@ -310,7 +307,6 @@ function App() {
     const problem = session.problems.find(p => p.id === problemId);
     if (!problem) return;
     if (problem.status !== 'coding' && problem.status !== 'submitted_fail') return;
-    if (problem.thinkBonus >= 2) return; // 最多2次思考加成
 
     const thinkResult = thinkProblem(problem, gameState.attributes);
     addLog(`🧠 思考题目 ${problem.letter}：耗时 ${thinkResult.thinkTime} 分钟`, 'info');
@@ -669,7 +665,7 @@ function App() {
         id: 'teammate_lu_renjia',
         name: '陆任佳',
         attributes: {
-          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
+          coding: 1, algorithm: 1, speed: 1, stress: 1,
           math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
         },
         unlocked: true
@@ -678,7 +674,7 @@ function App() {
         id: 'teammate_lu_renyi',
         name: '路仁义',
         attributes: {
-          coding: 1, algorithm: 1, speed: 1, stress: 1, teamwork: 1, english: 1,
+          coding: 1, algorithm: 1, speed: 1, stress: 1,
           math: 1, dp: 1, graph: 1, dataStructure: 1, string: 1, search: 1, greedy: 1, geometry: 1
         },
         unlocked: true
@@ -750,10 +746,11 @@ function App() {
   // 重置游戏
   const resetGame = () => {
     setConfirmDialog({
-      message: '确定要重置游戏吗？所有进度将被清除！',
+      message: '确定要退学重开吗？将退回首页重新开始！',
       onConfirm: () => {
         setConfirmDialog(null);
         setGameOverReason(null);
+        setGamePhase('intro');
         setGameState({
           isRunning: false,
           isPaused: false,
@@ -784,7 +781,7 @@ function App() {
         });
         setTraitsSelected(false);
         setLogs([]);
-        addLog('🔄 游戏已重置', 'warning');
+        addLog('🔄 已退学重开，退回首页', 'warning');
       }
     });
   };
@@ -1160,6 +1157,7 @@ function App() {
             rating={gameState.rating}
             gpa={gameState.gpa}
             buffs={gameState.buffs}
+            onReset={resetGame}
           />
         )}
 
@@ -1222,7 +1220,7 @@ function App() {
       </div>
 
       <footer>
-        <p>© 2025 ACMer选手模拟器</p>
+        <p>ACMer选手模拟器</p>
       </footer>
 
       {notification && (

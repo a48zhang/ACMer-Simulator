@@ -12,7 +12,7 @@ const SKILL_TYPES = {
 // 中文属性名映射
 const ATTR_NAMES_CN = {
     algorithm: '算法', coding: '代码', speed: '速度', stress: '抗压',
-    teamwork: '团队', english: '英语', math: '数学',
+    math: '数学',
     dp: '动态规划', graph: '图论', dataStructure: '数据结构',
     string: '字符串', search: '搜索', greedy: '贪心', geometry: '计算几何'
 };
@@ -46,22 +46,65 @@ export const readProblem = (problem, attributes) => {
 };
 
 // 思考阶段：返回耗时和加成信息
-// 使用阈值机制：每次加成乘以1-2之间的随机小数，点的越多收益越低
+// 思考效果与玩家属性、题目难度、属性匹配度相关，且逐步递减
+// 思考耗时是与玩家属性和题目难度相关的定值
 export const thinkProblem = (problem, attributes = {}) => {
-    const baseTime = 4 + problem.difficulty;
+    // ========== 耗时计算（定值） ==========
+    // 基础时间随难度增长
+    const baseTime = 5 + problem.difficulty * 1.2;
+    // 速度属性减少耗时
     const speedRatio = (attributes.speed ?? 0) / 10;
-    const timeMultiplier = Math.max(0.3, 1.0 - speedRatio * 0.7);
-    const thinkTime = Math.max(1, Math.round(baseTime * timeMultiplier));
-    
-    const bonusMultiplier = 1 + Math.random();
-    const bonusIncrease = (0.5 / (problem.thinkBonus + 1)) * bonusMultiplier;
-    const newThinkBonus = Math.min(2, problem.thinkBonus + bonusIncrease);
-    
+    // 算法属性也能略微提升思考速度
+    const algorithmRatio = (attributes.algorithm ?? 0) / 10;
+    const timeMultiplier = Math.max(0.35, 1.0 - speedRatio * 0.5 - algorithmRatio * 0.2);
+    // 固定耗时（取整）
+    const thinkTime = Math.max(2, Math.round(baseTime * timeMultiplier));
+
+    // ========== 思考效果计算 ==========
+    // 1. 基础加成：算法属性越高，基础效果越好
+    const algorithmSkill = (attributes.algorithm ?? 0) / 10;
+    let baseBonus = 0.3 + algorithmSkill * 0.4; // 0.3 - 0.7
+
+    // 2. 属性匹配度加成：检查玩家属性与题目要求的匹配程度
+    const attrKeys = Object.keys(problem.requires || {});
+    let matchScore = 0;
+    let totalReq = 0;
+
+    attrKeys.forEach(key => {
+        const playerVal = (attributes[key] ?? 0);
+        const reqVal = problem.requires[key] ?? 0;
+        totalReq += reqVal;
+        // 匹配度 = 玩家属性 / 题目要求，上限为 1
+        matchScore += Math.min(1, playerVal / Math.max(1, reqVal)) * reqVal;
+    });
+
+    const matchRatio = totalReq > 0 ? matchScore / totalReq : 0.5;
+    // 匹配度带来的加成：0 - 0.4
+    const matchBonus = matchRatio * 0.4;
+
+    // 3. 难度修正：题目越难，思考越不容易获得高加成
+    const difficultyFactor = Math.max(0.5, 1.0 - (problem.difficulty - 1) * 0.05);
+
+    // 4. 递减因子：思考次数越多，收益越低，最终趋近于 5%
+    // 使用指数衰减：第1次约100%，第5次约30%，第10次约10%，最终趋近5%
+    const minDecay = 0.05;
+    const decayFactor = minDecay + (1 - minDecay) * Math.exp(-problem.thinkBonus * 0.3);
+
+    // 综合计算本次加成
+    const totalBase = (baseBonus + matchBonus) * difficultyFactor;
+    const bonusIncrease = totalBase * decayFactor;
+    const newThinkBonus = problem.thinkBonus + bonusIncrease;
+
+    // ========== 标签揭露逻辑 ==========
     let newTags = null;
     if (problem.revealedInfo && problem.revealedInfo.tags) {
         const currentTags = problem.revealedInfo.tags;
         const attrKeys = Object.keys(problem.requires || {}).filter(k => SKILL_TYPES.specialized.includes(k));
-        if (attrKeys.length > currentTags.length && Math.random() < 0.4) {
+        // 揭露新标签的概率是定值，与玩家算法属性相关
+        // 算法0：20%，算法10：50%
+        const algorithmSkillForReveal = (attributes.algorithm ?? 0) / 10;
+        const revealChance = 0.2 + algorithmSkillForReveal * 0.3;
+        if (attrKeys.length > currentTags.length && Math.random() < revealChance) {
             const availableTags = attrKeys.filter(k => !currentTags.includes(ATTR_NAMES_CN[k] || k));
             if (availableTags.length > 0) {
                 const newTag = ATTR_NAMES_CN[availableTags[Math.floor(Math.random() * availableTags.length)]] || availableTags[0];
@@ -69,10 +112,10 @@ export const thinkProblem = (problem, attributes = {}) => {
             }
         }
     }
-    
-    return { 
-        thinkTime, 
-        newThinkBonus, 
+
+    return {
+        thinkTime,
+        newThinkBonus,
         newTags
     };
 };

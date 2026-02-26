@@ -7,8 +7,6 @@ const ATTRIBUTE_MULTIPLIERS = {
     ALGORITHM: 12,
     SPEED: 8,
     STRESS: 6,
-    TEAMWORK: 7,
-    ENGLISH: 5,
     // 专业属性
     MATH: 15,
     DP: 13,
@@ -29,8 +27,6 @@ const participateInContest = (attributes) => {
     const algorithmBonus = attributes.algorithm * ATTRIBUTE_MULTIPLIERS.ALGORITHM;
     const speedBonus = attributes.speed * ATTRIBUTE_MULTIPLIERS.SPEED;
     const stressBonus = attributes.stress * ATTRIBUTE_MULTIPLIERS.STRESS;
-    const teamworkBonus = attributes.teamwork * ATTRIBUTE_MULTIPLIERS.TEAMWORK;
-    const englishBonus = attributes.english * ATTRIBUTE_MULTIPLIERS.ENGLISH;
     // 专业属性
     const mathBonus = attributes.math * ATTRIBUTE_MULTIPLIERS.MATH;
     const dpBonus = attributes.dp * ATTRIBUTE_MULTIPLIERS.DP;
@@ -42,7 +38,7 @@ const participateInContest = (attributes) => {
     const geometryBonus = attributes.geometry * ATTRIBUTE_MULTIPLIERS.GEOMETRY;
 
     return baseScore + codingBonus + algorithmBonus +
-        speedBonus + stressBonus + teamworkBonus + englishBonus +
+        speedBonus + stressBonus +
         mathBonus + dpBonus + graphBonus + dataStructureBonus +
         stringBonus + searchBonus + greedyBonus + geometryBonus +
         Math.floor(Math.random() * 50);

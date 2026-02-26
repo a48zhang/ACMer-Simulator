@@ -3,9 +3,7 @@ function AttributeAllocation({ attributes, availablePoints, onIncrease, onDecrea
     { key: 'coding', name: '💻 编程能力' },
     { key: 'algorithm', name: '🧮 算法思维' },
     { key: 'speed', name: '🏃 速度' },
-    { key: 'stress', name: '🧘 抗压能力' },
-    { key: 'teamwork', name: '🤝 团队协作' },
-    { key: 'english', name: '🌐 英语能力' }
+    { key: 'stress', name: '🧘 抗压能力' }
   ];
 
   const specializedAttributes = [

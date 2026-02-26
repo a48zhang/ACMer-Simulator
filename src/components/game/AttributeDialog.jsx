@@ -1,14 +1,12 @@
 import { useState } from 'react';
 
-function AttributeDialog({ onConfirm, initialPoints = 20, maxValue = 10 }) {
+function AttributeDialog({ onConfirm, initialPoints = 20 }) {
   const [availablePoints, setAvailablePoints] = useState(initialPoints);
   const [attributes, setAttributes] = useState({
     coding: 0,
     algorithm: 0,
     speed: 0,
     stress: 0,
-    teamwork: 0,
-    english: 0,
     math: 0,
     dp: 0,
     graph: 0,
@@ -23,9 +21,7 @@ function AttributeDialog({ onConfirm, initialPoints = 20, maxValue = 10 }) {
     { key: 'coding', name: '💻 编程能力' },
     { key: 'algorithm', name: '🧮 算法思维' },
     { key: 'speed', name: '🏃 速度' },
-    { key: 'stress', name: '🧘 抗压能力' },
-    { key: 'teamwork', name: '🤝 团队协作' },
-    { key: 'english', name: '🌐 英语能力' }
+    { key: 'stress', name: '🧘 抗压能力' }
   ];
 
   const specializedAttributes = [
@@ -40,7 +36,7 @@ function AttributeDialog({ onConfirm, initialPoints = 20, maxValue = 10 }) {
   ];
 
   const increaseAttribute = (key) => {
-    if (availablePoints > 0 && attributes[key] < maxValue) {
+    if (availablePoints > 0) {
       setAttributes(prev => ({
         ...prev,
         [key]: prev[key] + 1
@@ -93,10 +89,10 @@ function AttributeDialog({ onConfirm, initialPoints = 20, maxValue = 10 }) {
                       -
                     </button>
                     <span className="dialog-attr-val">{attributes[key]}</span>
-                    <button 
+                    <button
                       className="dialog-btn"
                       onClick={() => increaseAttribute(key)}
-                      disabled={availablePoints === 0 || attributes[key] >= maxValue}
+                      disabled={availablePoints === 0}
                     >
                       +
                     </button>
@@ -122,10 +118,10 @@ function AttributeDialog({ onConfirm, initialPoints = 20, maxValue = 10 }) {
                       -
                     </button>
                     <span className="dialog-attr-val">{attributes[key]}</span>
-                    <button 
+                    <button
                       className="dialog-btn"
                       onClick={() => increaseAttribute(key)}
-                      disabled={availablePoints === 0 || attributes[key] >= maxValue}
+                      disabled={availablePoints === 0}
                     >
                       +
                     </button>

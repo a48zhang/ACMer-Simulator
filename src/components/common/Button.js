@@ -31,7 +31,16 @@ export const Button = styled.button`
   ${props => props.variant === 'secondary' && `
     background-color: ${props.theme.colors.secondary};
     color: white;
-    
+
+    &:hover:not(:disabled) {
+      background-color: ${props.theme.colors.secondaryHover};
+    }
+  `}
+
+  ${props => props.variant === 'success' && `
+    background-color: ${props.theme.colors.secondary};
+    color: white;
+
     &:hover:not(:disabled) {
       background-color: ${props.theme.colors.secondaryHover};
     }

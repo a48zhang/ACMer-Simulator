@@ -1,149 +1,207 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { Button } from '../common/Button';
 
 const PlayerPanelWrapper = styled.aside`
-  width: 268px;
-  background: #ffffff;
+  width: 280px;
+  background: linear-gradient(180deg, ${props => props.theme.colors.surface} 0%, #f8fafc 100%);
   border-right: 1px solid ${props => props.theme.colors.border};
   overflow-y: auto;
-  transition: width 0.3s ease;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   color: ${props => props.theme.colors.textMain};
 
-  ${props => props.$collapsed && `
-    width: 40px;
-  `}
-`;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
 
-const PanelToggle = styled.div`
-  padding: 0.5rem;
-  text-align: center;
-  cursor: pointer;
-  border-bottom: 1px solid ${props => props.theme.colors.border};
-  color: ${props => props.theme.colors.textSecondary};
-  background: ${props => props.theme.colors.background};
-  font-size: 0.75rem;
-  transition: background 0.2s;
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-  &:hover {
+  &::-webkit-scrollbar-thumb {
     background: ${props => props.theme.colors.border};
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
   }
 `;
 
-const ToggleIcon = styled.span`
-  display: inline-block;
-`;
-
 const PanelContent = styled.div`
-  padding: 0.875rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-
-  ${props => props.$collapsed && `
-    display: none;
-  `}
+  flex: 1;
 `;
 
 const PanelSection = styled.div``;
 
 const PanelTitle = styled.h3`
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.625rem;
   font-weight: 700;
-`;
-
-const PlayerInfo = styled.div`
-  display: grid;
-  gap: 0.35rem;
-`;
-
-const InfoItem = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0.65rem;
-  background: ${props => props.theme.colors.background};
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: ${props => props.theme.radius.md};
-  transition: border-color 0.15s;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
 
-  &:hover {
-    border-color: #c7d2fe;
+const PanelTitleLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: linear-gradient(180deg, ${props => props.theme.colors.primary} 0%, #8b5cf6 100%);
+    border-radius: 2px;
+    flex-shrink: 0;
   }
 `;
 
-const InfoLabel = styled.span`
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: ${props => props.theme.colors.textSecondary};
+const ResetButton = styled(Button)`
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
 `;
 
-const InfoValue = styled.span`
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: ${props => props.theme.colors.primary};
+const StatusCards = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+`;
+
+const StatusCard = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: ${props => props.$accentColor || props.theme.colors.primary};
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  &:hover {
+    border-color: ${props => props.$accentColor || props.theme.colors.primary};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+`;
+
+const StatusIcon = styled.div`
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+`;
+
+const StatusLabel = styled.div`
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+`;
+
+const StatusValue = styled.div`
+  font-weight: 800;
+  font-size: 1.125rem;
+  color: ${props => props.$color || props.theme.colors.textMain};
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 `;
 
 const BuffsDisplay = styled.div`
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  padding-top: 0.25rem;
+  margin-top: 0.75rem;
 `;
 
 const BuffItem = styled.span`
   font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.375rem 0.625rem;
   border-radius: ${props => props.theme.radius.md};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 
   ${props => props.$warning && `
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fcd34d;
   `}
 
   ${props => props.$danger && `
-    color: ${props => props.theme.colors.danger};
-    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 1px solid #fca5a5;
   `}
 `;
 
 const AttrCategory = styled.div`
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   flex-shrink: 0;
 `;
 
+const CategoryHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+`;
+
 const CategoryLabel = styled.div`
-  font-size: 0.63rem;
+  font-size: 0.65rem;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.4rem;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.1em;
   font-weight: 700;
-  padding-left: 2px;
+  padding-left: 4px;
 `;
 
 const AttrGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
+  gap: 0.5rem;
 `;
 
 const AttrCard = styled.div`
-  background: ${props => props.theme.colors.background};
+  background: ${props => props.theme.colors.surface};
   border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 6px;
-  padding: 0.42rem 0.5rem;
-  transition: border-color 0.15s, background 0.15s;
+  border-radius: ${props => props.theme.radius.md};
+  padding: 0.625rem;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: #eef2ff;
+    background: #fafbff;
     border-color: #c7d2fe;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
   }
 `;
 
@@ -151,40 +209,71 @@ const AttrHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0.375rem;
+  gap: 0.375rem;
 `;
 
 const AttrLabel = styled.span`
-  font-size: 0.72rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 600;
   color: ${props => props.theme.colors.textSecondary};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const AttrValueText = styled.span`
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 800;
   color: ${props => props.theme.colors.textMain};
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 `;
 
 const AttrProgressBg = styled.div`
-  height: 3px;
+  height: 5px;
   background: ${props => props.theme.colors.border};
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 `;
 
 const AttrProgressFill = styled.div`
   height: 100%;
-  border-radius: 2px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   width: ${props => props.$width}%;
+  position: relative;
 
-  ${props => props.$primary && `
-    background: linear-gradient(90deg, ${props.theme.colors.primary}, #818cf8);
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  ${props => props.$primary && !props.$gradient && `
+    background: linear-gradient(90deg, ${props.theme.colors.primary} 0%, #818cf8 100%);
   `}
 
-  ${props => props.$secondary && `
-    background: linear-gradient(90deg, ${props.theme.colors.secondary}, #34d399);
+  ${props => props.$secondary && !props.$gradient && `
+    background: linear-gradient(90deg, ${props.theme.colors.secondary} 0%, #34d399 100%);
+  `}
+
+  ${props => props.$primary && props.$gradient && `
+    background: linear-gradient(90deg, ${props.theme.colors.primary} 0%, #818cf8 50%, #f59e0b 100%);
+  `}
+
+  ${props => props.$secondary && props.$gradient && `
+    background: linear-gradient(90deg, ${props.theme.colors.secondary} 0%, #34d399 50%, #f59e0b 100%);
   `}
 `;
 
@@ -196,17 +285,14 @@ function PlayerPanel({
   san,
   rating,
   gpa,
-  buffs
+  buffs,
+  onReset
 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
-
   const generalAttributes = [
     { key: 'coding', name: '💻 编程', short: '编程' },
     { key: 'algorithm', name: '🧠 思维', short: '思维' },
     { key: 'speed', name: '🏃 速度', short: '速度' },
-    { key: 'stress', name: '🧘 抗压', short: '抗压' },
-    { key: 'teamwork', name: '🤝 协作', short: '协作' },
-    { key: 'english', name: '🌐 英语', short: '英语' }
+    { key: 'stress', name: '🧘 抗压', short: '抗压' }
   ];
 
   const specializedAttributes = [
@@ -220,50 +306,80 @@ function PlayerPanel({
     { key: 'geometry', name: '📏 几何', short: '几何' }
   ];
 
-  return (
-    <PlayerPanelWrapper $collapsed={!isExpanded}>
-      <PanelToggle onClick={() => setIsExpanded(!isExpanded)}>
-        <ToggleIcon>{isExpanded ? '◀' : '▶'}</ToggleIcon>
-      </PanelToggle>
+  const getSanColor = (value) => {
+    if (value >= 70) return '#059669';
+    if (value >= 40) return '#d97706';
+    return '#dc2626';
+  };
 
-      <PanelContent $collapsed={!isExpanded}>
+  const getGpaColor = (value) => {
+    if (value >= 3.5) return '#059669';
+    if (value >= 2.5) return '#d97706';
+    return '#dc2626';
+  };
+
+  const getRatingAccent = (value) => {
+    if (value >= 2400) return '#f59e0b';
+    if (value >= 2100) return '#ec4899';
+    if (value >= 1900) return '#8b5cf6';
+    if (value >= 1600) return '#3b82f6';
+    if (value >= 1400) return '#10b981';
+    return '#6b7280';
+  };
+
+  return (
+    <PlayerPanelWrapper>
+      <PanelContent>
         <PanelSection>
-          <PanelTitle>我的状态</PanelTitle>
-          <PlayerInfo>
-            <InfoItem>
-              <InfoLabel>余额</InfoLabel>
-              <InfoValue>¥{balance}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>SAN值</InfoLabel>
-              <InfoValue>{san}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Rating</InfoLabel>
-              <InfoValue>{rating}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>GPA</InfoLabel>
-              <InfoValue>{gpa.toFixed(2)}</InfoValue>
-            </InfoItem>
-            {buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0) && (
-              <BuffsDisplay>
-                {buffs.failedCourses > 0 && (
-                  <BuffItem $warning>📉 挂科×{buffs.failedCourses}</BuffItem>
-                )}
-                {buffs.academicWarnings > 0 && (
-                  <BuffItem $danger>⚠️ 学业警告×{buffs.academicWarnings}</BuffItem>
-                )}
-              </BuffsDisplay>
-            )}
-          </PlayerInfo>
+          <PanelTitle>
+            <PanelTitleLeft>我的状态</PanelTitleLeft>
+            <ResetButton variant="danger" size="sm" onClick={onReset}>
+              退学重开
+            </ResetButton>
+          </PanelTitle>
+          <StatusCards>
+            <StatusCard $accentColor="#f59e0b">
+              <StatusIcon>💰</StatusIcon>
+              <StatusLabel>余额</StatusLabel>
+              <StatusValue>¥{balance}</StatusValue>
+            </StatusCard>
+            <StatusCard $accentColor={getSanColor(san)}>
+              <StatusIcon>💊</StatusIcon>
+              <StatusLabel>SAN值</StatusLabel>
+              <StatusValue $color={getSanColor(san)}>{san}</StatusValue>
+            </StatusCard>
+            <StatusCard $accentColor={getRatingAccent(rating)}>
+              <StatusIcon>🏆</StatusIcon>
+              <StatusLabel>Rating</StatusLabel>
+              <StatusValue $color={getRatingAccent(rating)}>{rating}</StatusValue>
+            </StatusCard>
+            <StatusCard $accentColor={getGpaColor(gpa)}>
+              <StatusIcon>📚</StatusIcon>
+              <StatusLabel>GPA</StatusLabel>
+              <StatusValue $color={getGpaColor(gpa)}>{gpa.toFixed(2)}</StatusValue>
+            </StatusCard>
+          </StatusCards>
+          {buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0) && (
+            <BuffsDisplay>
+              {buffs.failedCourses > 0 && (
+                <BuffItem $warning>📉 挂科×{buffs.failedCourses}</BuffItem>
+              )}
+              {buffs.academicWarnings > 0 && (
+                <BuffItem $danger>⚠️ 学业警告×{buffs.academicWarnings}</BuffItem>
+              )}
+            </BuffsDisplay>
+          )}
         </PanelSection>
 
         <PanelSection>
-          <PanelTitle>我的属性</PanelTitle>
+          <PanelTitle>
+            <PanelTitleLeft>我的属性</PanelTitleLeft>
+          </PanelTitle>
 
           <AttrCategory>
-            <CategoryLabel>通用能力</CategoryLabel>
+            <CategoryHeader>
+              <CategoryLabel>通用能力</CategoryLabel>
+            </CategoryHeader>
             <AttrGrid>
               {generalAttributes.map(({ key, name, short }) => (
                 <AttrCard key={key}>
@@ -275,6 +391,7 @@ function PlayerPanel({
                     <AttrProgressFill
                       $primary
                       $width={Math.min(attributes[key] * 10, 100)}
+                      $gradient={attributes[key] > 10}
                     />
                   </AttrProgressBg>
                 </AttrCard>
@@ -283,7 +400,9 @@ function PlayerPanel({
           </AttrCategory>
 
           <AttrCategory>
-            <CategoryLabel>专业知识</CategoryLabel>
+            <CategoryHeader>
+              <CategoryLabel>专业知识</CategoryLabel>
+            </CategoryHeader>
             <AttrGrid>
               {specializedAttributes.map(({ key, name, short }) => (
                 <AttrCard key={key}>
@@ -295,6 +414,7 @@ function PlayerPanel({
                     <AttrProgressFill
                       $secondary
                       $width={Math.min(attributes[key] * 10, 100)}
+                      $gradient={attributes[key] > 10}
                     />
                   </AttrProgressBg>
                 </AttrCard>

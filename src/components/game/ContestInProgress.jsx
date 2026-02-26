@@ -22,7 +22,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
           const isPending = p.status === 'pending';
           const isCoding = p.status === 'coding';
           const isSubmittedFail = p.status === 'submitted_fail';
-          const canThink = (isCoding || isSubmittedFail) && p.thinkBonus < 2;
+          const canThink = (isCoding || isSubmittedFail);
           const canDebug = (isCoding || isSubmittedFail) && p.hasWrittenCode;
           const canSubmit = (isCoding || isSubmittedFail) && p.hasWrittenCode;
 
@@ -69,7 +69,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                       onClick={() => onThink(p.id)}
                       disabled={!canThink || timeRemaining <= 0}
                     >
-                      思考{!canThink ? '（已满）' : ''}
+                      思考
                     </button>
                     <button
                       className="btn btn-secondary btn-sm"

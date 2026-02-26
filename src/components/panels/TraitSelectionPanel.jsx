@@ -1,41 +1,135 @@
 import { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Button } from '../common/Button';
 import { TRAITS, TRAIT_TYPES, INITIAL_TRAIT_POINTS, calculateTraitCost, isTraitSelectionValid } from '../../data/traits';
 
+// 动画
+const floatIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px) rotateX(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+  }
+`;
+
+const pulseGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(99, 102, 241, 0.2);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+`;
+
 const TraitPanelWrapper = styled.section`
-  max-width: 900px;
+  min-height: 100vh;
+  padding: 1rem;
+  position: relative;
+  overflow-x: hidden;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+  }
+`;
+
+const TraitPanelContainer = styled.div`
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  animation: ${floatIn} 0.8s ease-out;
 `;
 
-const TraitPanelHeader = styled.div`
+const StatusBar = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.radius.xl};
+  border: 1px solid ${props => props.theme.colors.border};
+  box-shadow: ${props => props.theme.shadows.lg};
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary}, ${props => props.theme.colors.warning});
+  }
+`;
+
+const HeaderContent = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
 `;
 
-const TraitPanelTitle = styled.h2`
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: ${props => props.theme.colors.textMain};
-  margin-bottom: 0.5rem;
-`;
-
-const TraitPanelSubtitle = styled.p`
-  color: ${props => props.theme.colors.textSecondary};
-  font-size: 1rem;
-`;
-
-const TraitPanelStatus = styled.div`
+const TitleDecoration = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: ${props => props.theme.colors.surface};
-  border-radius: ${props => props.theme.radius.lg};
-  border: 1px solid ${props => props.theme.colors.border};
+  margin-bottom: 0.35rem;
+
+  &::before,
+  &::after {
+    content: '';
+    height: 2px;
+    width: 50px;
+    background: linear-gradient(90deg, transparent, ${props => props.theme.colors.primary}, transparent);
+  }
+`;
+
+const TraitPanelTitle = styled.h1`
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+`;
+
+const TraitPanelSubtitle = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
+`;
+
+const StatusContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 `;
 
 const TpBox = styled.div`
@@ -45,18 +139,28 @@ const TpBox = styled.div`
   gap: 0.25rem;
   padding: 0.5rem 1rem;
   background: ${props => props.theme.colors.background};
-  border-radius: ${props => props.theme.radius.md};
+  border-radius: ${props => props.theme.radius.lg};
+  min-width: 75px;
+  position: relative;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 `;
 
 const TpLabel = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: ${props => props.theme.colors.textSecondary};
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 const TpValue = styled.span`
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
   color: ${props => props.theme.colors.textMain};
 
   ${props => props.$consumed && `
@@ -73,130 +177,195 @@ const TpValue = styled.span`
 `;
 
 const TpArrow = styled.span`
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${props => props.theme.colors.textTertiary};
 `;
 
-const TraitPanelContent = styled.div`
+const ActionButtonWrapper = styled.div`
+  margin-left: 0.75rem;
+  padding-left: 1rem;
+  border-left: 2px solid ${props => props.theme.colors.border};
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+`;
+
+const ContentWrapper = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TraitCategory = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 2rem;
 `;
 
-const TraitCategory = styled.div``;
-
-const CategoryTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.textMain};
-  margin-bottom: 1rem;
+const CategoryHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-
-  ${props => props.$negative && `
-    color: ${props.theme.colors.danger};
-  `}
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
 `;
 
 const CategoryIcon = styled.span`
   font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)'};
+`;
+
+const CategoryTitle = styled.h2`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
+  margin: 0;
+  flex: 1;
 `;
 
 const CategoryHint = styled.span`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: ${props => props.theme.colors.textSecondary};
-  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.1)' : 'rgba(99, 102, 241, 0.1)'};
+  color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
 `;
 
 const TraitGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  flex: 1;
 `;
 
 const TraitCard = styled.div`
   border: 2px solid ${props => props.theme.colors.border};
-  border-radius: ${props => props.theme.radius.md};
-  padding: 0.75rem 1rem;
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 0.75rem 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   background: ${props => props.theme.colors.surface};
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateX(1px);
     box-shadow: ${props => props.theme.shadows.md};
+    border-color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
+
+    &::before {
+      opacity: 1;
+      animation: ${shimmer} 0.8s ease-out;
+    }
   }
 
   ${props => props.$selected && `
-    border-color: ${props.theme.colors.primary};
-    background: rgba(99, 102, 241, 0.05);
-  `}
+    border-color: ${props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
+    background: ${props.$negative ? 'rgba(245, 158, 11, 0.06)' : 'rgba(99, 102, 241, 0.06)'};
+    box-shadow: ${props.$negative ? '0 0 0 3px rgba(245, 158, 11, 0.15)' : '0 0 0 3px rgba(99, 102, 241, 0.15)'};
+    animation: ${pulseGlow} 2s ease-in-out infinite;
 
-  ${props => props.$negative && `
-    border-color: #fed7aa;
-
-    &:hover {
-      border-color: ${props.theme.colors.warning};
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: ${props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
     }
-
-    ${props.$selected && `
-      border-color: ${props.theme.colors.warning};
-      background: rgba(245, 158, 11, 0.05);
-    `}
   `}
 `;
 
 const TraitCardHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
 `;
 
 const TraitName = styled.span`
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: 700;
+  font-size: 0.95rem;
   color: ${props => props.theme.colors.textMain};
+  line-height: 1.2;
 `;
 
 const TraitCost = styled.span`
-  font-size: 0.875rem;
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  border-radius: ${props => props.theme.radius.md};
-  background: ${props => props.theme.colors.background};
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.12)'};
+  color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const TraitDesc = styled.div`
-  font-size: 0.8125rem;
+  font-size: 0.82rem;
   color: ${props => props.theme.colors.textSecondary};
   line-height: 1.4;
 `;
 
-const TraitCheck = styled.div`
+const SelectedBadge = styled.div`
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: ${props => props.theme.colors.primary};
+  top: 0.55rem;
+  right: 0.55rem;
+  background: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
   color: white;
-  font-size: 0.75rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: ${props => props.theme.radius.md};
-  font-weight: 600;
-`;
-
-const TraitPanelFooter = styled.div`
-  text-align: center;
+  font-size: 0.65rem;
+  padding: 0.12rem 0.35rem;
+  border-radius: 5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 function TraitSelectionPanel({ onConfirm }) {
   const [selectedTraits, setSelectedTraits] = useState([]);
-  
+
   const traitCost = calculateTraitCost(selectedTraits);
   const remainingTP = INITIAL_TRAIT_POINTS - traitCost;
   const canStart = isTraitSelectionValid(selectedTraits);
@@ -222,101 +391,109 @@ function TraitSelectionPanel({ onConfirm }) {
 
   return (
     <TraitPanelWrapper>
-      <TraitPanelHeader>
-        <TraitPanelTitle>🎭 选择你的特性</TraitPanelTitle>
-        <TraitPanelSubtitle>选择正面特性消耗特性点，选择负面特性获得特性点</TraitPanelSubtitle>
-      </TraitPanelHeader>
-      
-      <TraitPanelStatus>
-        <TpBox>
-          <TpLabel>初始TP</TpLabel>
-          <TpValue>{INITIAL_TRAIT_POINTS}</TpValue>
-        </TpBox>
-        <TpArrow>→</TpArrow>
-        <TpBox>
-          <TpLabel>已消耗</TpLabel>
-          <TpValue $consumed={traitCost > 0}>
-            {traitCost > 0 ? `-${traitCost}` : traitCost < 0 ? `+${-traitCost}` : '0'}
-          </TpValue>
-        </TpBox>
-        <TpArrow>=</TpArrow>
-        <TpBox>
-          <TpLabel>剩余</TpLabel>
-          <TpValue $negative={remainingTP < 0} $positive={remainingTP >= 0}>
-            {remainingTP}
-          </TpValue>
-        </TpBox>
-      </TraitPanelStatus>
+      <TraitPanelContainer>
+        <StatusBar>
+          <HeaderContent>
+            <TitleDecoration>
+              <TraitPanelTitle>🎭 选择你的特性</TraitPanelTitle>
+            </TitleDecoration>
+            <TraitPanelSubtitle>选择正面特性消耗特性点，选择负面特性获得特性点</TraitPanelSubtitle>
+          </HeaderContent>
 
-      <TraitPanelContent>
-        <TraitCategory>
-          <CategoryTitle>
-            <CategoryIcon>✨</CategoryIcon>
-            正面特性
-            <CategoryHint>(消耗TP)</CategoryHint>
-          </CategoryTitle>
-          <TraitGrid>
-            {positiveTraits.map(trait => {
-              const isSelected = selectedTraits.includes(trait.id);
-              return (
-                <TraitCard
-                  key={trait.id}
-                  $selected={isSelected}
-                  onClick={() => toggleTrait(trait.id)}
-                >
-                  <TraitCardHeader>
-                    <TraitName>{trait.name}</TraitName>
-                    <TraitCost>-{trait.cost}</TraitCost>
-                  </TraitCardHeader>
-                  <TraitDesc>{trait.description}</TraitDesc>
-                  {isSelected && <TraitCheck>✓</TraitCheck>}
-                </TraitCard>
-              );
-            })}
-          </TraitGrid>
-        </TraitCategory>
+          <StatusContent>
+            <TpBox>
+              <TpLabel>初始 TP</TpLabel>
+              <TpValue>{INITIAL_TRAIT_POINTS}</TpValue>
+            </TpBox>
+            <TpArrow>→</TpArrow>
+            <TpBox>
+              <TpLabel>已消耗</TpLabel>
+              <TpValue $consumed={traitCost > 0}>
+                {traitCost > 0 ? `-${traitCost}` : traitCost < 0 ? `+${-traitCost}` : '0'}
+              </TpValue>
+            </TpBox>
+            <TpArrow>=</TpArrow>
+            <TpBox>
+              <TpLabel>剩余</TpLabel>
+              <TpValue $negative={remainingTP < 0} $positive={remainingTP >= 0}>
+                {remainingTP}
+              </TpValue>
+            </TpBox>
 
-        <TraitCategory>
-          <CategoryTitle $negative>
-            <CategoryIcon>⚠️</CategoryIcon>
-            负面特性
-            <CategoryHint>(获得TP)</CategoryHint>
-          </CategoryTitle>
-          <TraitGrid>
-            {negativeTraits.map(trait => {
-              const isSelected = selectedTraits.includes(trait.id);
-              return (
-                <TraitCard
-                  key={trait.id}
-                  $selected={isSelected}
-                  $negative
-                  onClick={() => toggleTrait(trait.id)}
-                >
-                  <TraitCardHeader>
-                    <TraitName>{trait.name}</TraitName>
-                    <TraitCost>+{-trait.cost}</TraitCost>
-                  </TraitCardHeader>
-                  <TraitDesc>{trait.description}</TraitDesc>
-                  {isSelected && <TraitCheck>✓</TraitCheck>}
-                </TraitCard>
-              );
-            })}
-          </TraitGrid>
-        </TraitCategory>
-      </TraitPanelContent>
+            <ActionButtonWrapper>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleConfirm}
+                disabled={!canStart}
+              >
+                {!canStart
+                  ? `特性点不足！还需要 ${-remainingTP} TP`
+                  : '🚀 开始游戏'}
+              </Button>
+            </ActionButtonWrapper>
+          </StatusContent>
+        </StatusBar>
 
-      <TraitPanelFooter>
-        <Button 
-          variant="primary" 
-          size="lg"
-          onClick={handleConfirm}
-          disabled={!canStart}
-        >
-          {!canStart 
-            ? `特性点不足！还需要 ${-remainingTP} TP` 
-            : '🚀 确认并开始游戏'}
-        </Button>
-      </TraitPanelFooter>
+        <ContentWrapper>
+          <TraitCategory>
+            <CategoryHeader>
+              <CategoryIcon>✨</CategoryIcon>
+              <CategoryTitle>正面特性</CategoryTitle>
+              <CategoryHint>消耗 TP</CategoryHint>
+            </CategoryHeader>
+            <TraitGrid>
+              {positiveTraits.map((trait, index) => {
+                const isSelected = selectedTraits.includes(trait.id);
+                return (
+                  <TraitCard
+                    key={trait.id}
+                    $selected={isSelected}
+                    onClick={() => toggleTrait(trait.id)}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <TraitCardHeader>
+                      <TraitName>{trait.name}</TraitName>
+                      <TraitCost>-{trait.cost}</TraitCost>
+                    </TraitCardHeader>
+                    <TraitDesc>{trait.description}</TraitDesc>
+                    {isSelected && <SelectedBadge>✓ 已选</SelectedBadge>}
+                  </TraitCard>
+                );
+              })}
+            </TraitGrid>
+          </TraitCategory>
+
+          <TraitCategory>
+            <CategoryHeader $negative>
+              <CategoryIcon $negative>⚠️</CategoryIcon>
+              <CategoryTitle $negative>负面特性</CategoryTitle>
+              <CategoryHint $negative>获得 TP</CategoryHint>
+            </CategoryHeader>
+            <TraitGrid>
+              {negativeTraits.map((trait, index) => {
+                const isSelected = selectedTraits.includes(trait.id);
+                return (
+                  <TraitCard
+                    key={trait.id}
+                    $selected={isSelected}
+                    $negative
+                    onClick={() => toggleTrait(trait.id)}
+                    style={{ animationDelay: `${(positiveTraits.length + index) * 0.05}s` }}
+                  >
+                    <TraitCardHeader>
+                      <TraitName>{trait.name}</TraitName>
+                      <TraitCost $negative>+{-trait.cost}</TraitCost>
+                    </TraitCardHeader>
+                    <TraitDesc>{trait.description}</TraitDesc>
+                    {isSelected && <SelectedBadge $negative>✓ 已选</SelectedBadge>}
+                  </TraitCard>
+                );
+              })}
+            </TraitGrid>
+          </TraitCategory>
+        </ContentWrapper>
+      </TraitPanelContainer>
     </TraitPanelWrapper>
   );
 }

@@ -2,64 +2,76 @@ import styled from 'styled-components';
 import { Button } from '../common/Button';
 
 const IntroPanelWrapper = styled.section`
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 `;
 
 const IntroHero = styled.div`
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 `;
 
 const IntroLogo = styled.div`
-  font-size: 4rem;
-  margin-bottom: 1rem;
-`;
-
-const IntroTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: ${props => props.theme.colors.primary};
+  font-size: 3rem;
   margin-bottom: 0.5rem;
 `;
 
+const IntroTitle = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: 0.25rem;
+`;
+
 const IntroSubtitle = styled.p`
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: ${props => props.theme.colors.textSecondary};
 `;
 
 const IntroCards = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex: 1;
+  min-height: 0;
 `;
 
 const IntroCard = styled.div`
+  flex: 1;
   background: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.lg};
-  padding: 1.5rem;
+  padding: 1.25rem;
   box-shadow: ${props => props.theme.shadows.sm};
   border: 1px solid ${props => props.theme.colors.border};
+  overflow-y: auto;
+  min-width: 0;
 `;
 
 const IntroCardIcon = styled.div`
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
 `;
 
 const IntroCardTitle = styled.h3`
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: ${props => props.theme.colors.textMain};
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
 `;
 
 const IntroCardText = styled.p`
   color: ${props => props.theme.colors.textSecondary};
-  line-height: 1.6;
-  margin-bottom: 0.75rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 `;
 
 const IntroCardList = styled.ul`
@@ -70,8 +82,9 @@ const IntroCardList = styled.ul`
 
 const IntroCardListItem = styled.li`
   color: ${props => props.theme.colors.textSecondary};
-  line-height: 1.6;
-  margin-bottom: 0.5rem;
+  line-height: 1.5;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
 
   strong {
     color: ${props => props.theme.colors.textMain};
@@ -81,11 +94,37 @@ const IntroCardListItem = styled.li`
 
 const IntroFooter = styled.div`
   text-align: center;
+  padding: 1rem 0;
+  flex-shrink: 0;
 `;
 
 const IntroStartButton = styled(Button)`
-  padding: 0.75rem 2rem;
-  font-size: 1.125rem;
+  padding: 1.25rem 3.5rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+  box-shadow: ${props => props.theme.shadows.lg};
+  transform: scale(1);
+  transition: all 0.2s ease;
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      box-shadow: ${props => props.theme.shadows.lg};
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.2);
+    }
+  }
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: none;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 `;
 
 function IntroPanel({ onStart }) {

@@ -124,12 +124,12 @@ function LogPanel({ logs }) {
     return (
         <LogPanelWrapper>
             <LogHeader>
-                <LogTitle>📜 运行日志</LogTitle>
-                <LogCount>{logs.length} 条记录</LogCount>
+                <LogTitle>📜 消息列表</LogTitle>
+                <LogCount>{logs.length} 条消息</LogCount>
             </LogHeader>
             <LogContainer ref={containerRef}>
                 {logs.length === 0 ? (
-                    <LogEmpty>暂无日志记录...</LogEmpty>
+                    <LogEmpty>暂无消息...</LogEmpty>
                 ) : (
                     logs.map((log) => (
                         <LogEntry key={log.id}>

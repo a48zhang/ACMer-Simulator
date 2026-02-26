@@ -35,14 +35,14 @@ export const TRAITS = [
     }
   },
   {
-    id: 'trait_english_master',
-    name: '英语专八',
+    id: 'trait_calm_master',
+    name: '佛系选手',
     type: TRAIT_TYPES.POSITIVE,
     cost: 5,
-    description: 'English能力直接拉满，读题再也不怕了！',
+    description: '抗压能力直接拉满，大赛型选手！',
     effects: {
       initialStats: {
-        english: 10
+        stress: 10
       }
     }
   },
@@ -77,10 +77,10 @@ export const TRAITS = [
     name: '团学骨干',
     type: TRAIT_TYPES.POSITIVE,
     cost: 4,
-    description: '团队协作能力优秀。可能会有其他效果？',
+    description: '社交能力优秀，抗压提升。',
     effects: {
       initialStats: {
-        teamwork: 4
+        stress: 4
       }
     }
   },
@@ -113,14 +113,14 @@ export const TRAITS = [
     }
   },
   {
-    id: 'trait_weak_english',
-    name: '英语四级424',
+    id: 'trait_slow_hand',
+    name: '手残党',
     type: TRAIT_TYPES.NEGATIVE,
     cost: -3,
-    description: '英语能力较弱，理解题目会更困难。小心挂科。',
+    description: '速度能力较弱，敲代码比较慢。',
     effects: {
       initialStats: {
-        english: -3
+        speed: -3
       }
     }
   },
@@ -132,7 +132,7 @@ export const TRAITS = [
     description: '社交能力降低。',
     effects: {
       initialStats: {
-        teamwork: -3
+        stress: -3
       },
     }
   },
@@ -154,7 +154,7 @@ export const TRAITS = [
     name: 'MTF Trans',
     type: TRAIT_TYPES.NEGATIVE,
     cost: -5,
-    description: '鱼板人？属性下降。可能会解锁特殊事件。',
+    description: '属性有微妙变化。可能会解锁🍥特殊事件。',
     effects: {
       sanPenalty: 20,
       moneyPenalty: 500 // 初始资金减少500
@@ -177,7 +177,7 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
     // 应用固定属性加成
     if (trait.effects.initialStats) {
       Object.entries(trait.effects.initialStats).forEach(([attr, value]) => {
-        result[attr] = Math.max(0, Math.min(10, (result[attr] || 0) + value));
+        result[attr] = Math.max(0, (result[attr] || 0) + value);
       });
     }
 
@@ -206,10 +206,8 @@ export function applyTraitEffects(selectedTraits, baseAttributes) {
 
     while (remainingBonus > 0 && attempts < maxAttempts) {
       const randomAttr = attributeKeys[Math.floor(Math.random() * attributeKeys.length)];
-      if (result[randomAttr] < 10) {
-        result[randomAttr] = Math.min(10, result[randomAttr] + 1);
-        remainingBonus--;
-      }
+      result[randomAttr] = (result[randomAttr] || 0) + 1;
+      remainingBonus--;
       attempts++;
     }
   }

@@ -48,9 +48,9 @@ export const EVENTS = [
                 id: 'join',
                 label: '加入社团',
                 effects: {
-                    attributeChanges: { teamwork: 1, english: 1 },
+                    attributeChanges: { stress: 1 },
                     apBonus: 2,
-                    log: '🎉 加入了ACM算法社团！团队协作+1，英语+1，本月额外获得2AP。',
+                    log: '🎉 加入了ACM算法社团！抗压+1，本月额外获得2AP。',
                     logType: 'success'
                 },
                 setFlags: { joinedClub: true },

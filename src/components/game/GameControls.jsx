@@ -85,13 +85,6 @@ const ApBarFill = styled.div`
 `;
 
 function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
-  const getStatusText = () => {
-    if (!gameState.isRunning) return '未开始';
-    if (gameState.isPaused) return '已暂停';
-    if (gameState.month > 46) return '已结束';
-    return '进行中';
-  };
-
   const getYearMonth = () => {
     const gameMonth = gameState.month;
     const monthsSinceStart = gameMonth - 1;
@@ -116,7 +109,6 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
     return `大学 ${academicYear} 年 ${calendarMonth} 月`;
   };
 
-  const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
   const hasActiveContest = !!gameState.activeContest;
 
   const getAPProgressColor = () => {
@@ -126,17 +118,12 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
     return '#ef4444';
   };
 
+  const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
+
   return (
     <GameStartSection>
       <SectionTitle>游戏控制</SectionTitle>
       <GameControlsWrapper>
-        <Button
-          variant="primary"
-          onClick={onStart}
-          disabled={gameState.isRunning}
-        >
-          开始游戏
-        </Button>
         <Button
           variant="success"
           onClick={onAdvanceMonth}
@@ -144,17 +131,8 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
         >
           下一月 ➡️
         </Button>
-        <Button
-          variant="danger"
-          onClick={onReset}
-        >
-          重置
-        </Button>
       </GameControlsWrapper>
       <GameStatusWrapper>
-        <StatusChip>
-          📌 <StatusChipStrong>{getStatusText()}</StatusChipStrong>
-        </StatusChip>
         <StatusChip>
           📅 <StatusChipStrong>{getYearMonth()}</StatusChipStrong>
         </StatusChip>
@@ -167,11 +145,6 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
           </ApBarContainer>
           <StatusChipStrong $ap>{gameState.remainingAP}</StatusChipStrong> / {gameState.monthlyAP} AP
         </StatusChip>
-        {hasPendingEvents && (
-          <StatusChip $alert>
-            🔔 待处理事件 <StatusChipStrong $alert>{gameState.pendingEvents.length}</StatusChipStrong>
-          </StatusChip>
-        )}
         {hasActiveContest && (
           <StatusChip $alert>
             ⏱️ 比赛剩余 <StatusChipStrong $alert>{gameState.contestTimeRemaining}</StatusChipStrong> 分钟
