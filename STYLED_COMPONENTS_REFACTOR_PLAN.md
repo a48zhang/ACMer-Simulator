@@ -83,8 +83,8 @@
 - [x] 提交: `git commit -m "refactor: ContestResultDialog styled-components重构"`
 - [x] TeammateSelectionDialog
 - [x] 提交: `git commit -m "refactor: TeammateSelectionDialog styled-components重构"`
-- [ ] TraitSelectionDialog
-- [ ] 提交: `git commit -m "refactor: TraitSelectionDialog styled-components重构"`
+- [x] TraitSelectionDialog
+- [x] 提交: `git commit -m "refactor: TraitSelectionDialog styled-components重构"`
 - [ ] EventDialog
 - [ ] 提交: `git commit -m "refactor: EventDialog styled-components重构"`
 - [ ] PracticeContestSelectionDialog
