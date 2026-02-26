@@ -1,3 +1,89 @@
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const GameStartSection = styled.section`
+  background-color: ${props => props.theme.colors.surface};
+  padding: 0.875rem 1.25rem;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border: 1px solid ${props => props.theme.colors.border};
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1rem;
+  margin-bottom: 0;
+  color: ${props => props.theme.colors.textMain};
+  font-weight: 700;
+  display: none;
+`;
+
+const GameControlsWrapper = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const GameStatusWrapper = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const StatusChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.full};
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.textSecondary};
+  white-space: nowrap;
+
+  ${props => props.$alert && `
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+  `}
+`;
+
+const StatusChipStrong = styled.strong`
+  color: ${props => props.theme.colors.textMain};
+  font-weight: 700;
+
+  ${props => props.$ap && `
+    color: ${props => props.theme.colors.primary};
+  `}
+
+  ${props => props.$alert && `
+    color: #b45309;
+  `}
+`;
+
+const ApBarContainer = styled.div`
+  width: 100px;
+  height: 8px;
+  background: ${props => props.theme.colors.border};
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+const ApBarFill = styled.div`
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  width: ${props => props.$width}%;
+  background: ${props => props.$color};
+`;
+
 function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
   const getStatusText = () => {
     if (!gameState.isRunning) return '未开始';
@@ -33,7 +119,6 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
   const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
   const hasActiveContest = !!gameState.activeContest;
 
-  // AP进度条颜色
   const getAPProgressColor = () => {
     const ratio = gameState.remainingAP / gameState.monthlyAP;
     if (ratio >= 0.7) return '#22c55e';
@@ -42,50 +127,58 @@ function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
   };
 
   return (
-    <section className="game-start-section">
-      <h2>游戏控制</h2>
-      <div className="game-controls">
-        <button
-          className="btn btn-primary"
+    <GameStartSection>
+      <SectionTitle>游戏控制</SectionTitle>
+      <GameControlsWrapper>
+        <Button
+          variant="primary"
           onClick={onStart}
           disabled={gameState.isRunning}
         >
           开始游戏
-        </button>
-        <button
-          className="btn btn-success"
+        </Button>
+        <Button
+          variant="success"
           onClick={onAdvanceMonth}
           disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest}
         >
           下一月 ➡️
-        </button>
-        <button className="btn btn-danger" onClick={onReset}>
+        </Button>
+        <Button
+          variant="danger"
+          onClick={onReset}
+        >
           重置
-        </button>
-      </div>
-      <div className="game-status">
-        <span className="status-chip">📌 <strong>{getStatusText()}</strong></span>
-        <span className="status-chip">📅 <strong>{getYearMonth()}</strong></span>
-        <span className="status-chip ap">
-          <div className="ap-bar-container">
-            <div 
-              className="ap-bar-fill" 
-              style={{ 
-                width: `${(gameState.remainingAP / gameState.monthlyAP) * 100}%`,
-                background: getAPProgressColor()
-              }}
-            ></div>
-          </div>
-          <strong>{gameState.remainingAP}</strong> / {gameState.monthlyAP} AP
-        </span>
+        </Button>
+      </GameControlsWrapper>
+      <GameStatusWrapper>
+        <StatusChip>
+          📌 <StatusChipStrong>{getStatusText()}</StatusChipStrong>
+        </StatusChip>
+        <StatusChip>
+          📅 <StatusChipStrong>{getYearMonth()}</StatusChipStrong>
+        </StatusChip>
+        <StatusChip>
+          <ApBarContainer>
+            <ApBarFill
+              $width={(gameState.remainingAP / gameState.monthlyAP) * 100}
+              $color={getAPProgressColor()}
+            />
+          </ApBarContainer>
+          <StatusChipStrong $ap>{gameState.remainingAP}</StatusChipStrong> / {gameState.monthlyAP} AP
+        </StatusChip>
         {hasPendingEvents && (
-          <span className="status-chip alert">🔔 待处理事件 <strong>{gameState.pendingEvents.length}</strong></span>
+          <StatusChip $alert>
+            🔔 待处理事件 <StatusChipStrong $alert>{gameState.pendingEvents.length}</StatusChipStrong>
+          </StatusChip>
         )}
         {hasActiveContest && (
-          <span className="status-chip alert">⏱️ 比赛剩余 <strong>{gameState.contestTimeRemaining}</strong> 分钟</span>
+          <StatusChip $alert>
+            ⏱️ 比赛剩余 <StatusChipStrong $alert>{gameState.contestTimeRemaining}</StatusChipStrong> 分钟
+          </StatusChip>
         )}
-      </div>
-    </section>
+      </GameStatusWrapper>
+    </GameStartSection>
   );
 }
 

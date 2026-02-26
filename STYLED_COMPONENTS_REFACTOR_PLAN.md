@@ -95,8 +95,8 @@
 - [x] 提交: `git commit -m "refactor: GlobalStatistics styled-components重构"`
 
 ### 阶段5: 游戏相关组件重构
-- [ ] GameControls
-- [ ] 提交: `git commit -m "refactor: GameControls styled-components重构"`
+- [x] GameControls
+- [x] 提交: `git commit -m "refactor: GameControls styled-components重构"`
 - [ ] PlayerStatus
 - [ ] 提交: `git commit -m "refactor: PlayerStatus styled-components重构"`
 - [ ] AttributeDialog
