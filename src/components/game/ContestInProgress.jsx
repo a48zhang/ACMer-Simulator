@@ -1,3 +1,168 @@
+import styled from 'styled-components';
+import { Button } from '../common/Button';
+
+const ContestSection = styled.section`
+  background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+  border: 2px solid #ffd4d4;
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+  margin-bottom: 1.5rem;
+`;
+
+const ContestHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ffe0e0;
+`;
+
+const ContestTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ContestTitle = styled.h2`
+  font-size: 1rem;
+  margin: 0;
+  color: ${props => props.theme.colors.textMain};
+`;
+
+const ContestBadge = styled.span`
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+`;
+
+const ContestMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+`;
+
+const ContestTime = styled.span`
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const ContestProblemGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ContestProblemCard = styled.div`
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.md};
+  padding: 0.6rem 0.75rem;
+  background: ${props => props.theme.colors.background};
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: ${props => props.theme.shadows.sm};
+
+  ${props => props.$status === 'solved' && `
+    border-color: #22c55e;
+    background: linear-gradient(135deg, #ecfdf3 0%, #ffffff 100%);
+  `}
+
+  ${props => (props.$status === 'coding' || props.$status === 'submitted_fail') && `
+    border-color: #fde68a;
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+  `}
+
+  ${props => props.$status === 'attempted' && `
+    border-color: #fde68a;
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+  `}
+`;
+
+const ContestProblemTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ContestProblemTitle = styled.div`
+  font-weight: 700;
+  color: ${props => props.theme.colors.textMain};
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ContestProblemStatus = styled.div`
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const ContestProblemInfo = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const ContestProblemTags = styled.span`
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: ${props => props.theme.radius.sm};
+`;
+
+const ContestProblemActions = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+`;
+
+const ContestProblemSolved = styled.span`
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #22c55e;
+`;
+
+const ContestFooter = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ffe0e0;
+`;
+
+const ContestHint = styled.span`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.8rem;
+`;
+
+const SmallButton = styled(Button)`
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+`;
+
 // ContestInProgress 组件 - 在比赛进行时显示并支持做题
 function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onCode, onDebug }) {
   const solvedCount = contest.problems.filter(p => p.status === 'solved').length;
@@ -5,18 +170,18 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
   const allSolved = solvedCount === totalCount;
 
   return (
-    <section className="contest-in-progress">
-      <div className="contest-header">
-        <div className="contest-title-row">
-          <h2>🏁 {contest.name} 进行中</h2>
-          <span className="contest-badge">{solvedCount}/{totalCount} 已解</span>
-        </div>
-        <div className="contest-meta">
-          <span className="contest-time">⏱️ 剩余时间：{timeRemaining} 分钟</span>
-        </div>
-      </div>
+    <ContestSection>
+      <ContestHeader>
+        <ContestTitleRow>
+          <ContestTitle>🏁 {contest.name} 进行中</ContestTitle>
+          <ContestBadge>{solvedCount}/{totalCount} 已解</ContestBadge>
+        </ContestTitleRow>
+        <ContestMeta>
+          <ContestTime>⏱️ 剩余时间：{timeRemaining} 分钟</ContestTime>
+        </ContestMeta>
+      </ContestHeader>
 
-      <div className="contest-problem-grid">
+      <ContestProblemGrid>
         {contest.problems.map((p, idx) => {
           const isSolved = p.status === 'solved';
           const isPending = p.status === 'pending';
@@ -27,97 +192,102 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
           const canSubmit = (isCoding || isSubmittedFail) && p.hasWrittenCode;
 
           return (
-            <div 
-              key={p.id} 
-              className={`contest-problem-card ${p.status}`}
+            <ContestProblemCard
+              key={p.id}
+              $status={p.status}
             >
-              <div className="contest-problem-top">
-                <div className="contest-problem-title">
+              <ContestProblemTop>
+                <ContestProblemTitle>
                   Problem {p.letter}
-                </div>
-                <div className="contest-problem-status">
+                </ContestProblemTitle>
+                <ContestProblemStatus>
                   {isSolved ? '✅ Accepted' : (isPending ? '未读题' : (isSubmittedFail ? '❌ 已尝试' : '📝 可开始'))}
-                </div>
-              </div>
+                </ContestProblemStatus>
+              </ContestProblemTop>
 
               {p.revealedInfo && (
-                <div className="contest-problem-info">
+                <ContestProblemInfo>
                   {p.revealedInfo.tags && p.revealedInfo.tags.length > 0 && (
-                    <span className="contest-problem-tags">
+                    <ContestProblemTags>
                       🏷️ {p.revealedInfo.tags.join(' | ')}
-                    </span>
+                    </ContestProblemTags>
                   )}
-                </div>
+                </ContestProblemInfo>
               )}
 
-              <div className="contest-problem-actions">
+              <ContestProblemActions>
                 {isPending && (
-                  <button
-                    className="btn btn-secondary btn-sm"
+                  <SmallButton
+                    variant="secondary"
+                    size="sm"
                     type="button"
                     onClick={() => onRead(p.id)}
                     disabled={timeRemaining <= 0}
                   >
                     读题
-                  </button>
+                  </SmallButton>
                 )}
                 {(isCoding || isSubmittedFail) && (
                   <>
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    <SmallButton
+                      variant="secondary"
+                      size="sm"
                       type="button"
                       onClick={() => onThink(p.id)}
                       disabled={!canThink || timeRemaining <= 0}
                     >
                       思考
-                    </button>
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    </SmallButton>
+                    <SmallButton
+                      variant="secondary"
+                      size="sm"
                       type="button"
                       onClick={() => onCode(p.id)}
                       disabled={p.hasWrittenCode || timeRemaining <= 0}
                     >
                       写代码{p.hasWrittenCode ? '（已写）' : ''}
-                    </button>
-                    <button
-                      className="btn btn-info btn-sm"
+                    </SmallButton>
+                    <SmallButton
+                      variant="info"
+                      size="sm"
                       type="button"
                       onClick={() => onDebug(p.id)}
                       disabled={!canDebug || timeRemaining <= 0}
                     >
                       对拍
-                    </button>
-                    <button
-                      className="btn btn-primary btn-sm"
+                    </SmallButton>
+                    <SmallButton
+                      variant="primary"
+                      size="sm"
                       type="button"
                       onClick={() => onAttempt(p.id)}
                       disabled={!canSubmit || timeRemaining <= 0}
                     >
                       提交
-                    </button>
+                    </SmallButton>
                   </>
                 )}
                 {isSolved && (
-                  <span className="contest-problem-solved">Accepted</span>
+                  <ContestProblemSolved>Accepted</ContestProblemSolved>
                 )}
-              </div>
-            </div>
+              </ContestProblemActions>
+            </ContestProblemCard>
           );
         })}
-      </div>
+      </ContestProblemGrid>
 
-      <div className="contest-footer">
-        <button
-          className="btn btn-secondary"
+      <ContestFooter>
+        <Button
+          variant="secondary"
           type="button"
           onClick={onFinish}
           disabled={timeRemaining <= 0 || allSolved}
         >
           提前交卷
-        </button>
-        <span className="contest-hint">⏰ 到时或全部解出后自动结算</span>
-      </div>
-    </section>
+        </Button>
+        <ContestHint>⏰ 到时或全部解出后自动结算</ContestHint>
+      </ContestFooter>
+    </ContestSection>
   );
 }
 
