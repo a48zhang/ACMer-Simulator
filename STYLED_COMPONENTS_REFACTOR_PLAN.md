@@ -77,8 +77,8 @@
 ### 阶段4: 对话框组件重构
 - [x] ConfirmDialog
 - [x] 提交: `git commit -m "refactor: ConfirmDialog styled-components重构"`
-- [ ] Notification
-- [ ] 提交: `git commit -m "refactor: Notification styled-components重构"`
+- [x] Notification
+- [x] 提交: `git commit -m "refactor: Notification styled-components重构"`
 - [ ] ContestResultDialog
 - [ ] 提交: `git commit -m "refactor: ContestResultDialog styled-components重构"`
 - [ ] TeammateSelectionDialog
@@ -226,17 +226,6 @@ export const Button = styled.button`
 3. ✅ 动态样式更容易: Props驱动的样式更直观
 4. ✅ 无CSS文件依赖: 单一源代码管理
 5. ✅ 完全相同的UI: 零视觉差异
-
----
-
-## 时间估算
-
-- 阶段1-2: 1-2小时
-- 阶段3: 3-4小时
-- 阶段4: 3-4小时
-- 阶段5: 4-5小时
-- 阶段6: 1小时
-- **总计**: 约12-16小时
 
 ---
 
