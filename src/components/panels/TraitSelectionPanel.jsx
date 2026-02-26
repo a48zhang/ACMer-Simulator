@@ -15,15 +15,6 @@ const floatIn = keyframes`
   }
 `;
 
-const pulseGlow = keyframes`
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 20px 5px rgba(99, 102, 241, 0.2);
-  }
-`;
-
 const shimmer = keyframes`
   0% {
     background-position: -200% center;
@@ -260,43 +251,17 @@ const TraitCard = styled.div`
   border-radius: ${props => props.theme.radius.lg};
   padding: 0.75rem 0.9rem;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
   background: ${props => props.theme.colors.surface};
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(
-      120deg,
-      transparent 0%,
-      transparent 40%,
-      rgba(255, 255, 255, 0.05) 50%,
-      transparent 60%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
 
   &:hover {
-    transform: translateY(-2px) translateX(1px);
-    box-shadow: ${props => props.theme.shadows.md};
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.sm};
     border-color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
-
-    &::before {
-      opacity: 1;
-      animation: ${shimmer} 0.8s ease-out;
-    }
   }
 
-  /* Selected state - separated to avoid nested interpolation issues */
+  /* Selected state */
   border-color: ${props => props.$selected
     ? (props.$negative ? props.theme.colors.warning : props.theme.colors.primary)
     : props.theme.colors.border};
@@ -304,21 +269,8 @@ const TraitCard = styled.div`
     ? (props.$negative ? 'rgba(245, 158, 11, 0.06)' : 'rgba(99, 102, 241, 0.06)')
     : props.theme.colors.surface};
   box-shadow: ${props => props.$selected
-    ? (props.$negative ? '0 0 0 3px rgba(245, 158, 11, 0.15)' : '0 0 0 3px rgba(99, 102, 241, 0.15)')
+    ? (props.$negative ? '0 0 0 2px rgba(245, 158, 11, 0.2)' : '0 0 0 2px rgba(99, 102, 241, 0.2)')
     : 'none'};
-  animation: ${props => props.$selected ? pulseGlow : 'none'} 2s ease-in-out infinite;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: ${props => props.$selected
-      ? (props.$negative ? props.theme.colors.warning : props.theme.colors.primary)
-      : 'transparent'};
-  }
 `;
 
 const TraitCardHeader = styled.div`
