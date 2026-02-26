@@ -91,6 +91,8 @@
 - [x] 提交: `git commit -m "refactor: PracticeContestSelectionDialog styled-components重构"`
 - [x] GameOverDialog
 - [x] 提交: `git commit -m "refactor: GameOverDialog styled-components重构"`
+- [x] GlobalStatistics
+- [x] 提交: `git commit -m "refactor: GlobalStatistics styled-components重构"`
 
 ### 阶段5: 游戏相关组件重构
 - [ ] GameControls
