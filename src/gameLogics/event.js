@@ -1,0 +1,323 @@
+import { INITIAL_SAN } from '../constants';
+import { clampValue, clampGPA, applyAttributeChanges } from '../utils';
+import { createContestSession } from '../data/contests';
+
+/**
+ * 获取字段值的辅助函数（支持直接设置或增量变化）
+ */
+const getFieldValue = (effects, prevState, field, deltaField) => {
+  if (effects[field] !== undefined) return effects[field];
+  if (effects[deltaField] !== undefined) return prevState[field] + effects[deltaField];
+  return prevState[field];
+};
+
+/**
+ * 处理期末周GPA审核（内部函数）
+ */
+function processFinalsWeek(gameState, effects, ev) {
+  const logs = [];
+  const currentGpa = gameState.gpa;
+  const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
+  let gameOver = false;
+  let gameOverReason = null;
+  let newState = gameState;
+
+  if (currentGpa < 2.5) {
+    const newWarnings = currentBuffs.academicWarnings + 1;
+    logs.push({
+      message: `⚠️ 学业警告！GPA低于2.5，获得学业警告 buff（当前${newWarnings}个）`,
+      type: 'error'
+    });
+
+    if (newWarnings >= 2) {
+      logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
+      newState = {
+        ...gameState,
+        isRunning: false,
+        buffs: { ...currentBuffs, academicWarnings: newWarnings }
+      };
+      gameOver = true;
+      gameOverReason = `GPA长期低于2.5，累计获得${newWarnings}次学业警告，被迫退学。`;
+    } else {
+      effects.buffChanges = { academicWarnings: 1 };
+    }
+  } else if (currentGpa < 3.0) {
+    const newFailures = currentBuffs.failedCourses + 1;
+    logs.push({
+      message: `📉 挂科！GPA低于3.0，获得挂科 buff（当前${newFailures}个）`,
+      type: 'warning'
+    });
+
+    if (newFailures % 3 === 0) {
+      const newWarnings = currentBuffs.academicWarnings + 1;
+      logs.push({
+        message: `⚠️ 累计3次挂科，转换为1个学业警告！（当前${newWarnings}个学业警告，0个挂科）`,
+        type: 'error'
+      });
+
+      if (newWarnings >= 2) {
+        logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
+        newState = {
+          ...gameState,
+          isRunning: false,
+          buffs: { failedCourses: 0, academicWarnings: newWarnings }
+        };
+        gameOver = true;
+        gameOverReason = `GPA长期低于3.0，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`;
+      } else {
+        effects.buffChanges = { failedCourses: -currentBuffs.failedCourses, academicWarnings: 1 };
+      }
+    } else {
+      effects.buffChanges = { failedCourses: 1 };
+    }
+  } else if (currentGpa >= 3.7) {
+    logs.push({
+      message: `🎓 优秀！GPA达到3.7以上，获得奖学金！`,
+      type: 'success'
+    });
+    effects.balanceDelta = 2000;
+  } else {
+    logs.push({ message: `✅ 期末考试通过，GPA正常`, type: 'info' });
+  }
+
+  return { logs, effects, gameOver, gameOverReason, newState };
+}
+
+/**
+ * 处理启动比赛（内部函数）
+ */
+function processStartContest(gameState, ev, choice, effects, setFlags, logs, selectedTeammateIds) {
+  const contestConfig = choice.contestConfig;
+  if (!contestConfig) {
+    logs.push({ message: '❌ 比赛配置错误', type: 'error' });
+    return { newState: gameState, logs, uiState: {} };
+  }
+
+  if (gameState.activeContest) {
+    logs.push({ message: '⚠️ 已有正在进行的比赛', type: 'warning' });
+    return { newState: gameState, logs, uiState: {} };
+  }
+
+  const session = createContestSession(contestConfig);
+  logs.push({
+    message: `🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`,
+    type: 'info'
+  });
+
+  const updatedAttributes = applyAttributeChanges(gameState.attributes, effects.attributeChanges);
+  const nextSan = effects.sanDelta !== undefined
+    ? clampValue(gameState.san + effects.sanDelta, 0, INITIAL_SAN)
+    : gameState.san;
+  const remaining = (gameState.pendingEvents || []).filter(e => e.id !== ev.id);
+  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now() };
+
+  const newState = {
+    ...gameState,
+    attributes: updatedAttributes,
+    san: nextSan,
+    worldFlags: { ...(gameState.worldFlags || {}), ...setFlags },
+    activeContest: session,
+    contestTimeRemaining: session.timeRemaining,
+    pendingEvents: remaining,
+    resolvedEvents: [...(gameState.resolvedEvents || []), resolvedItem]
+  };
+
+  if (selectedTeammateIds) {
+    newState.selectedTeam = selectedTeammateIds;
+  }
+
+  return {
+    newState,
+    logs,
+    uiState: { showEventDialog: false, currentEvent: null }
+  };
+}
+
+/**
+ * 构建事件的新状态（内部函数）
+ */
+function buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selectedTeammateIds) {
+  const updatedAttributes = applyAttributeChanges(gameState.attributes, effects.attributeChanges);
+
+  const newState = {
+    ...gameState,
+    remainingAP: Math.min(gameState.monthlyAP, Math.max(0, gameState.remainingAP + (effects.apBonus || 0))),
+    playerContests: getFieldValue(effects, gameState, 'playerContests', 'playerContestsDelta'),
+    playerProblems: getFieldValue(effects, gameState, 'playerProblems', 'playerProblemsDelta'),
+    attributes: updatedAttributes
+  };
+
+  if (selectedTeammateIds) {
+    newState.selectedTeam = selectedTeammateIds;
+  }
+
+  if (effects.balance !== undefined) {
+    newState.balance = effects.balance;
+  } else if (effects.balanceDelta !== undefined) {
+    newState.balance = Math.max(0, gameState.balance + effects.balanceDelta);
+  }
+
+  if (effects.san !== undefined) {
+    newState.san = clampValue(effects.san, 0, INITIAL_SAN);
+  } else if (effects.sanDelta !== undefined) {
+    newState.san = clampValue(gameState.san + effects.sanDelta, 0, INITIAL_SAN);
+  }
+
+  if (effects.rating !== undefined) {
+    newState.rating = effects.rating;
+  } else if (effects.ratingDelta !== undefined) {
+    newState.rating = gameState.rating + effects.ratingDelta;
+  }
+
+  if (effects.gpa !== undefined) {
+    newState.gpa = clampGPA(effects.gpa);
+  } else if (effects.gpaDelta !== undefined) {
+    newState.gpa = clampGPA(gameState.gpa + effects.gpaDelta);
+  }
+
+  newState.worldFlags = { ...(gameState.worldFlags || {}), ...setFlags };
+
+  if (effects.buffChanges) {
+    const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
+    newState.buffs = {
+      failedCourses: Math.max(0, currentBuffs.failedCourses + (effects.buffChanges.failedCourses || 0)),
+      academicWarnings: Math.max(0, currentBuffs.academicWarnings + (effects.buffChanges.academicWarnings || 0))
+    };
+  }
+
+  const remaining = (gameState.pendingEvents || []).filter(e => e.id !== ev.id);
+  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now() };
+  newState.pendingEvents = remaining;
+  newState.resolvedEvents = [...(gameState.resolvedEvents || []), resolvedItem];
+
+  return newState;
+}
+
+/**
+ * 处理事件选择（内部函数）
+ */
+function processEventChoice(gameState, ev, choice, selectedTeammateIds = null) {
+  const logs = [];
+  let effects = { ...(choice.effects || {}) };
+  const setFlags = choice.setFlags || {};
+
+  // 特殊处理：期末周GPA审核
+  if (ev.id === 'june_finals_week' || ev.id === 'january_finals_week') {
+    const result = processFinalsWeek(gameState, effects, ev);
+    logs.push(...result.logs);
+    effects = result.effects;
+
+    if (result.gameOver) {
+      return {
+        newState: result.newState,
+        logs,
+        uiState: { showEventDialog: false, currentEvent: null },
+        gameOverReason: result.gameOverReason
+      };
+    }
+  }
+
+  // 处理特殊动作：启动比赛
+  if (choice.specialAction === 'START_CONTEST') {
+    return processStartContest(gameState, ev, choice, effects, setFlags, logs, selectedTeammateIds);
+  }
+
+  // 普通事件处理
+  logs.push({
+    message: `🗳️ 事件处理：${ev.title} → ${choice.label}`,
+    type: 'info'
+  });
+
+  const newState = buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selectedTeammateIds);
+
+  return {
+    newState,
+    logs,
+    uiState: { showEventDialog: false, currentEvent: null }
+  };
+}
+
+/**
+ * 应用事件选择（主入口）
+ * @param {Object} gameState - 当前游戏状态
+ * @param {string} eventId - 事件ID
+ * @param {string} choiceId - 选择ID
+ * @returns {Object} LogicResult
+ */
+export function applyEventChoice(gameState, eventId, choiceId) {
+  const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
+  if (!ev) return { newState: gameState, logs: [], uiState: {} };
+
+  const choice = ev.choices.find(c => c.id === choiceId);
+  if (!choice) return { newState: gameState, logs: [], uiState: {} };
+
+  // 检查是否需要队友选择
+  if (choice.requiresTeamSelection) {
+    return {
+      newState: gameState,
+      logs: [],
+      uiState: {
+        showEventDialog: false,
+        showTeammateDialog: true,
+        pendingEventChoice: { eventId, choiceId }
+      }
+    };
+  }
+
+  return processEventChoice(gameState, ev, choice);
+}
+
+/**
+ * 处理队友确认
+ * @param {Object} gameState - 当前游戏状态
+ * @param {Object} pendingEventChoice - 待处理的事件选择
+ * @param {string[]} selectedTeammateIds - 选中的队友ID列表
+ * @returns {Object} LogicResult
+ */
+export function handleTeammateConfirm(gameState, pendingEventChoice, selectedTeammateIds) {
+  if (!pendingEventChoice) {
+    return { newState: gameState, logs: [], uiState: { showTeammateDialog: false } };
+  }
+
+  const { eventId, choiceId } = pendingEventChoice;
+  const logs = [];
+
+  logs.push({
+    message: `👥 组队成功！队友：${selectedTeammateIds.map(id => {
+      const tm = gameState.teammates.find(t => t.id === id);
+      return tm ? tm.name : id;
+    }).join('、')}`,
+    type: 'success'
+  });
+
+  const ev = (gameState.pendingEvents || []).find(e => e.id === eventId);
+  if (!ev) {
+    return {
+      newState: gameState,
+      logs,
+      uiState: { showTeammateDialog: false, pendingEventChoice: null }
+    };
+  }
+
+  const choice = ev.choices.find(c => c.id === choiceId);
+  if (!choice) {
+    return {
+      newState: gameState,
+      logs,
+      uiState: { showTeammateDialog: false, pendingEventChoice: null }
+    };
+  }
+
+  const result = processEventChoice(gameState, ev, choice, selectedTeammateIds);
+
+  return {
+    newState: result.newState,
+    logs: [...logs, ...result.logs],
+    uiState: {
+      ...result.uiState,
+      showTeammateDialog: false,
+      pendingEventChoice: null
+    },
+    gameOverReason: result.gameOverReason
+  };
+}
