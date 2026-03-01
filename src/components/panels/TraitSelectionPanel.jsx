@@ -25,10 +25,15 @@ const shimmer = keyframes`
 `;
 
 const TraitPanelWrapper = styled.section`
-  min-height: 100vh;
+  width: 100%;
+  max-width: 1200px;
   padding: 1rem;
   position: relative;
+  overflow-y: auto;
   overflow-x: hidden;
+  max-height: 100%;
+  height: auto;
+  min-height: min-content;
 
   &::before {
     content: '';
@@ -106,6 +111,14 @@ const TraitPanelTitle = styled.h1`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+  }
 `;
 
 const TraitPanelSubtitle = styled.p`

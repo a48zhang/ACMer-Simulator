@@ -28,6 +28,19 @@ const PlayerPanelWrapper = styled.aside`
   &::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 240px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid ${props => props.theme.colors.border};
+    height: 50vh;
+  }
 `;
 
 const PanelContent = styled.div`

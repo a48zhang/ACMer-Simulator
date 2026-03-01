@@ -20,6 +20,21 @@ const ActivityList = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 0.625rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.375rem;
+  }
 `;
 
 const ActivityCard = styled.div`
@@ -37,6 +52,16 @@ const ActivityCard = styled.div`
     transform: translateY(-2px);
     box-shadow: ${props => props.theme.shadows.md};
     border-color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.625rem;
+    min-height: 140px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+    min-height: 120px;
   }
 `;
 

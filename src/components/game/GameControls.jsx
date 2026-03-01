@@ -13,6 +13,16 @@ const GameStartSection = styled.section`
   flex-wrap: wrap;
   gap: 0.75rem;
   border: 1px solid ${props => props.theme.colors.border};
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.625rem 0.75rem;
+    gap: 0.375rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -53,6 +63,17 @@ const StatusChip = styled.span`
     background: #fffbeb;
     color: #92400e;
   `}
+
+  @media (max-width: 768px) {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    gap: 0.25rem;
+  }
 `;
 
 const StatusChipStrong = styled.strong`

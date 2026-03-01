@@ -12,6 +12,24 @@ const LogPanelWrapper = styled.section`
   border: 1px solid ${props => props.theme.colors.border};
   width: 320px;
   flex-shrink: 0;
+
+  @media (max-width: 1024px) {
+    width: 280px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    max-width: none;
+    height: 40vh;
+    border-radius: ${props => props.theme.radius.lg} ${props => props.theme.radius.lg} 0 0;
+    border-right: none;
+    border-bottom: none;
+  }
 `;
 
 const LogHeader = styled.div`

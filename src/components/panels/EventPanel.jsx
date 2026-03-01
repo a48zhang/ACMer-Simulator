@@ -55,10 +55,20 @@ const EventCard = styled.div`
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: ${props => props.theme.shadows.md};
-      border-color: ${props => props.theme.colors.primary};
+      box-shadow: ${props.theme.shadows.md};
+      border-color: ${props.theme.colors.primary};
     }
   `}
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.625rem;
+    gap: 0.625rem;
+  }
 `;
 
 const EventCardIcon = styled.div`

@@ -26,6 +26,16 @@ const DialogBox = styled.div`
   width: 90%;
   max-height: 85vh;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+    max-width: 95%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+    max-width: 98%;
+  }
 `;
 
 const DialogTitle = styled.h2`
@@ -33,6 +43,14 @@ const DialogTitle = styled.h2`
   font-weight: 700;
   color: ${props => props.theme.colors.textMain};
   margin-bottom: 0.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const DialogSubtitle = styled.p`
@@ -106,6 +124,16 @@ const TraitList = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.75rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.625rem;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 `;
 
 const TraitCard = styled.div`
@@ -115,6 +143,14 @@ const TraitCard = styled.div`
   padding: 1rem;
   cursor: pointer;
   transition: all 0.2s;
+
+  @media (max-width: 768px) {
+    padding: 0.875rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
 
   &:hover {
     border-color: ${props => props.theme.colors.primary};
