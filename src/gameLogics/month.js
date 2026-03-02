@@ -1,9 +1,10 @@
 import { END_MONTH } from '../constants';
 import { clampGPA } from '../utils';
 import { scheduleMonthlyEvents } from '../data/events';
+import { GPA_CONFIG } from '../config/gameBalance';
 
 /**
- * 推进到下一月
+ * 推进到下一月 - 主函数
  * @param {Object} gameState - 当前游戏状态
  * @returns {Object} LogicResult
  */
@@ -11,101 +12,120 @@ export function advanceMonth(gameState) {
   const logs = [];
   const newMonth = gameState.month + 1;
 
-  // 检查游戏是否结束
-  if (newMonth > END_MONTH) {
-    logs.push({
-      message: `🎓 游戏结束！比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`,
-      type: 'success'
-    });
-
-    const newState = {
-      ...gameState,
-      month: newMonth,
-      isRunning: false
-    };
-
-    return {
-      newState,
-      logs,
-      uiState: {},
-      gameOverReason: 'graduation'
-    };
+  const endCheck = checkGameEnd(gameState, newMonth);
+  if (endCheck.isEnded) {
+    return endCheck.result;
   }
 
-  // 计算本月日历月份
-  const monthsSinceStartEarly = newMonth - 1;
-  const totalCalMonthEarly = 9 + monthsSinceStartEarly;
-  const calendarMonthForGpa = ((totalCalMonthEarly - 1) % 12) + 1;
+  const gpaResult = calculateGPAChange(gameState, newMonth);
+  logs.push(...gpaResult.logs);
 
-  // 假期月份判定
-  const isHolidayMonth = calendarMonthForGpa === 2 || calendarMonthForGpa === 7 || calendarMonthForGpa === 8;
+  const economyResult = processEconomy(gameState);
+  logs.push(...economyResult.logs);
 
-  // 月度GPA扣除
-  let gpaDeduction = 0;
-  if (!isHolidayMonth) {
-    const baseGpaDeduction = 0.05;
-    gpaDeduction = baseGpaDeduction;
-    const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
-    if (!attendedClass && Math.random() < 0.3) {
-      gpaDeduction += 0.15;
-      logs.push({ message: '⚠️ 本月未上课，GPA额外扣除！', type: 'warning' });
-    }
-  } else {
-    logs.push({ message: `🏖️ 假期月，无需上课，GPA不扣除`, type: 'info' });
-  }
+  const sanResult = processSanPenalty(gameState);
+  if (sanResult.log) logs.push(sanResult.log);
 
-  const newGpa = clampGPA(gameState.gpa - gpaDeduction);
-
-  // 月度经济结算
-  const allowance = gameState.monthlyAllowance || 1500;
-  const expense = Math.floor(Math.random() * 701) + 800;
-  const netBalance = Math.max(0, gameState.balance + allowance - expense);
-  logs.push({
-    message: `💰 家里打生活费 +${allowance}，本月支出 -${expense}，余额：${netBalance}`,
-    type: 'info'
-  });
-
-  // SAN=0 惩罚
-  const sanWasBurntOut = gameState.san <= 0;
-  const baseMonthlyAP = gameState.monthlyAP;
-  const nextMonthlyAP = sanWasBurntOut ? Math.floor(baseMonthlyAP / 2) : baseMonthlyAP;
-  if (sanWasBurntOut) {
-    logs.push({ message: '😵 SAN值耗尽！本月精力大幅下降，行动点减半！', type: 'error' });
-  }
-
-  // 生成当月事件
   const events = scheduleMonthlyEvents(gameState, newMonth);
-  const calendarMonth = calendarMonthForGpa;
+  const academicYear = calculateAcademicYear(newMonth);
+  logs.push(formatMonthLog(academicYear, getCalendarMonth(newMonth), events.length));
 
-  // 计算学年
-  let academicYear;
-  if (newMonth <= 4) {
-    academicYear = 1;
-  } else {
-    const monthsAfterFirstSemester = newMonth - 5;
-    const completedYears = Math.floor(monthsAfterFirstSemester / 12);
-    if (calendarMonth < 9) {
-      academicYear = completedYears + 1;
-    } else {
-      academicYear = completedYears + 2;
-    }
-  }
-
-  logs.push({
-    message: `📅 进入大学 ${academicYear} 年 ${calendarMonth} 月（待处理事件 ${events.length}）`,
-    type: 'info'
+  const newState = buildNewMonthState(gameState, newMonth, {
+    gpa: gpaResult.gpa,
+    balance: economyResult.balance,
+    remainingAP: sanResult.nextAP,
+    pendingEvents: events,
   });
 
-  const newState = {
+  return { newState, logs, uiState: {} };
+}
+
+function checkGameEnd(gameState, newMonth) {
+  if (newMonth > END_MONTH) {
+    return {
+      isEnded: true,
+      result: {
+        newState: { ...gameState, month: newMonth, isRunning: false },
+        logs: [{
+          message: `🎓 游戏结束！比赛次数：${gameState.playerContests}，解题数：${gameState.playerProblems}`,
+          type: 'success'
+        }],
+        uiState: {},
+        gameOverReason: 'graduation'
+      }
+    };
+  }
+  return { isEnded: false };
+}
+
+function calculateGPAChange(gameState, newMonth) {
+  const logs = [];
+  const calendarMonth = getCalendarMonth(newMonth);
+  const isHoliday = GPA_CONFIG.HOLIDAY_MONTHS.includes(calendarMonth);
+
+  if (isHoliday) {
+    logs.push({ message: `🏖️ 假期月，无需上课，GPA不扣除`, type: 'info' });
+    return { logs, gpa: gameState.gpa };
+  }
+
+  let deduction = GPA_CONFIG.MONTHLY_DEDUCTION;
+  const attended = gameState.worldFlags?.attendedClassThisMonth || false;
+
+  if (!attended && Math.random() < GPA_CONFIG.SKIP_CLASS_PROBABILITY) {
+    deduction += GPA_CONFIG.SKIP_CLASS_DEDUCTION;
+    logs.push({ message: '⚠️ 本月未上课，GPA额外扣除！', type: 'warning' });
+  }
+
+  return { logs, gpa: clampGPA(gameState.gpa - deduction) };
+}
+
+function processEconomy(gameState) {
+  const allowance = gameState.monthlyAllowance || 1500;
+  const expense = 800 + Math.floor(Math.random() * 701);
+  const balance = Math.max(0, gameState.balance + allowance - expense);
+
+  return {
+    logs: [{
+      message: `💰 家里打生活费 +${allowance}，本月支出 -${expense}，余额：${balance}`,
+      type: 'info'
+    }],
+    balance
+  };
+}
+
+function processSanPenalty(gameState) {
+  const wasBurntOut = gameState.san <= 0;
+  const nextAP = wasBurntOut ? Math.floor(gameState.monthlyAP / 2) : gameState.monthlyAP;
+
+  return {
+    log: wasBurntOut ? { message: '😵 SAN值耗尽！本月精力大幅下降，行动点减半！', type: 'error' } : null,
+    nextAP
+  };
+}
+
+function getCalendarMonth(gameMonth) {
+  return ((9 + gameMonth - 2) % 12) + 1;
+}
+
+function calculateAcademicYear(month) {
+  if (month <= 4) return 1;
+  const cm = getCalendarMonth(month);
+  return cm < 9 ? Math.floor((month - 5) / 12) + 1 : Math.floor((month - 5) / 12) + 2;
+}
+
+function formatMonthLog(year, month, eventCount) {
+  return {
+    message: `📅 进入大学 ${year} 年 ${month} 月（待处理事件 ${eventCount}）`,
+    type: 'info'
+  };
+}
+
+function buildNewMonthState(gameState, month, updates) {
+  return {
     ...gameState,
-    month: newMonth,
-    gpa: newGpa,
-    balance: netBalance,
-    remainingAP: nextMonthlyAP,
-    pendingEvents: events,
+    month,
+    ...updates,
     resolvedEvents: [],
     worldFlags: { ...(gameState.worldFlags || {}), attendedClassThisMonth: false }
   };
-
-  return { newState, logs, uiState: {} };
 }

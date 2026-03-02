@@ -5,6 +5,25 @@
 const hasFlag = (flags, key) => !!(flags && flags[key]);
 const getFlag = (flags, key, def = 0) => (flags && typeof flags[key] === 'number' ? flags[key] : def);
 
+/**
+ * 创建通用月份条件检查函数
+ * @param {number|number[]} targetMonth - 目标日历月份（单月或数组）
+ * @param {number} minYear - 最低学年要求
+ * @param {string[]} requiredFlags - 必须满足的 worldFlags 键列表
+ * @returns {Function} 条件检查函数
+ */
+const createMonthlyCondition = (targetMonth, minYear, requiredFlags) => {
+  return (state) => {
+    const { month, year } = getSchoolMonth(state.month);
+    const monthMatch = Array.isArray(targetMonth)
+      ? targetMonth.includes(month)
+      : month === targetMonth;
+    const yearMatch = year >= minYear;
+    const flagsMatch = requiredFlags.every(flag => hasFlag(state.worldFlags, flag));
+    return monthMatch && yearMatch && flagsMatch;
+  };
+};
+
 // 将游戏月份转换为学年和日历月份（gameMonth 1 = 大一9月）
 const getSchoolMonth = (gameMonth) => {
     const monthsSinceStart = gameMonth - 1; // 0-based
@@ -74,10 +93,7 @@ export const EVENTS = [
         title: '3月邀请赛名额抢夺',
         description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
-        conditions: (state) => {
-            const { month } = getSchoolMonth(state.month);
-            return month === 3 && hasFlag(state.worldFlags, 'joinedClub'); // 3月，且已加入社团
-        },
+        conditions: createMonthlyCondition(3, 1, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -114,10 +130,7 @@ export const EVENTS = [
         title: '4月XCPC省赛',
         description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
-        conditions: (state) => {
-            const { month } = getSchoolMonth(state.month);
-            return month === 4 && hasFlag(state.worldFlags, 'joinedClub'); // 4月，且已加入社团
-        },
+        conditions: createMonthlyCondition(4, 1, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -154,10 +167,7 @@ export const EVENTS = [
         title: '5月邀请赛',
         description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
         mandatory: true,
-        conditions: (state) => {
-            const { month } = getSchoolMonth(state.month);
-            return month === 5 && hasFlag(state.worldFlags, 'joinedClub'); // 5月，且已加入社团
-        },
+        conditions: createMonthlyCondition(5, 1, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -249,10 +259,7 @@ export const EVENTS = [
         title: '9月网络预选赛',
         description: '为区域赛做准备的网络预选赛，是否参加？个人赛，成绩影响区域赛入场资格。',
         mandatory: true,
-        conditions: (state) => {
-            const { month, year } = getSchoolMonth(state.month);
-            return month === 9 && year > 1 && hasFlag(state.worldFlags, 'joinedClub'); // 9月，大二及以上，且已加入社团
-        },
+        conditions: createMonthlyCondition(9, 2, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -289,10 +296,7 @@ export const EVENTS = [
         description: '区域赛季开始了！本月有一个赛站，是否组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出，由 scheduleMonthlyEvents 负责掷骰
-        conditions: (state) => {
-            const { month, year } = getSchoolMonth(state.month);
-            return month === 10 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
-        },
+        conditions: createMonthlyCondition(10, 2, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -329,10 +333,7 @@ export const EVENTS = [
         description: '又有区域赛赛站了！是否继续组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出
-        conditions: (state) => {
-            const { month, year } = getSchoolMonth(state.month);
-            return month === 11 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
-        },
+        conditions: createMonthlyCondition(11, 2, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -369,10 +370,7 @@ export const EVENTS = [
         description: '区域赛季的最后机会！是否组队参赛？',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率在调度时刷出
-        conditions: (state) => {
-            const { month, year } = getSchoolMonth(state.month);
-            return month === 12 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
-        },
+        conditions: createMonthlyCondition(12, 2, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
@@ -471,11 +469,7 @@ export const EVENTS = [
         description: '学校举办校内程序设计比赛，需要组队参赛。',
         mandatory: false,
         chanceToAppear: 0.3, // 30%概率刷出
-        conditions: (state) => {
-            const { month, year } = getSchoolMonth(state.month);
-            // 10-12月，大二及以上，且已加入社团
-            return (month === 10 || month === 11 || month === 12) && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
-        },
+        conditions: createMonthlyCondition([10, 11, 12], 2, ['joinedClub']),
         choices: [
             {
                 id: 'participate',
