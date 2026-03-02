@@ -1,6 +1,8 @@
 // 事件系统数据定义
 // Event system data definitions
 
+import { EVENT_CHANCES } from '../config/gameBalance';
+
 // 条件匹配工具
 const hasFlag = (flags, key) => !!(flags && flags[key]);
 const getFlag = (flags, key, def = 0) => (flags && typeof flags[key] === 'number' ? flags[key] : def);
@@ -288,7 +290,7 @@ export const EVENTS = [
         title: '10月区域赛站点',
         description: '区域赛季开始了！本月有一个赛站，是否组队参赛？',
         mandatory: false,
-        chanceToAppear: 0.3, // 30%概率在调度时刷出，由 scheduleMonthlyEvents 负责掷骰
+        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION, // 30%概率在调度时刷出，由 scheduleMonthlyEvents 负责掷骰
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
             return month === 10 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
@@ -328,7 +330,7 @@ export const EVENTS = [
         title: '11月区域赛站点',
         description: '又有区域赛赛站了！是否继续组队参赛？',
         mandatory: false,
-        chanceToAppear: 0.3, // 30%概率在调度时刷出
+        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION, // 30%概率在调度时刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
             return month === 11 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
@@ -368,7 +370,7 @@ export const EVENTS = [
         title: '12月区域赛站点',
         description: '区域赛季的最后机会！是否组队参赛？',
         mandatory: false,
-        chanceToAppear: 0.3, // 30%概率在调度时刷出
+        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION, // 30%概率在调度时刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
             return month === 12 && year >= 2 && hasFlag(state.worldFlags, 'joinedClub');
@@ -430,7 +432,7 @@ export const EVENTS = [
         title: '新生程序设计大赛',
         description: '学校举办新生程序设计大赛，这是展示自己的好机会！个人赛，难度相对较低。',
         mandatory: false,
-        chanceToAppear: 0.4, // 40%概率刷出
+        chanceToAppear: EVENT_CHANCES.FRESHMAN_CONTEST, // 40%概率刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
             return (month === 10 || month === 11) && year === 1; // 仅大一10-11月
@@ -470,7 +472,7 @@ export const EVENTS = [
         title: '校内程序设计大赛',
         description: '学校举办校内程序设计比赛，需要组队参赛。',
         mandatory: false,
-        chanceToAppear: 0.3, // 30%概率刷出
+        chanceToAppear: EVENT_CHANCES.SCHOOL_CONTEST, // 30%概率刷出
         conditions: (state) => {
             const { month, year } = getSchoolMonth(state.month);
             // 10-12月，大二及以上，且已加入社团

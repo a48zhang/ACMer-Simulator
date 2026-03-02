@@ -1,6 +1,8 @@
 // 活动系统数据定义
 // Activity system data definitions
 
+import { SKILL_CONFIG } from '../config/gameBalance';
+
 const ATTRIBUTE_MULTIPLIERS = {
     // 通用属性
     CODING: 10,
@@ -111,7 +113,7 @@ export const ACTIVITIES = [
             // 正常刷题：每道题独立判定属性提升
             let solved = 0;
             const attributeGains = {};
-            const SKILL_GAIN_PROBABILITY = 0.15; // 15%概率提升
+            const SKILL_GAIN_PROBABILITY = SKILL_CONFIG.GAIN_PROBABILITY; // 15%概率提升
 
             for (let i = 0; i < attempts; i++) {
                 if (solveProblem(state.attributes)) {

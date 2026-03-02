@@ -150,7 +150,7 @@ export const TRAITS = [
     }
   },
   {
-    id: 'trait_LGBTQ+',
+    id: 'trait_LGBTQ',
     name: 'MTF Trans',
     type: TRAIT_TYPES.NEGATIVE,
     cost: -5,

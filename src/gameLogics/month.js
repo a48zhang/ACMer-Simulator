@@ -1,6 +1,7 @@
 import { END_MONTH } from '../constants';
 import { clampGPA } from '../utils';
 import { scheduleMonthlyEvents } from '../data/events';
+import { GPA_CONFIG } from '../config/gameBalance';
 
 /**
  * 推进到下一月
@@ -38,16 +39,16 @@ export function advanceMonth(gameState) {
   const calendarMonthForGpa = ((totalCalMonthEarly - 1) % 12) + 1;
 
   // 假期月份判定
-  const isHolidayMonth = calendarMonthForGpa === 2 || calendarMonthForGpa === 7 || calendarMonthForGpa === 8;
+  const isHolidayMonth = GPA_CONFIG.HOLIDAY_MONTHS.includes(calendarMonthForGpa);
 
   // 月度GPA扣除
   let gpaDeduction = 0;
   if (!isHolidayMonth) {
-    const baseGpaDeduction = 0.05;
+    const baseGpaDeduction = GPA_CONFIG.MONTHLY_DEDUCTION;
     gpaDeduction = baseGpaDeduction;
     const attendedClass = gameState.worldFlags?.attendedClassThisMonth || false;
-    if (!attendedClass && Math.random() < 0.3) {
-      gpaDeduction += 0.15;
+    if (!attendedClass && Math.random() < GPA_CONFIG.SKIP_CLASS_PROBABILITY) {
+      gpaDeduction += GPA_CONFIG.SKIP_CLASS_DEDUCTION;
       logs.push({ message: '⚠️ 本月未上课，GPA额外扣除！', type: 'warning' });
     }
   } else {
