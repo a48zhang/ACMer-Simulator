@@ -109,7 +109,7 @@ function processStartContest(gameState, ev, choice, effects, setFlags, logs, sel
     ? clampValue(gameState.san + effects.sanDelta, 0, INITIAL_SAN)
     : gameState.san;
   const remaining = (gameState.pendingEvents || []).filter(e => e.id !== ev.id);
-  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now() };
+  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now(), uuid: crypto.randomUUID() };
 
   const newState = {
     ...gameState,
@@ -186,7 +186,7 @@ function buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selecte
   }
 
   const remaining = (gameState.pendingEvents || []).filter(e => e.id !== ev.id);
-  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now() };
+  const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now(), uuid: crypto.randomUUID() };
   newState.pendingEvents = remaining;
   newState.resolvedEvents = [...(gameState.resolvedEvents || []), resolvedItem];
 

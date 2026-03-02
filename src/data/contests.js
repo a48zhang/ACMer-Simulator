@@ -207,7 +207,7 @@ const generateProblem = (difficulty) => {
     }
 
     return {
-        id: `problem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `problem_${crypto.randomUUID()}`,
         difficulty,
         requires,
         trickiness,
