@@ -40,6 +40,12 @@ export function advanceMonth(gameState) {
   return { newState, logs, uiState: {} };
 }
 
+/**
+ * 检查游戏是否结束（毕业）
+ * @param {Object} gameState - 当前游戏状态
+ * @param {number} newMonth - 下一月份
+ * @returns {Object} { isEnded: boolean, result?: LogicResult }
+ */
 function checkGameEnd(gameState, newMonth) {
   if (newMonth > END_MONTH) {
     return {
@@ -58,6 +64,12 @@ function checkGameEnd(gameState, newMonth) {
   return { isEnded: false };
 }
 
+/**
+ * 计算本月GPA变化
+ * @param {Object} gameState - 当前游戏状态
+ * @param {number} newMonth - 推进后的新游戏月份
+ * @returns {Object} { logs: Array, gpa: number }
+ */
 function calculateGPAChange(gameState, newMonth) {
   const logs = [];
   const calendarMonth = getCalendarMonth(newMonth);
@@ -79,6 +91,11 @@ function calculateGPAChange(gameState, newMonth) {
   return { logs, gpa: clampGPA(gameState.gpa - deduction) };
 }
 
+/**
+ * 处理月度经济结算（生活费收入与随机支出）
+ * @param {Object} gameState - 当前游戏状态
+ * @returns {Object} { logs: Array, balance: number }
+ */
 function processEconomy(gameState) {
   const allowance = gameState.monthlyAllowance || 1500;
   const expense = 800 + Math.floor(Math.random() * 701);
@@ -93,6 +110,11 @@ function processEconomy(gameState) {
   };
 }
 
+/**
+ * 处理SAN值耗尽惩罚（行动点减半）
+ * @param {Object} gameState - 当前游戏状态
+ * @returns {Object} { log: Object|null, nextAP: number }
+ */
 function processSanPenalty(gameState) {
   const wasBurntOut = gameState.san <= 0;
   const nextAP = wasBurntOut ? Math.floor(gameState.monthlyAP / 2) : gameState.monthlyAP;
@@ -103,16 +125,33 @@ function processSanPenalty(gameState) {
   };
 }
 
+/**
+ * 将游戏月份转换为日历月份（1-12）
+ * @param {number} gameMonth - 游戏内月份（1 = 大一9月）
+ * @returns {number} 日历月份（1-12）
+ */
 function getCalendarMonth(gameMonth) {
   return ((9 + gameMonth - 2) % 12) + 1;
 }
 
+/**
+ * 根据游戏月份计算当前学年（1-4）
+ * @param {number} month - 游戏内月份
+ * @returns {number} 学年
+ */
 function calculateAcademicYear(month) {
   if (month <= 4) return 1;
   const cm = getCalendarMonth(month);
   return cm < 9 ? Math.floor((month - 5) / 12) + 1 : Math.floor((month - 5) / 12) + 2;
 }
 
+/**
+ * 格式化月份推进日志
+ * @param {number} year - 学年
+ * @param {number} month - 日历月份
+ * @param {number} eventCount - 本月待处理事件数量
+ * @returns {Object} 日志对象
+ */
 function formatMonthLog(year, month, eventCount) {
   return {
     message: `📅 进入大学 ${year} 年 ${month} 月（待处理事件 ${eventCount}）`,
@@ -120,6 +159,13 @@ function formatMonthLog(year, month, eventCount) {
   };
 }
 
+/**
+ * 构建推进月份后的新游戏状态
+ * @param {Object} gameState - 当前游戏状态
+ * @param {number} month - 新月份
+ * @param {Object} updates - 需要合并的状态更新（gpa, balance, remainingAP, pendingEvents）
+ * @returns {Object} 新游戏状态
+ */
 function buildNewMonthState(gameState, month, updates) {
   return {
     ...gameState,

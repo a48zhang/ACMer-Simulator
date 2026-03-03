@@ -13,9 +13,12 @@ const getFieldValue = (effects, prevState, field, deltaField) => {
 };
 
 /**
- * 检查是否触发学业警告或退学（内部函数）
+ * 检查是否触发学业警告或退学
+ * @param {number} gpa - 当前GPA
+ * @param {Object} buffs - 当前buff状态 { failedCourses, academicWarnings }
+ * @returns {Object} { isExpelled, buffChanges?, reason?, newState?, logs }
  */
-function checkAcademicWarning(gpa, buffs) {
+export function checkAcademicWarning(gpa, buffs) {
   const logs = [];
 
   if (gpa < ACADEMIC_CONFIG.WARNING_THRESHOLD) {
@@ -36,12 +39,10 @@ function checkAcademicWarning(gpa, buffs) {
     }
 
     return { isExpelled: false, buffChanges: { academicWarnings: 1 }, logs };
-  }
-
-  if (gpa < ACADEMIC_CONFIG.FAILED_COURSE_THRESHOLD) {
+  } else if (gpa < ACADEMIC_CONFIG.FAILURE_THRESHOLD) {
     const newFailures = buffs.failedCourses + 1;
     logs.push({
-      message: `📉 挂科！GPA低于${ACADEMIC_CONFIG.FAILED_COURSE_THRESHOLD}，获得挂科 buff（当前${newFailures}个）`,
+      message: `📉 挂科！GPA低于${ACADEMIC_CONFIG.FAILURE_THRESHOLD}，获得挂科 buff（当前${newFailures}个）`,
       type: 'warning'
     });
 
@@ -56,7 +57,7 @@ function checkAcademicWarning(gpa, buffs) {
         logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
         return {
           isExpelled: true,
-          reason: `GPA长期低于${ACADEMIC_CONFIG.FAILED_COURSE_THRESHOLD}，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`,
+          reason: `GPA长期低于${ACADEMIC_CONFIG.FAILURE_THRESHOLD}，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`,
           newState: { isRunning: false, buffs: { failedCourses: 0, academicWarnings: newWarnings } },
           logs
         };
@@ -72,9 +73,11 @@ function checkAcademicWarning(gpa, buffs) {
 }
 
 /**
- * 检查是否获得奖学金（内部函数）
+ * 检查是否获得奖学金
+ * @param {number} gpa - 当前GPA
+ * @returns {Object|null} 日志对象，未获得则返回 null
  */
-function checkScholarship(gpa) {
+export function checkScholarship(gpa) {
   if (gpa >= ACADEMIC_CONFIG.SCHOLARSHIP_THRESHOLD) {
     return {
       message: `🎓 优秀！GPA达到${ACADEMIC_CONFIG.SCHOLARSHIP_THRESHOLD}以上，获得奖学金！`,
