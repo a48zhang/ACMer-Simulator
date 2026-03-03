@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import { Button } from '../common/Button';
 
@@ -290,6 +290,41 @@ const AttrProgressFill = styled.div`
   `}
 `;
 
+// 独立的属性卡片组件，使用 memo 包装
+const AttributeCard = memo(({ attrKey, name, short, value, isPrimary }) => {
+  return (
+    <AttrCard>
+      <AttrHeader>
+        <AttrLabel title={name}>{short}</AttrLabel>
+        <AttrValueText>{value}</AttrValueText>
+      </AttrHeader>
+      <AttrProgressBg>
+        <AttrProgressFill
+          $primary={isPrimary}
+          $secondary={!isPrimary}
+          $width={Math.min(value * 10, 100)}
+          $gradient={value > 10}
+        />
+      </AttrProgressBg>
+    </AttrCard>
+  );
+});
+
+AttributeCard.displayName = 'AttributeCard';
+
+// 独立的状态卡片组件，使用 memo 包装
+const StatusCardItem = memo(({ icon, label, value, accentColor, valueColor }) => {
+  return (
+    <StatusCard $accentColor={accentColor}>
+      <StatusIcon>{icon}</StatusIcon>
+      <StatusLabel>{label}</StatusLabel>
+      <StatusValue $color={valueColor}>{value}</StatusValue>
+    </StatusCard>
+  );
+});
+
+StatusCardItem.displayName = 'StatusCardItem';
+
 function PlayerPanel({
   attributes,
   balance,
@@ -301,14 +336,15 @@ function PlayerPanel({
   buffs,
   onReset
 }) {
-  const generalAttributes = [
+  // 缓存属性列表
+  const generalAttributes = useMemo(() => [
     { key: 'coding', name: '💻 编程', short: '编程' },
     { key: 'algorithm', name: '🧠 思维', short: '思维' },
     { key: 'speed', name: '🏃 速度', short: '速度' },
     { key: 'stress', name: '🧘 抗压', short: '抗压' }
-  ];
+  ], []);
 
-  const specializedAttributes = [
+  const specializedAttributes = useMemo(() => [
     { key: 'math', name: '📐 数学', short: '数学' },
     { key: 'dp', name: '🔄 DP', short: 'DP' },
     { key: 'graph', name: '🕸️ 图论', short: '图论' },
@@ -317,28 +353,42 @@ function PlayerPanel({
     { key: 'search', name: '🔍 搜索', short: '搜索' },
     { key: 'greedy', name: '💡 贪心', short: '贪心' },
     { key: 'geometry', name: '📏 几何', short: '几何' }
-  ];
+  ], []);
 
-  const getSanColor = (value) => {
-    if (value >= 70) return '#059669';
-    if (value >= 40) return '#d97706';
-    return '#dc2626';
-  };
+  // 缓存颜色计算
+  const colors = useMemo(() => {
+    const getSanColor = (value) => {
+      if (value >= 70) return '#059669';
+      if (value >= 40) return '#d97706';
+      return '#dc2626';
+    };
 
-  const getGpaColor = (value) => {
-    if (value >= 3.5) return '#059669';
-    if (value >= 2.5) return '#d97706';
-    return '#dc2626';
-  };
+    const getGpaColor = (value) => {
+      if (value >= 3.5) return '#059669';
+      if (value >= 2.5) return '#d97706';
+      return '#dc2626';
+    };
 
-  const getRatingAccent = (value) => {
-    if (value >= 2400) return '#f59e0b';
-    if (value >= 2100) return '#ec4899';
-    if (value >= 1900) return '#8b5cf6';
-    if (value >= 1600) return '#3b82f6';
-    if (value >= 1400) return '#10b981';
-    return '#6b7280';
-  };
+    const getRatingAccent = (value) => {
+      if (value >= 2400) return '#f59e0b';
+      if (value >= 2100) return '#ec4899';
+      if (value >= 1900) return '#8b5cf6';
+      if (value >= 1600) return '#3b82f6';
+      if (value >= 1400) return '#10b981';
+      return '#6b7280';
+    };
+
+    return {
+      sanColor: getSanColor(san),
+      gpaColor: getGpaColor(gpa),
+      ratingAccent: getRatingAccent(rating)
+    };
+  }, [san, gpa, rating]);
+
+  // 缓存 buffs 显示条件
+  const shouldShowBuffs = useMemo(() => {
+    return buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0);
+  }, [buffs]);
 
   return (
     <PlayerPanelWrapper>
@@ -351,28 +401,35 @@ function PlayerPanel({
             </ResetButton>
           </PanelTitle>
           <StatusCards>
-            <StatusCard $accentColor="#f59e0b">
-              <StatusIcon>💰</StatusIcon>
-              <StatusLabel>余额</StatusLabel>
-              <StatusValue>¥{balance}</StatusValue>
-            </StatusCard>
-            <StatusCard $accentColor={getSanColor(san)}>
-              <StatusIcon>💊</StatusIcon>
-              <StatusLabel>SAN值</StatusLabel>
-              <StatusValue $color={getSanColor(san)}>{san}</StatusValue>
-            </StatusCard>
-            <StatusCard $accentColor={getRatingAccent(rating)}>
-              <StatusIcon>🏆</StatusIcon>
-              <StatusLabel>Rating</StatusLabel>
-              <StatusValue $color={getRatingAccent(rating)}>{rating}</StatusValue>
-            </StatusCard>
-            <StatusCard $accentColor={getGpaColor(gpa)}>
-              <StatusIcon>📚</StatusIcon>
-              <StatusLabel>GPA</StatusLabel>
-              <StatusValue $color={getGpaColor(gpa)}>{gpa.toFixed(2)}</StatusValue>
-            </StatusCard>
+            <StatusCardItem
+              icon="💰"
+              label="余额"
+              value={`¥${balance}`}
+              accentColor="#f59e0b"
+            />
+            <StatusCardItem
+              icon="💊"
+              label="SAN值"
+              value={san}
+              accentColor={colors.sanColor}
+              valueColor={colors.sanColor}
+            />
+            <StatusCardItem
+              icon="🏆"
+              label="Rating"
+              value={rating}
+              accentColor={colors.ratingAccent}
+              valueColor={colors.ratingAccent}
+            />
+            <StatusCardItem
+              icon="📚"
+              label="GPA"
+              value={gpa.toFixed(2)}
+              accentColor={colors.gpaColor}
+              valueColor={colors.gpaColor}
+            />
           </StatusCards>
-          {buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0) && (
+          {shouldShowBuffs && (
             <BuffsDisplay>
               {buffs.failedCourses > 0 && (
                 <BuffItem $warning>📉 挂科×{buffs.failedCourses}</BuffItem>
@@ -395,19 +452,14 @@ function PlayerPanel({
             </CategoryHeader>
             <AttrGrid>
               {generalAttributes.map(({ key, name, short }) => (
-                <AttrCard key={key}>
-                  <AttrHeader>
-                    <AttrLabel title={name}>{short}</AttrLabel>
-                    <AttrValueText>{attributes[key]}</AttrValueText>
-                  </AttrHeader>
-                  <AttrProgressBg>
-                    <AttrProgressFill
-                      $primary
-                      $width={Math.min(attributes[key] * 10, 100)}
-                      $gradient={attributes[key] > 10}
-                    />
-                  </AttrProgressBg>
-                </AttrCard>
+                <AttributeCard
+                  key={key}
+                  attrKey={key}
+                  name={name}
+                  short={short}
+                  value={attributes[key]}
+                  isPrimary={true}
+                />
               ))}
             </AttrGrid>
           </AttrCategory>
@@ -418,19 +470,14 @@ function PlayerPanel({
             </CategoryHeader>
             <AttrGrid>
               {specializedAttributes.map(({ key, name, short }) => (
-                <AttrCard key={key}>
-                  <AttrHeader>
-                    <AttrLabel title={name}>{short}</AttrLabel>
-                    <AttrValueText>{attributes[key]}</AttrValueText>
-                  </AttrHeader>
-                  <AttrProgressBg>
-                    <AttrProgressFill
-                      $secondary
-                      $width={Math.min(attributes[key] * 10, 100)}
-                      $gradient={attributes[key] > 10}
-                    />
-                  </AttrProgressBg>
-                </AttrCard>
+                <AttributeCard
+                  key={key}
+                  attrKey={key}
+                  name={name}
+                  short={short}
+                  value={attributes[key]}
+                  isPrimary={false}
+                />
               ))}
             </AttrGrid>
           </AttrCategory>
@@ -440,4 +487,4 @@ function PlayerPanel({
   );
 }
 
-export default PlayerPanel;
+export default memo(PlayerPanel);

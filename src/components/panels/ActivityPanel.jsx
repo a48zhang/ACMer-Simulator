@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 const ActivityPanelWrapper = styled.section`
@@ -120,33 +121,65 @@ const ActivityButton = styled.button`
   }
 `;
 
+// 独立的活动卡片组件
+const ActivityCardItem = memo(({ activity, canExecute, remainingAP, onExecute }) => {
+  const handleClick = useCallback(() => {
+    onExecute(activity.id);
+  }, [activity.id, onExecute]);
+
+  const buttonText = useMemo(() => {
+    return remainingAP < activity.cost ? '行动点不足' : '执行';
+  }, [remainingAP, activity.cost]);
+
+  return (
+    <ActivityCard>
+      <ActivityHeader>
+        <ActivityName>{activity.name}</ActivityName>
+        <ActivityCost>{activity.cost} AP</ActivityCost>
+      </ActivityHeader>
+      <ActivityDescription>{activity.description}</ActivityDescription>
+      <ActivityButton
+        onClick={handleClick}
+        disabled={!canExecute}
+      >
+        {buttonText}
+      </ActivityButton>
+    </ActivityCard>
+  );
+});
+
+ActivityCardItem.displayName = 'ActivityCardItem';
+
 function ActivityPanel({ activities, remainingAP, onExecuteActivity, isRunning, isPaused, gameEnded }) {
-  const canExecute = (activity) => {
+  // 缓存 canExecute 检查函数
+  const canExecute = useCallback((activity) => {
     return isRunning && !isPaused && !gameEnded && remainingAP >= activity.cost;
-  };
+  }, [isRunning, isPaused, gameEnded, remainingAP]);
+
+  // 缓存 onExecute 回调
+  const handleExecute = useCallback((activityId) => {
+    onExecuteActivity(activityId);
+  }, [onExecuteActivity]);
+
+  // 缓存活动列表
+  const memoizedActivities = useMemo(() => activities, [activities]);
 
   return (
     <ActivityPanelWrapper>
       <ActivityTitle>📋 本月活动</ActivityTitle>
       <ActivityList>
-        {activities.map(activity => (
-          <ActivityCard key={activity.id}>
-            <ActivityHeader>
-              <ActivityName>{activity.name}</ActivityName>
-              <ActivityCost>{activity.cost} AP</ActivityCost>
-            </ActivityHeader>
-            <ActivityDescription>{activity.description}</ActivityDescription>
-            <ActivityButton
-              onClick={() => onExecuteActivity(activity.id)}
-              disabled={!canExecute(activity)}
-            >
-              {remainingAP < activity.cost ? '行动点不足' : '执行'}
-            </ActivityButton>
-          </ActivityCard>
+        {memoizedActivities.map(activity => (
+          <ActivityCardItem
+            key={activity.id}
+            activity={activity}
+            canExecute={canExecute(activity)}
+            remainingAP={remainingAP}
+            onExecute={handleExecute}
+          />
         ))}
       </ActivityList>
     </ActivityPanelWrapper>
   );
 }
 
-export default ActivityPanel;
+export default memo(ActivityPanel);

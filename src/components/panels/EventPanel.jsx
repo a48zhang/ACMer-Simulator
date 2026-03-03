@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
 import { Button } from '../common/Button';
 
@@ -155,73 +155,123 @@ const EventBlockWarning = styled.div`
   text-align: center;
 `;
 
+// 独立的内联选择按钮组件
+const InlineChoiceButton = memo(({ choice, eventId, onDirectChoice }) => {
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+    onDirectChoice(eventId, choice.id);
+  }, [choice.id, eventId, onDirectChoice]);
+
+  return (
+    <BtnInlineChoice onClick={handleClick}>
+      {choice.label}
+    </BtnInlineChoice>
+  );
+});
+
+InlineChoiceButton.displayName = 'InlineChoiceButton';
+
+// 独立的事件卡片组件
+const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }) => {
+  // 检查是否为简单事件（可以内联选择）
+  const isSimple = useMemo(() => {
+    return event.choices?.length === 2 &&
+      event.choices.every(c => !c.requiresTeamSelection && !c.specialAction);
+  }, [event.choices]);
+
+  const handleCardClick = useCallback(() => {
+    if (!isSimple) {
+      onOpenEvent(event.id);
+    }
+  }, [event.id, isSimple, onOpenEvent]);
+
+  const handleActionClick = useCallback((e) => {
+    e.stopPropagation();
+    onOpenEvent(event.id);
+  }, [event.id, onOpenEvent]);
+
+  return (
+    <EventCard
+      $isSimple={isSimple}
+      onClick={handleCardClick}
+    >
+      <EventCardIcon>📩</EventCardIcon>
+      <EventCardContent>
+        <EventCardHeader>
+          <EventCardTitle>{event.title}</EventCardTitle>
+          {event.mandatory && <TagMandatory>必做</TagMandatory>}
+        </EventCardHeader>
+        <EventCardDesc>{event.description}</EventCardDesc>
+        {isSimple && (
+          <EventInlineChoices>
+            {event.choices.map((choice) => (
+              <InlineChoiceButton
+                key={choice.id}
+                choice={choice}
+                eventId={event.id}
+                onDirectChoice={onDirectChoice}
+              />
+            ))}
+          </EventInlineChoices>
+        )}
+      </EventCardContent>
+      {!isSimple && (
+        <BtnEventAction
+          variant="secondary"
+          size="sm"
+          onClick={handleActionClick}
+        >
+          处理 →
+        </BtnEventAction>
+      )}
+    </EventCard>
+  );
+});
+
+EventCardItem.displayName = 'EventCardItem';
+
 function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }) {
-    const count = pendingEvents?.length || 0;
-    const sorted = useMemo(() => pendingEvents || [], [pendingEvents]);
+  const count = pendingEvents?.length || 0;
 
-    if (count === 0) return null;
+  // 缓存事件列表
+  const sorted = useMemo(() => pendingEvents || [], [pendingEvents]);
 
-    return (
-        <EventPanelWrapper>
-            <PanelHeader>
-                <PanelTitle>📅 当月事件</PanelTitle>
-                <EventBadge>{count} 待处理</EventBadge>
-            </PanelHeader>
+  // 缓存回调
+  const handleOpenEvent = useCallback((eventId) => {
+    onOpenEvent(eventId);
+  }, [onOpenEvent]);
 
-            <EventList>
-                {sorted.map((ev) => {
-                    const isSimple = ev.choices?.length === 2 &&
-                        ev.choices.every(c => !c.requiresTeamSelection && !c.specialAction);
-                    return (
-                        <EventCard
-                            key={ev.id}
-                            $isSimple={isSimple}
-                            onClick={isSimple ? undefined : () => onOpenEvent(ev.id)}
-                        >
-                            <EventCardIcon>📩</EventCardIcon>
-                            <EventCardContent>
-                                <EventCardHeader>
-                                    <EventCardTitle>{ev.title}</EventCardTitle>
-                                    {ev.mandatory && <TagMandatory>必做</TagMandatory>}
-                                </EventCardHeader>
-                                <EventCardDesc>{ev.description}</EventCardDesc>
-                                {isSimple && (
-                                    <EventInlineChoices>
-                                        {ev.choices.map((choice) => (
-                                            <BtnInlineChoice
-                                                key={choice.id}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDirectChoice(ev.id, choice.id);
-                                                }}
-                                            >
-                                                {choice.label}
-                                            </BtnInlineChoice>
-                                        ))}
-                                    </EventInlineChoices>
-                                )}
-                            </EventCardContent>
-                            {!isSimple && (
-                                <BtnEventAction
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={(e) => { e.stopPropagation(); onOpenEvent(ev.id); }}
-                                >
-                                    处理 →
-                                </BtnEventAction>
-                            )}
-                        </EventCard>
-                    );
-                })}
-            </EventList>
+  const handleDirectChoice = useCallback((eventId, choiceId) => {
+    onDirectChoice(eventId, choiceId);
+  }, [onDirectChoice]);
 
-            {!canAdvance && (
-                <EventBlockWarning>
-                    ⚠️ 请先处理完所有事件才能进入下一月
-                </EventBlockWarning>
-            )}
-        </EventPanelWrapper>
-    );
+  if (count === 0) return null;
+
+  return (
+    <EventPanelWrapper>
+      <PanelHeader>
+        <PanelTitle>📅 当月事件</PanelTitle>
+        <EventBadge>{count} 待处理</EventBadge>
+      </PanelHeader>
+
+      <EventList>
+        {sorted.map((ev) => (
+          <EventCardItem
+            key={ev.id}
+            event={ev}
+            onOpenEvent={handleOpenEvent}
+            onDirectChoice={handleDirectChoice}
+          />
+        ))}
+      </EventList>
+
+      {!canAdvance && (
+        <EventBlockWarning>
+          ⚠️ 请先处理完所有事件才能进入下一月
+        </EventBlockWarning>
+      )}
+    </EventPanelWrapper>
+  );
 }
 
-export default EventPanel;
+export default memo(EventPanel);

@@ -10,7 +10,7 @@
 | ~~代码重构~~ | 拆分长函数，降低复杂度 | ✅ 已完成 |
 | ~~测试覆盖~~ | 添加单元测试，覆盖率 >80% | ✅ 已完成 |
 | ~~TypeScript基础设施~~ | 配置 tsconfig，基础类型 | ✅ 已完成 |
-| **性能优化** | 减少不必要的 React 渲染 | 待开始 |
+| ~~性能优化~~ | 减少不必要的 React 渲染 | ✅ 已完成 |
 | **TypeScript 迁移** | 将所有模块迁移到 TypeScript | 待开始 |
 
 ## 执行策略
@@ -77,10 +77,10 @@ open docs/plans/EXECUTION_PLAN.md
 - ✅ 配置集中管理
 - ✅ 函数复杂度达标
 - ✅ 测试通过 >80% 覆盖
+- ✅ 性能优化 (React.memo, useMemo, useCallback)
 
 ### 待完成
 
-- [ ] 性能改善 >30%
 - [ ] TypeScript 零错误
 - [ ] 性能优化效果在 TypeScript 迁移后保留
 

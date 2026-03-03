@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import GameControls from './components/game/GameControls'
 import PlayerPanel from './components/panels/PlayerPanel'
 import GlobalStatistics from './components/panels/GlobalStatistics'
@@ -228,6 +228,49 @@ function App() {
     setShowEventDialog(true)
   }, [gameState.pendingEvents])
 
+  // 关闭事件对话框回调
+  const handleEventDialogClose = useCallback(() => {
+    setShowEventDialog(false)
+    setCurrentEvent(null)
+  }, [])
+
+  // 关闭通知回调
+  const handleNotificationClose = useCallback(() => {
+    setNotification(null)
+  }, [])
+
+  // 关闭练习比赛对话框回调
+  const handlePracticeContestCancel = useCallback(() => {
+    setShowPracticeContestDialog(false)
+  }, [])
+
+  // 关闭确认对话框回调
+  const handleConfirmCancel = useCallback(() => {
+    setConfirmDialog(null)
+  }, [])
+
+  // 结束比赛回调
+  const handleFinishContest = useCallback(() => {
+    wrappedFinishContest(true)
+  }, [wrappedFinishContest])
+
+  // 缓存 pendingEvents 数组
+  const pendingEvents = useMemo(() => gameState.pendingEvents || [], [gameState.pendingEvents])
+
+  // 缓存 canAdvance 值
+  const canAdvance = useMemo(() => pendingEvents.length === 0, [pendingEvents.length])
+
+  // 缓存 gameEnded 值
+  const gameEnded = useMemo(() => gameState.month > 46, [gameState.month])
+
+  // 缓存游戏结束统计数据
+  const gameOverStats = useMemo(() => ({
+    playerContests: gameState.playerContests,
+    playerProblems: gameState.playerProblems,
+    rating: gameState.rating,
+    gpa: gameState.gpa
+  }), [gameState.playerContests, gameState.playerProblems, gameState.rating, gameState.gpa])
+
   // UI 渲染
   return (
     <Container>
@@ -272,10 +315,10 @@ function App() {
 
                 {!gameState.activeContest && (
                   <EventPanel
-                    pendingEvents={gameState.pendingEvents || []}
+                    pendingEvents={pendingEvents}
                     onOpenEvent={openEventDialog}
                     onDirectChoice={wrappedApplyEventChoice}
-                    canAdvance={(gameState.pendingEvents || []).length === 0}
+                    canAdvance={canAdvance}
                   />
                 )}
 
@@ -284,7 +327,7 @@ function App() {
                     contest={gameState.activeContest}
                     timeRemaining={gameState.contestTimeRemaining}
                     onAttempt={wrappedAttemptContestProblem}
-                    onFinish={() => wrappedFinishContest(true)}
+                    onFinish={handleFinishContest}
                     onRead={wrappedReadContestProblem}
                     onThink={wrappedThinkContestProblem}
                     onCode={wrappedCodeContestProblem}
@@ -299,7 +342,7 @@ function App() {
                     onExecuteActivity={wrappedExecuteActivity}
                     isRunning={gameState.isRunning}
                     isPaused={gameState.isPaused}
-                    gameEnded={gameState.month > 46}
+                    gameEnded={gameEnded}
                   />
                 )}
               </div>
@@ -316,7 +359,7 @@ function App() {
       {notification && (
         <Notification
           message={notification}
-          onClose={() => setNotification(null)}
+          onClose={handleNotificationClose}
         />
       )}
 
@@ -324,7 +367,7 @@ function App() {
         <EventDialog
           event={currentEvent}
           onSelectChoice={wrappedApplyEventChoice}
-          onClose={() => { setShowEventDialog(false); setCurrentEvent(null); }}
+          onClose={handleEventDialogClose}
         />
       )}
 
@@ -347,19 +390,14 @@ function App() {
       {showPracticeContestDialog && (
         <PracticeContestSelectionDialog
           onSelect={wrappedHandlePracticeContestSelect}
-          onCancel={() => setShowPracticeContestDialog(false)}
+          onCancel={handlePracticeContestCancel}
         />
       )}
 
       {gameOverReason && (
         <GameOverDialog
           reason={gameOverReason}
-          stats={{
-            playerContests: gameState.playerContests,
-            playerProblems: gameState.playerProblems,
-            rating: gameState.rating,
-            gpa: gameState.gpa
-          }}
+          stats={gameOverStats}
           onRestart={wrappedHandleGameOverRestart}
         />
       )}
@@ -367,7 +405,7 @@ function App() {
         <ConfirmDialog
           message={confirmDialog.message}
           onConfirm={confirmDialog.onConfirm}
-          onCancel={() => setConfirmDialog(null)}
+          onCancel={handleConfirmCancel}
         />
       )}
     </Container>
