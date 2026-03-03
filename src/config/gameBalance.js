@@ -1,24 +1,29 @@
-// 游戏平衡配置 - 所有数值可在此调整
+/**
+ * 游戏平衡配置
+ */
 
+/** GPA相关配置 */
 export const GPA_CONFIG = {
   INITIAL: 3.2,
   MIN: 0,
   MAX: 4.0,
+  HOLIDAY_MONTHS: [2, 7, 8],
   MONTHLY_DEDUCTION: 0.05,
-  ATTEND_CLASS_BONUS: 0.10,
   SKIP_CLASS_DEDUCTION: 0.15,
   SKIP_CLASS_PROBABILITY: 0.30,
-  HOLIDAY_MONTHS: [2, 7, 8],
+  ATTEND_CLASS_BONUS: 0.10,
 };
 
+/** 学业相关配置 */
 export const ACADEMIC_CONFIG = {
   WARNING_THRESHOLD: 2.5,
   FAILURE_THRESHOLD: 3.0,
-  SCHOLARSHIP_THRESHOLD: 3.7,
   WARNINGS_FOR_EXPULSION: 2,
+  SCHOLARSHIP_THRESHOLD: 3.7,
   FAILURES_PER_WARNING: 3,
 };
 
+/** 活动行动点消耗 */
 export const ACTIVITY_COSTS = {
   PRACTICE: 12,
   PRACTICE_CONTEST: 10,
@@ -28,6 +33,7 @@ export const ACTIVITY_COSTS = {
   GYM: 10,
 };
 
+/** 活动效果数值 */
 export const ACTIVITY_EFFECTS = {
   REST_SAN_RECOVERY: 15,
   LECTURE_SAN_COST: -5,
@@ -35,6 +41,7 @@ export const ACTIVITY_EFFECTS = {
   PART_TIME_JOB_SAN: -10,
 };
 
+/** 比赛题目难度配置 */
 export const CONTEST_DIFFICULTIES = {
   FRESHMAN: [1, 2, 3, 4, 5],
   INVITATIONAL: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
@@ -43,12 +50,14 @@ export const CONTEST_DIFFICULTIES = {
   SCHOOL: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 };
 
+/** 随机事件概率 */
 export const EVENT_CHANCES = {
   REGIONAL_STATION: 0.30,
   SCHOOL_CONTEST: 0.30,
   FRESHMAN_CONTEST: 0.40,
 };
 
+/** 技能成长配置 */
 export const SKILL_CONFIG = {
   GAIN_PROBABILITY: 0.15,
   RANDOM_BONUS_MAX: 500,

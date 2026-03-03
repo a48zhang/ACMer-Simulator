@@ -1,6 +1,7 @@
 import { INITIAL_SAN } from '../constants';
 import { clampValue, clampGPA, applyAttributeChanges } from '../utils';
 import { createContestSession } from '../data/contests';
+import { ACADEMIC_CONFIG } from '../config/gameBalance';
 
 /**
  * 获取字段值的辅助函数（支持直接设置或增量变化）
@@ -12,75 +13,114 @@ const getFieldValue = (effects, prevState, field, deltaField) => {
 };
 
 /**
+ * 检查是否触发学业警告或退学
+ * @param {number} gpa - 当前GPA
+ * @param {Object} buffs - 当前buff状态 { failedCourses, academicWarnings }
+ * @returns {Object} { isExpelled, buffChanges?, reason?, newState?, logs }
+ */
+export function checkAcademicWarning(gpa, buffs) {
+  const logs = [];
+
+  if (gpa < ACADEMIC_CONFIG.WARNING_THRESHOLD) {
+    const newWarnings = buffs.academicWarnings + 1;
+    logs.push({
+      message: `⚠️ 学业警告！GPA低于${ACADEMIC_CONFIG.WARNING_THRESHOLD}，获得学业警告 buff（当前${newWarnings}个）`,
+      type: 'error'
+    });
+
+    if (newWarnings >= ACADEMIC_CONFIG.WARNINGS_FOR_EXPULSION) {
+      logs.push({ message: '❌ 累计2个学业警告，进入退学结局！', type: 'error' });
+      return {
+        isExpelled: true,
+        reason: `GPA长期低于${ACADEMIC_CONFIG.WARNING_THRESHOLD}，累计获得${newWarnings}次学业警告，被迫退学。`,
+        newState: { isRunning: false, buffs: { ...buffs, academicWarnings: newWarnings } },
+        logs
+      };
+    }
+
+    return { isExpelled: false, buffChanges: { academicWarnings: 1 }, logs };
+  } else if (gpa < ACADEMIC_CONFIG.FAILURE_THRESHOLD) {
+    const newFailures = buffs.failedCourses + 1;
+    logs.push({
+      message: `📉 挂科！GPA低于${ACADEMIC_CONFIG.FAILURE_THRESHOLD}，获得挂科 buff（当前${newFailures}个）`,
+      type: 'warning'
+    });
+
+    if (newFailures % ACADEMIC_CONFIG.FAILURES_PER_WARNING === 0) {
+      const newWarnings = buffs.academicWarnings + 1;
+      logs.push({
+        message: `⚠️ 累计${ACADEMIC_CONFIG.FAILURES_PER_WARNING}次挂科，转换为1个学业警告！（当前${newWarnings}个学业警告，0个挂科）`,
+        type: 'error'
+      });
+
+      if (newWarnings >= ACADEMIC_CONFIG.WARNINGS_FOR_EXPULSION) {
+        logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
+        return {
+          isExpelled: true,
+          reason: `GPA长期低于${ACADEMIC_CONFIG.FAILURE_THRESHOLD}，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`,
+          newState: { isRunning: false, buffs: { failedCourses: 0, academicWarnings: newWarnings } },
+          logs
+        };
+      }
+
+      return { isExpelled: false, buffChanges: { failedCourses: -buffs.failedCourses, academicWarnings: 1 }, logs };
+    }
+
+    return { isExpelled: false, buffChanges: { failedCourses: 1 }, logs };
+  }
+
+  return { isExpelled: false, logs };
+}
+
+/**
+ * 检查是否获得奖学金
+ * @param {number} gpa - 当前GPA
+ * @returns {Object|null} 日志对象，未获得则返回 null
+ */
+export function checkScholarship(gpa) {
+  if (gpa >= ACADEMIC_CONFIG.SCHOLARSHIP_THRESHOLD) {
+    return {
+      message: `🎓 优秀！GPA达到${ACADEMIC_CONFIG.SCHOLARSHIP_THRESHOLD}以上，获得奖学金！`,
+      type: 'success'
+    };
+  }
+  return null;
+}
+
+/**
  * 处理期末周GPA审核（内部函数）
  */
 function processFinalsWeek(gameState, effects, ev) {
   const logs = [];
-  const currentGpa = gameState.gpa;
-  const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
-  let gameOver = false;
-  let gameOverReason = null;
-  let newState = gameState;
+  const gpa = gameState.gpa;
+  const buffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
 
-  if (currentGpa < 2.5) {
-    const newWarnings = currentBuffs.academicWarnings + 1;
-    logs.push({
-      message: `⚠️ 学业警告！GPA低于2.5，获得学业警告 buff（当前${newWarnings}个）`,
-      type: 'error'
-    });
+  const warningResult = checkAcademicWarning(gpa, buffs);
+  logs.push(...warningResult.logs);
 
-    if (newWarnings >= 2) {
-      logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
-      newState = {
-        ...gameState,
-        isRunning: false,
-        buffs: { ...currentBuffs, academicWarnings: newWarnings }
-      };
-      gameOver = true;
-      gameOverReason = `GPA长期低于2.5，累计获得${newWarnings}次学业警告，被迫退学。`;
-    } else {
-      effects.buffChanges = { academicWarnings: 1 };
-    }
-  } else if (currentGpa < 3.0) {
-    const newFailures = currentBuffs.failedCourses + 1;
-    logs.push({
-      message: `📉 挂科！GPA低于3.0，获得挂科 buff（当前${newFailures}个）`,
-      type: 'warning'
-    });
+  if (warningResult.isExpelled) {
+    return {
+      logs,
+      effects,
+      gameOver: true,
+      gameOverReason: warningResult.reason,
+      newState: { ...gameState, ...warningResult.newState }
+    };
+  }
 
-    if (newFailures % 3 === 0) {
-      const newWarnings = currentBuffs.academicWarnings + 1;
-      logs.push({
-        message: `⚠️ 累计3次挂科，转换为1个学业警告！（当前${newWarnings}个学业警告，0个挂科）`,
-        type: 'error'
-      });
+  if (warningResult.buffChanges) {
+    effects.buffChanges = warningResult.buffChanges;
+  }
 
-      if (newWarnings >= 2) {
-        logs.push({ message: `❌ 累计2个学业警告，进入退学结局！`, type: 'error' });
-        newState = {
-          ...gameState,
-          isRunning: false,
-          buffs: { failedCourses: 0, academicWarnings: newWarnings }
-        };
-        gameOver = true;
-        gameOverReason = `GPA长期低于3.0，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`;
-      } else {
-        effects.buffChanges = { failedCourses: -currentBuffs.failedCourses, academicWarnings: 1 };
-      }
-    } else {
-      effects.buffChanges = { failedCourses: 1 };
-    }
-  } else if (currentGpa >= 3.7) {
-    logs.push({
-      message: `🎓 优秀！GPA达到3.7以上，获得奖学金！`,
-      type: 'success'
-    });
+  const scholarshipResult = checkScholarship(gpa);
+  if (scholarshipResult) {
+    logs.push(scholarshipResult);
     effects.balanceDelta = 2000;
-  } else {
+  } else if (!warningResult.buffChanges) {
     logs.push({ message: `✅ 期末考试通过，GPA正常`, type: 'info' });
   }
 
-  return { logs, effects, gameOver, gameOverReason, newState };
+  return { logs, effects, gameOver: false };
 }
 
 /**
