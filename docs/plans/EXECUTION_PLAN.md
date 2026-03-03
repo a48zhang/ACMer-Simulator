@@ -2,14 +2,16 @@
 
 ## 执行策略
 
-Plan E 和 F 相互独立，采用**并行执行策略**：
+**重要**: Plan F 和 E 不能完全并行，因为会修改相同的组件文件。
 
-- **性能优化**: 可立即开始
-- **TypeScript 迁移**: 分批次执行
+采用**顺序执行策略**：
+
+1. **阶段一**: Plan F (性能优化) - 先完成
+2. **阶段二**: Plan E (TypeScript 迁移) - 在 F 完成后开始
 
 ---
 
-## 性能优化
+## 性能优化 (Plan F) - 先执行
 
 ### 步骤 1: 组件分析
 运行 React DevTools Profiler，识别高频渲染组件：
@@ -66,12 +68,13 @@ npm run dev
 
 ---
 
-## TypeScript 迁移
+## TypeScript 迁移 (Plan E) - 在 F 完成后执行
 
 ### 前提条件
 - ✅ `tsconfig.json` 已配置
 - ✅ `allowJs: true` 已启用
 - ✅ 测试覆盖完善
+- ✅ **Plan F 已完成并合并**
 
 ### 批次 1: 类型定义
 
@@ -173,9 +176,9 @@ npm run dev
 
 ---
 
-### 批次 6: UI 组件
+### 批次 6: UI 组件 (包含已优化的组件)
 
-**目标**: 迁移 React 组件
+**目标**: 迁移 React 组件（包含 Plan F 已优化的代码）
 
 按复杂度迁移:
 1. 简单组件 (无状态):
@@ -186,9 +189,11 @@ npm run dev
    - `src/components/dialogs/*.jsx`
    - `src/components/game/*.jsx`
 
-3. 复杂组件:
-   - `src/components/panels/*.jsx`
-   - `src/App.jsx`
+3. 复杂组件 (已在 Plan F 中优化):
+   - `src/components/panels/PlayerPanel.jsx` → `PlayerPanel.tsx`
+   - `src/components/panels/ActivityPanel.jsx` → `ActivityPanel.tsx`
+   - `src/components/panels/EventPanel.jsx` → `EventPanel.tsx`
+   - `src/App.jsx` → `App.tsx`
 
 **每组件步骤**:
 1. 重命名为 `.tsx`
@@ -201,6 +206,7 @@ npm run dev
 - `npm run dev` 页面正常渲染
 - `npx tsc --noEmit` 无错误
 - 所有交互功能正常
+- **性能优化效果保留** (memo/useMemo/useCallback)
 
 ---
 
@@ -226,20 +232,6 @@ npm run dev
 
 ---
 
-## 并行执行建议
-
-| 阶段 | 性能优化 | TypeScript 迁移 |
-|------|---------|----------------|
-| 1 | Profiler + PlayerPanel | 类型定义 |
-| 2 | ActivityPanel + EventPanel | 工具模块 + traits/activities |
-| 3 | App.jsx + 验证 | contests/events |
-| 4 | (可协助测试) | gameLogics |
-| 5 | (可协助测试) | gameState + 简单组件 |
-| 6 | (可协助测试) | 复杂组件 |
-| 7 | (可协助测试) | 清理验证 |
-
----
-
 ## 风险与缓解
 
 ### TypeScript 迁移引入 bug
@@ -247,10 +239,10 @@ npm run dev
 - 保持 Git 分支，可随时回退
 - 使用 `git bisect` 定位问题
 
-### 性能优化过度复杂
-- 先测量再优化
-- 每个优化独立提交
-- 保持代码可读性
+### 性能优化效果在迁移中丢失
+- 在批次 6 中明确验证优化效果
+- 对比 Plan F 完成后的 Profiler 数据
+- 确保 memo/useMemo/useCallback 保留
 
 ### 类型定义不准确
 - 从 JSDoc 迁移类型
@@ -261,7 +253,7 @@ npm run dev
 
 ## 检查清单
 
-### 性能优化
+### 性能优化 (Plan F)
 - [ ] Profiler 基准测量完成
 - [ ] PlayerPanel 已优化 (memo + useMemo)
 - [ ] ActivityPanel 已优化 (memo + useCallback)
@@ -269,15 +261,17 @@ npm run dev
 - [ ] App.jsx 已优化
 - [ ] Profiler 验证渲染减少 ≥30%
 - [ ] 所有测试通过
+- [ ] **合并到 main** (开始 Plan E 前必须完成)
 
-### TypeScript 迁移
-- [ ] 类型定义完成
-- [ ] utils/constants/gameBalance 迁移完成
-- [ ] traits/activities/contests/events 迁移完成
-- [ ] gameLogics 全部迁移完成
-- [ ] gameState 迁移完成
-- [ ] 所有组件迁移完成
-- [ ] 清理完成，tsc 零错误
+### TypeScript 迁移 (Plan E)
+- [ ] Plan F 已完成并合并
+- [ ] E1: 类型定义完成
+- [ ] E2: utils/constants/gameBalance 迁移完成
+- [ ] E3: traits/activities/contests/events 迁移完成
+- [ ] E4: gameLogics 全部迁移完成
+- [ ] E5: gameState 迁移完成
+- [ ] E6: 所有组件迁移完成 (包含性能优化)
+- [ ] E7: 清理完成，tsc 零错误
 - [ ] 所有测试通过
 - [ ] 构建成功
 
@@ -285,8 +279,9 @@ npm run dev
 
 ## 成功标准
 
-- [ ] 性能优化完成，渲染性能提升 ≥30%
-- [ ] TypeScript 迁移完成，零错误
+- [ ] Plan F 完成，渲染性能提升 ≥30%
+- [ ] Plan E 完成，TypeScript 零错误
+- [ ] 性能优化效果在 TypeScript 迁移后保留
 - [ ] 所有测试通过 (74个)
 - [ ] `npm run build` 成功
 - [ ] 游戏可正常运行
