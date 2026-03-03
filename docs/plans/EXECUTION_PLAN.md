@@ -2,16 +2,14 @@
 
 ## 执行策略
 
-**重要**: Plan F 和 E 不能完全并行，因为会修改相同的组件文件。
+两个计划会修改相同的组件文件，采用**顺序执行策略**：
 
-采用**顺序执行策略**：
-
-1. **阶段一**: Plan F (性能优化) - 先完成
-2. **阶段二**: Plan E (TypeScript 迁移) - 在 F 完成后开始
+1. **第一阶段**: 性能优化 - 先完成并合并
+2. **第二阶段**: TypeScript 迁移 - 在性能优化完成后开始
 
 ---
 
-## 性能优化 (Plan F) - 先执行
+## 第一阶段：性能优化
 
 ### 步骤 1: 组件分析
 运行 React DevTools Profiler，识别高频渲染组件：
@@ -66,15 +64,20 @@ npm run dev
 - 功能无退化
 - 游戏运行正常
 
+### 步骤 7: 合并到 main
+- 提交所有优化
+- 合并到 main 分支
+- 确认主分支稳定后开始下一阶段
+
 ---
 
-## TypeScript 迁移 (Plan E) - 在 F 完成后执行
+## 第二阶段：TypeScript 迁移
 
 ### 前提条件
 - ✅ `tsconfig.json` 已配置
 - ✅ `allowJs: true` 已启用
 - ✅ 测试覆盖完善
-- ✅ **Plan F 已完成并合并**
+- ✅ **性能优化已完成并合并**
 
 ### 批次 1: 类型定义
 
@@ -176,9 +179,9 @@ npm run dev
 
 ---
 
-### 批次 6: UI 组件 (包含已优化的组件)
+### 批次 6: UI 组件 (包含已优化的代码)
 
-**目标**: 迁移 React 组件（包含 Plan F 已优化的代码）
+**目标**: 迁移 React 组件（包含第一阶段已优化的代码）
 
 按复杂度迁移:
 1. 简单组件 (无状态):
@@ -189,7 +192,7 @@ npm run dev
    - `src/components/dialogs/*.jsx`
    - `src/components/game/*.jsx`
 
-3. 复杂组件 (已在 Plan F 中优化):
+3. 复杂组件 (已在第一阶段优化):
    - `src/components/panels/PlayerPanel.jsx` → `PlayerPanel.tsx`
    - `src/components/panels/ActivityPanel.jsx` → `ActivityPanel.tsx`
    - `src/components/panels/EventPanel.jsx` → `EventPanel.tsx`
@@ -241,7 +244,7 @@ npm run dev
 
 ### 性能优化效果在迁移中丢失
 - 在批次 6 中明确验证优化效果
-- 对比 Plan F 完成后的 Profiler 数据
+- 对比第一阶段完成后的 Profiler 数据
 - 确保 memo/useMemo/useCallback 保留
 
 ### 类型定义不准确
@@ -253,7 +256,7 @@ npm run dev
 
 ## 检查清单
 
-### 性能优化 (Plan F)
+### 性能优化
 - [ ] Profiler 基准测量完成
 - [ ] PlayerPanel 已优化 (memo + useMemo)
 - [ ] ActivityPanel 已优化 (memo + useCallback)
@@ -261,17 +264,17 @@ npm run dev
 - [ ] App.jsx 已优化
 - [ ] Profiler 验证渲染减少 ≥30%
 - [ ] 所有测试通过
-- [ ] **合并到 main** (开始 Plan E 前必须完成)
+- [ ] **合并到 main** (开始 TypeScript 迁移前必须完成)
 
-### TypeScript 迁移 (Plan E)
-- [ ] Plan F 已完成并合并
-- [ ] E1: 类型定义完成
-- [ ] E2: utils/constants/gameBalance 迁移完成
-- [ ] E3: traits/activities/contests/events 迁移完成
-- [ ] E4: gameLogics 全部迁移完成
-- [ ] E5: gameState 迁移完成
-- [ ] E6: 所有组件迁移完成 (包含性能优化)
-- [ ] E7: 清理完成，tsc 零错误
+### TypeScript 迁移
+- [ ] 性能优化已完成并合并
+- [ ] 类型定义完成
+- [ ] utils/constants/gameBalance 迁移完成
+- [ ] traits/activities/contests/events 迁移完成
+- [ ] gameLogics 全部迁移完成
+- [ ] gameState 迁移完成
+- [ ] 所有组件迁移完成 (包含性能优化)
+- [ ] 清理完成，tsc 零错误
 - [ ] 所有测试通过
 - [ ] 构建成功
 
@@ -279,8 +282,8 @@ npm run dev
 
 ## 成功标准
 
-- [ ] Plan F 完成，渲染性能提升 ≥30%
-- [ ] Plan E 完成，TypeScript 零错误
+- [ ] 性能优化完成，渲染性能提升 ≥30%
+- [ ] TypeScript 迁移完成，零错误
 - [ ] 性能优化效果在 TypeScript 迁移后保留
 - [ ] 所有测试通过 (74个)
 - [ ] `npm run build` 成功
