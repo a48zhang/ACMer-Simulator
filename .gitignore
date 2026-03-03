@@ -29,3 +29,6 @@ yarn-error.log*
 *-vanilla.html
 *-vanilla.css
 *-vanilla.js
+
+# Test coverage output
+coverage
