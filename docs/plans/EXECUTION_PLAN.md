@@ -1,40 +1,17 @@
 # 剩余计划执行方案
 
-**状态**: 执行中
-**更新日期**: 2026-03-03
-
-## 当前状态
-
-### 已完成
-- ✅ Plan A: 配置提取与清理
-- ✅ Plan B: 代码重构
-- ✅ Plan C: 测试覆盖
-- ✅ Plan D: TypeScript 基础设施
-
-### 待完成
-- ⏳ Plan E: TypeScript 迁移
-- ⏳ Plan F: 性能优化
-
----
-
 ## 执行策略
 
-由于 Plan E 和 F 相互独立，采用**并行执行策略**：
+Plan E 和 F 相互独立，采用**并行执行策略**：
 
-1. **阶段一**: Plan F (性能优化) - 可立即开始
-2. **阶段二**: Plan E (TypeScript 迁移) - 分批次执行
+- **性能优化**: 可立即开始
+- **TypeScript 迁移**: 分批次执行
 
 ---
 
-## 详细执行方案
+## 性能优化
 
-### 方案一：性能优化 (Plan F)
-
-**优先级**: 中
-**预计工期**: 1-2天
-**风险**: 低
-
-#### 步骤 F1: 组件分析
+### 步骤 1: 组件分析
 运行 React DevTools Profiler，识别高频渲染组件：
 
 ```bash
@@ -48,7 +25,7 @@ npm run dev
 - EventPanel 渲染次数
 - App 组件渲染次数
 
-#### 步骤 F2: 优化 PlayerPanel
+### 步骤 2: 优化 PlayerPanel
 文件: `src/components/panels/PlayerPanel.jsx`
 
 改动：
@@ -57,7 +34,7 @@ npm run dev
 - 使用 `useMemo` 缓存属性列表
 - 使用 `useMemo` 缓存颜色计算
 
-#### 步骤 F3: 优化 ActivityPanel
+### 步骤 3: 优化 ActivityPanel
 文件: `src/components/panels/ActivityPanel.jsx`
 
 改动：
@@ -66,14 +43,14 @@ npm run dev
 - 使用 `useCallback` 缓存事件回调
 - 使用 `useMemo` 缓存活动列表
 
-#### 步骤 F4: 优化 EventPanel
+### 步骤 4: 优化 EventPanel
 文件: `src/components/panels/EventPanel.jsx`
 
 改动：
 - 添加 `React.memo` 包装
 - 拆分事件卡片为独立组件
 
-#### 步骤 F5: 优化 App.jsx
+### 步骤 5: 优化 App.jsx
 文件: `src/App.jsx`
 
 改动：
@@ -81,7 +58,7 @@ npm run dev
 - 避免内联对象/数组作为 props
 - 使用 memo 包装所有子组件
 
-#### 步骤 F6: 验证优化
+### 步骤 6: 验证优化
 再次运行 Profiler，对比：
 - 渲染次数减少 ≥ 30%
 - 功能无退化
@@ -89,18 +66,14 @@ npm run dev
 
 ---
 
-### 方案二：TypeScript 迁移 (Plan E)
+## TypeScript 迁移
 
-**优先级**: 高
-**预计工期**: 5-7天
-**风险**: 中
-
-#### 前提条件
-- ✅ `tsconfig.json` 已配置 (Plan D 完成)
+### 前提条件
+- ✅ `tsconfig.json` 已配置
 - ✅ `allowJs: true` 已启用
-- ✅ 测试覆盖完善 (Plan C 完成)
+- ✅ 测试覆盖完善
 
-#### 批次 E1: 类型定义 (0.5天)
+### 批次 1: 类型定义
 
 **目标**: 建立完整的 TypeScript 类型系统
 
@@ -119,7 +92,7 @@ npm run dev
 
 ---
 
-#### 批次 E2: 工具模块 (0.5天)
+### 批次 2: 工具模块
 
 **目标**: 迁移无依赖的工具函数
 
@@ -140,7 +113,7 @@ npm run dev
 
 ---
 
-#### 批次 E3: 数据层 (1.5天)
+### 批次 3: 数据层
 
 **目标**: 迁移数据模块，保持导入兼容性
 
@@ -163,7 +136,7 @@ npm run dev
 
 ---
 
-#### 批次 E4: 游戏逻辑 (2天)
+### 批次 4: 游戏逻辑
 
 **目标**: 迁移核心游戏逻辑模块
 
@@ -187,7 +160,7 @@ npm run dev
 
 ---
 
-#### 批次 E5: 状态管理 (0.5天)
+### 批次 5: 状态管理
 
 **目标**: 迁移状态管理模块
 
@@ -200,7 +173,7 @@ npm run dev
 
 ---
 
-#### 批次 E6: UI 组件 (2天)
+### 批次 6: UI 组件
 
 **目标**: 迁移 React 组件
 
@@ -231,7 +204,7 @@ npm run dev
 
 ---
 
-#### 批次 E7: 清理 (0.5天)
+### 批次 7: 清理
 
 **目标**: 最终清理与验证
 
@@ -253,36 +226,33 @@ npm run dev
 
 ---
 
-## 并行执行计划
+## 并行执行建议
 
-| 时间 | 执行者 A (性能优化) | 执行者 B (TypeScript) |
-|------|---------------------|---------------------|
-| Day 1 | F1-F2: Profiler + PlayerPanel | E1: 类型定义 |
-| Day 2 | F3-F4: ActivityPanel + EventPanel | E2: 工具模块 + E3: traits/activities |
-| Day 3 | F5-F6: App.jsx + 验证 | E3: contests/events |
-| Day 4 | (可提前开始E，如果F完成) | E4: gameLogics |
-| Day 5 | 辅助测试/修复 | E5: gameState + E6: 简单组件 |
-| Day 6 | 辅助测试/修复 | E6: 复杂组件 |
-| Day 7 | 辅助测试/修复 | E7: 清理验证 |
+| 阶段 | 性能优化 | TypeScript 迁移 |
+|------|---------|----------------|
+| 1 | Profiler + PlayerPanel | 类型定义 |
+| 2 | ActivityPanel + EventPanel | 工具模块 + traits/activities |
+| 3 | App.jsx + 验证 | contests/events |
+| 4 | (可协助测试) | gameLogics |
+| 5 | (可协助测试) | gameState + 简单组件 |
+| 6 | (可协助测试) | 复杂组件 |
+| 7 | (可协助测试) | 清理验证 |
 
 ---
 
 ## 风险与缓解
 
-### 风险 1: TypeScript 迁移引入 bug
-**缓解**:
+### TypeScript 迁移引入 bug
 - 每批次后运行完整测试
 - 保持 Git 分支，可随时回退
 - 使用 `git bisect` 定位问题
 
-### 风险 2: 性能优化过度复杂
-**缓解**:
+### 性能优化过度复杂
 - 先测量再优化
 - 每个优化独立提交
 - 保持代码可读性
 
-### 风险 3: 类型定义不准确
-**缓解**:
+### 类型定义不准确
 - 从 JSDoc 迁移类型
 - 参考运行时数据结构
 - 使用 `unknown` 逐步收窄类型
@@ -291,7 +261,7 @@ npm run dev
 
 ## 检查清单
 
-### Plan F (性能优化)
+### 性能优化
 - [ ] Profiler 基准测量完成
 - [ ] PlayerPanel 已优化 (memo + useMemo)
 - [ ] ActivityPanel 已优化 (memo + useCallback)
@@ -300,14 +270,14 @@ npm run dev
 - [ ] Profiler 验证渲染减少 ≥30%
 - [ ] 所有测试通过
 
-### Plan E (TypeScript 迁移)
-- [ ] E1: 类型定义完成
-- [ ] E2: utils/constants/gameBalance 迁移完成
-- [ ] E3: traits/activities/contests/events 迁移完成
-- [ ] E4: gameLogics 全部迁移完成
-- [ ] E5: gameState 迁移完成
-- [ ] E6: 所有组件迁移完成
-- [ ] E7: 清理完成，tsc 零错误
+### TypeScript 迁移
+- [ ] 类型定义完成
+- [ ] utils/constants/gameBalance 迁移完成
+- [ ] traits/activities/contests/events 迁移完成
+- [ ] gameLogics 全部迁移完成
+- [ ] gameState 迁移完成
+- [ ] 所有组件迁移完成
+- [ ] 清理完成，tsc 零错误
 - [ ] 所有测试通过
 - [ ] 构建成功
 
@@ -315,9 +285,8 @@ npm run dev
 
 ## 成功标准
 
-### 整体验收
-- [ ] Plan F 完成，渲染性能提升 ≥30%
-- [ ] Plan E 完成，TypeScript 零错误
+- [ ] 性能优化完成，渲染性能提升 ≥30%
+- [ ] TypeScript 迁移完成，零错误
 - [ ] 所有测试通过 (74个)
 - [ ] `npm run build` 成功
 - [ ] 游戏可正常运行
