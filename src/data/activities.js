@@ -1,7 +1,7 @@
 // 活动系统数据定义
 // Activity system data definitions
 
-import { SKILL_CONFIG } from '../config/gameBalance';
+import { SKILL_CONFIG, GPA_CONFIG } from '../config/gameBalance';
 
 const ATTRIBUTE_MULTIPLIERS = {
     // 通用属性
@@ -176,8 +176,8 @@ export const ACTIVITIES = [
         description: '猛猛学',
         effects: (state) => ({
             sanDelta: -5,
-            gpaDelta: 0.1,
-            log: '📚 认真上课，GPA+0.1',
+            gpaDelta: GPA_CONFIG.ATTEND_CLASS_BONUS,
+            log: `📚 认真上课，GPA+${GPA_CONFIG.ATTEND_CLASS_BONUS}`,
             logType: 'info',
             setFlags: { attendedClassThisMonth: true }
         }),
