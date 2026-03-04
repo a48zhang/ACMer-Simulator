@@ -25,6 +25,13 @@ export interface WorldFlags {
   [key: string]: boolean | number | undefined;
 }
 
+export interface ResolvedEventItem {
+  id: string;
+  choiceId: string;
+  time: number;
+  uuid: string;
+}
+
 export interface GameState {
   isRunning: boolean;
   isPaused: boolean;
@@ -41,7 +48,7 @@ export interface GameState {
   playerProblems: number;
   selectedTraits: string[];
   pendingEvents: Event[];
-  resolvedEvents: string[];
+  resolvedEvents: ResolvedEventItem[];
   worldFlags: WorldFlags;
   eventGraph: Record<string, unknown>;
   activeContest: ContestSession | null;
@@ -89,6 +96,13 @@ export interface Effects {
   log?: string;
   logType?: 'info' | 'success' | 'warning' | 'error';
   setFlags?: Record<string, boolean | number>;
+  // 直接设置值（支持两种方式）
+  san?: number;
+  balance?: number;
+  rating?: number;
+  gpa?: number;
+  playerContests?: number;
+  playerProblems?: number;
 }
 
 // ========== 比赛系统 ==========
@@ -106,9 +120,7 @@ export interface Problem {
   hasBug: boolean;
   bugFound: boolean;
   hasWrittenCode: boolean;
-  revealedInfo: {
-    tags: string[];
-  } | null;
+  revealedInfo: unknown | null;
 }
 
 export interface AttemptLog {
