@@ -2,7 +2,7 @@ import { INITIAL_SAN } from '../constants';
 import { clampValue, clampGPA, applyAttributeChanges, getFieldValue } from '../utils';
 import { createContestSession } from '../data/contests';
 import { ACADEMIC_CONFIG } from '../config/gameBalance';
-import type { GameState, LogicResult, LogEntry, Effects, Buffs, Event, Choice, Teammate, ResolvedEventItem } from '../types';
+import type { GameState, LogicResult, LogEntry, Effects, Buffs, Event, Choice, Teammate } from '../types';
 
 /**
  * 检查是否触发学业警告或退学
@@ -96,7 +96,7 @@ interface FinalsWeekResult {
 /**
  * 处理期末周GPA审核（内部函数）
  */
-function processFinalsWeek(gameState: GameState, effects: Effects, ev: Event): FinalsWeekResult {
+function processFinalsWeek(gameState: GameState, effects: Effects, _ev: Event): FinalsWeekResult {
   const logs: LogEntry[] = [];
   const gpa = gameState.gpa;
   const buffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
@@ -203,8 +203,8 @@ function buildNewStateForEvent(
   const newState: GameState = {
     ...gameState,
     remainingAP: Math.min(gameState.monthlyAP, Math.max(0, gameState.remainingAP + (effects.apBonus || 0))),
-    playerContests: getFieldValue(effects, gameState, 'playerContests', 'playerContestsDelta'),
-    playerProblems: getFieldValue(effects, gameState, 'playerProblems', 'playerProblemsDelta'),
+    playerContests: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerContests', 'playerContestsDelta') as number,
+    playerProblems: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerProblems', 'playerProblemsDelta') as number,
     attributes: updatedAttributes
   };
 
@@ -249,7 +249,7 @@ function buildNewStateForEvent(
   const remaining = (gameState.pendingEvents || []).filter(e => e.id !== ev.id);
   const resolvedItem = { id: ev.id, choiceId: choice.id, time: Date.now(), uuid: crypto.randomUUID() };
   newState.pendingEvents = remaining;
-  newState.resolvedEvents = [...(gameState.resolvedEvents || []), resolvedItem] as unknown as string[];
+  newState.resolvedEvents = [...(gameState.resolvedEvents || []), resolvedItem];
 
   return newState;
 }
@@ -292,7 +292,7 @@ function processEventChoice(
 
   // 处理特殊动作：启动比赛
   if (choice.specialAction === 'START_CONTEST') {
-    return processStartContest(gameState, ev, choice, effects, setFlags, logs, selectedTeammateIds);
+    return processStartContest(gameState, ev, choice, effects, setFlags, logs, selectedTeammateIds) as ProcessEventChoiceResult;
   }
 
   // 普通事件处理

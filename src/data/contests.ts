@@ -118,8 +118,9 @@ export const thinkProblem = (problem: Problem, attributes: Partial<Attributes> =
 
     // ========== 标签揭露逻辑 ==========
     let newTags: string[] | null = null;
-    if (problem.revealedInfo && problem.revealedInfo.tags) {
-        const currentTags = problem.revealedInfo.tags;
+    const revealedInfoTyped = problem.revealedInfo as ReadProblemResult | null;
+    if (revealedInfoTyped && revealedInfoTyped.tags) {
+        const currentTags = revealedInfoTyped.tags;
         const attrKeysReveal = Object.keys(problem.requires || {}).filter(k =>
             (SKILL_TYPES.specialized as readonly string[]).includes(k)
         );

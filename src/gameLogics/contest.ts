@@ -48,7 +48,7 @@ export function readContestProblem(gameState: GameState, problemId: string): Log
   const readResult = readProblem(problem, gameState.attributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - readResult.readTime);
 
-  const updatedProblems = session.problems.map((p: Problem) => {
+  const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     return {
       ...p,
@@ -125,7 +125,7 @@ export function thinkContestProblem(gameState: GameState, problemId: string): Lo
   const thinkResult = thinkProblem(problem, gameState.attributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - thinkResult.thinkTime);
 
-  const updatedProblems = session.problems.map((p: Problem) => {
+  const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     const updatedProblem = {
       ...p,
@@ -209,7 +209,7 @@ export function codeContestProblem(gameState: GameState, problemId: string): Log
   const codeResult = codeProblem(problem, gameState.attributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - codeResult.codeTime);
 
-  const updatedProblems = session.problems.map((p: Problem) => {
+  const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     return {
       ...p,
@@ -286,7 +286,7 @@ export function debugContestProblem(gameState: GameState, problemId: string): Lo
   const debugResult = debugProblem(problem, gameState.attributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - debugResult.debugTime);
 
-  const updatedProblems = session.problems.map((p: Problem) => {
+  const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     return {
       ...p,
@@ -372,7 +372,7 @@ export function attemptContestProblem(gameState: GameState, problemId: string): 
   }
 
   const attempt = evaluateAttempt(problem, gameState.attributes, problem.thinkBonus, problem.debugBonus || 0);
-  const updatedProblems = session.problems.map((p: Problem) => {
+  const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     return {
       ...p,

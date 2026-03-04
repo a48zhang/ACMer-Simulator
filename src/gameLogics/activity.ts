@@ -2,7 +2,7 @@ import { ACTIVITIES } from '../data/activities';
 import { createContestSession } from '../data/contests';
 import { applyAttributeChanges, getFieldValue, clampValue, clampGPA } from '../utils';
 import { INITIAL_SAN, END_MONTH } from '../constants';
-import type { GameState, LogicResult, Activity } from '../types';
+import type { GameState, LogicResult, Activity, LogEntry } from '../types';
 
 /**
  * 执行活动
@@ -14,7 +14,7 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
   const activity = ACTIVITIES.find((a: Activity) => a.id === activityId);
   if (!activity) return { newState: gameState, logs: [], uiState: {} };
 
-  const logs = [];
+  const logs: LogEntry[] = [];
 
   // 检查AP是否足够
   if (gameState.remainingAP < activity.cost) {
@@ -84,46 +84,47 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
     nextRemainingAP = Math.max(0, Math.min(gameState.monthlyAP, nextRemainingAP + effects.apBonus));
   }
 
-  const newState = {
+  // Build all newState updates at once
+  const worldFlags = effects.setFlags
+    ? { ...(gameState.worldFlags || {}), ...effects.setFlags }
+    : gameState.worldFlags;
+
+  const balance = effects.balance !== undefined
+    ? effects.balance
+    : effects.balanceDelta !== undefined
+      ? Math.max(0, gameState.balance + effects.balanceDelta)
+      : gameState.balance;
+
+  const san = effects.san !== undefined
+    ? clampValue(effects.san, 0, INITIAL_SAN)
+    : effects.sanDelta !== undefined
+      ? clampValue(gameState.san + effects.sanDelta, 0, INITIAL_SAN)
+      : gameState.san;
+
+  const rating = effects.rating !== undefined
+    ? effects.rating
+    : effects.ratingDelta !== undefined
+      ? gameState.rating + effects.ratingDelta
+      : gameState.rating;
+
+  const gpa = effects.gpa !== undefined
+    ? clampGPA(effects.gpa)
+    : effects.gpaDelta !== undefined
+      ? clampGPA(gameState.gpa + effects.gpaDelta)
+      : gameState.gpa;
+
+  const newState: GameState = {
     ...gameState,
     remainingAP: nextRemainingAP,
-    playerContests: getFieldValue(effects, gameState, 'playerContests', 'playerContestsDelta'),
-    playerProblems: getFieldValue(effects, gameState, 'playerProblems', 'playerProblemsDelta'),
-    attributes: updatedAttributes
+    playerContests: getFieldValue(effects as Record<string, unknown>, gameState, 'playerContests', 'playerContestsDelta') as number,
+    playerProblems: getFieldValue(effects as Record<string, unknown>, gameState, 'playerProblems', 'playerProblemsDelta') as number,
+    attributes: updatedAttributes,
+    worldFlags,
+    balance,
+    san,
+    rating,
+    gpa,
   };
-
-  // 处理 setFlags
-  if (effects.setFlags) {
-    newState.worldFlags = { ...(gameState.worldFlags || {}), ...effects.setFlags };
-  }
-
-  // 处理 balance
-  if (effects.balance !== undefined) {
-    newState.balance = effects.balance;
-  } else if (effects.balanceDelta !== undefined) {
-    newState.balance = Math.max(0, gameState.balance + effects.balanceDelta);
-  }
-
-  // 处理 san
-  if (effects.san !== undefined) {
-    newState.san = clampValue(effects.san, 0, INITIAL_SAN);
-  } else if (effects.sanDelta !== undefined) {
-    newState.san = clampValue(gameState.san + effects.sanDelta, 0, INITIAL_SAN);
-  }
-
-  // 处理 rating
-  if (effects.rating !== undefined) {
-    newState.rating = effects.rating;
-  } else if (effects.ratingDelta !== undefined) {
-    newState.rating = gameState.rating + effects.ratingDelta;
-  }
-
-  // 处理 gpa
-  if (effects.gpa !== undefined) {
-    newState.gpa = clampGPA(effects.gpa);
-  } else if (effects.gpaDelta !== undefined) {
-    newState.gpa = clampGPA(gameState.gpa + effects.gpaDelta);
-  }
 
   return { newState, logs, uiState: {} };
 }
