@@ -1,0 +1,65 @@
+/**
+ * 游戏平衡配置
+ */
+import type { GPAConfig, AcademicConfig } from '../types';
+
+/** GPA相关配置 */
+export const GPA_CONFIG: GPAConfig = {
+  INITIAL: 3.2,
+  MIN: 0,
+  MAX: 4.0,
+  HOLIDAY_MONTHS: [2, 7, 8],
+  MONTHLY_DEDUCTION: 0.05,
+  SKIP_CLASS_DEDUCTION: 0.15,
+  SKIP_CLASS_PROBABILITY: 0.30,
+  ATTEND_CLASS_BONUS: 0.10,
+};
+
+/** 学业相关配置 */
+export const ACADEMIC_CONFIG: AcademicConfig = {
+  WARNING_THRESHOLD: 2.5,
+  FAILURE_THRESHOLD: 3.0,
+  WARNINGS_FOR_EXPULSION: 2,
+  SCHOLARSHIP_THRESHOLD: 3.7,
+  FAILURES_PER_WARNING: 3,
+};
+
+/** 活动行动点消耗 */
+export const ACTIVITY_COSTS = {
+  PRACTICE: 12,
+  PRACTICE_CONTEST: 10,
+  REST: 3,
+  LECTURE: 10,
+  PART_TIME_JOB: 5,
+  GYM: 10,
+};
+
+/** 活动效果数值 */
+export const ACTIVITY_EFFECTS = {
+  REST_SAN_RECOVERY: 15,
+  LECTURE_SAN_COST: -5,
+  PART_TIME_JOB_BALANCE: 400,
+  PART_TIME_JOB_SAN: -10,
+};
+
+/** 比赛题目难度配置 */
+export const CONTEST_DIFFICULTIES = {
+  FRESHMAN: [1, 2, 3, 4, 5],
+  INVITATIONAL: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
+  PROVINCIAL: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+  REGIONAL: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+  SCHOOL: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+};
+
+/** 随机事件概率 */
+export const EVENT_CHANCES = {
+  REGIONAL_STATION: 0.30,
+  SCHOOL_CONTEST: 0.30,
+  FRESHMAN_CONTEST: 0.40,
+};
+
+/** 技能成长配置 */
+export const SKILL_CONFIG = {
+  GAIN_PROBABILITY: 0.15,
+  RANDOM_BONUS_MAX: 500,
+};

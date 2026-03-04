@@ -41,7 +41,7 @@ export interface GameState {
   playerProblems: number;
   selectedTraits: string[];
   pendingEvents: Event[];
-  resolvedEvents: ResolvedEvent[];
+  resolvedEvents: string[];
   worldFlags: WorldFlags;
   eventGraph: Record<string, unknown>;
   activeContest: ContestSession | null;
@@ -60,6 +60,8 @@ export interface Choice {
   requiresTeamSelection?: boolean;
   specialAction?: string;
   contestConfig?: ContestConfig;
+  eventPath?: string;
+  apBonus?: number;
 }
 
 export interface Event {
@@ -70,12 +72,7 @@ export interface Event {
   chanceToAppear?: number;
   conditions: (state: GameState) => boolean;
   choices: Choice[];
-}
-
-export interface ResolvedEvent {
-  id: string;
-  choiceId: string;
-  time: number;
+  monthConstraints?: { start?: number; end?: number };
 }
 
 // ========== 效果系统 ==========
@@ -131,6 +128,7 @@ export interface ContestSession {
   startedAt: number;
   isRated: boolean;
   ratingSource: string | null;
+  config?: ContestConfig;
 }
 
 export interface ContestConfig {
@@ -170,6 +168,7 @@ export interface Activity {
 
 export interface ActivityResult extends Effects {
   specialAction?: string;
+  playerProblems?: number;
 }
 
 // ========== 特性系统 ==========
@@ -177,6 +176,7 @@ export interface Teammate {
   id: string;
   name: string;
   attributes: Partial<Attributes>;
+  description?: string;
 }
 
 export interface Trait {
@@ -212,11 +212,12 @@ export interface UIState {
     choiceId: string;
   } | null;
   confirmDialog?: {
-    title: string;
+    title?: string;
     message: string;
     onConfirm: () => void;
-    onCancel: () => void;
+    onCancel?: () => void;
   } | null;
+  gameOverReason?: string | null;
 }
 
 // ========== 逻辑结果 ==========
@@ -225,10 +226,10 @@ export interface LogicResult {
   logs: LogEntry[];
   uiState: UIState;
   gameOverReason?: string;
-  notification?: {
+  notification?: string | {
     message: string;
     type: string;
-  };
+  } | null;
   clearLogs?: boolean;
 }
 
