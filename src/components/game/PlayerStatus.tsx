@@ -44,7 +44,18 @@ const StatNumber = styled.span`
   color: ${props => props.theme.colors.primary};
 `;
 
-function PlayerStatus({ score, contests, problems, leaderboardData }) {
+interface LeaderboardEntry {
+  score: number;
+}
+
+interface PlayerStatusProps {
+  score: number;
+  contests: number;
+  problems: number;
+  leaderboardData: LeaderboardEntry[];
+}
+
+function PlayerStatus({ score, contests, problems, leaderboardData }: PlayerStatusProps) {
   const getRank = () => {
     if (leaderboardData.length === 0) {
       return '未上榜';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-const NotificationWrapper = styled.div`
+const NotificationWrapper = styled.div<{ $exiting?: boolean }>`
   position: fixed;
   top: 20px;
   right: 20px;
@@ -41,7 +41,12 @@ const NotificationWrapper = styled.div`
   }
 `;
 
-function Notification({ message, onClose }) {
+interface NotificationProps {
+  message: string;
+  onClose: () => void;
+}
+
+function Notification({ message, onClose }: NotificationProps) {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {

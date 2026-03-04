@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { Attributes } from '../../types';
 
 const AttributesSection = styled.section`
   background-color: ${props => props.theme.colors.surface};
@@ -99,7 +100,7 @@ const ProgressBar = styled.div`
   overflow: hidden;
 `;
 
-const ProgressFill = styled.div`
+const ProgressFill = styled.div<{ $width?: string }>`
   height: 100%;
   background: ${props => props.theme.colors.primary};
   border-radius: 9999px;
@@ -113,15 +114,22 @@ const SmallButton = styled(Button)`
   min-width: 2rem;
 `;
 
-function AttributeAllocation({ attributes, availablePoints, onIncrease, onDecrease }) {
-  const generalAttributes = [
+interface AttributeAllocationProps {
+  attributes: Attributes;
+  availablePoints: number;
+  onIncrease: (key: keyof Attributes) => void;
+  onDecrease: (key: keyof Attributes) => void;
+}
+
+function AttributeAllocation({ attributes, availablePoints, onIncrease, onDecrease }: AttributeAllocationProps) {
+  const generalAttributes: { key: keyof Attributes; name: string }[] = [
     { key: 'coding', name: '💻 编程能力' },
     { key: 'algorithm', name: '🧮 算法思维' },
     { key: 'speed', name: '🏃 速度' },
     { key: 'stress', name: '🧘 抗压能力' }
   ];
 
-  const specializedAttributes = [
+  const specializedAttributes: { key: keyof Attributes; name: string }[] = [
     { key: 'math', name: '📐 数学' },
     { key: 'dp', name: '🔄 动态规划' },
     { key: 'graph', name: '🕸️ 图论' },
@@ -132,7 +140,7 @@ function AttributeAllocation({ attributes, availablePoints, onIncrease, onDecrea
     { key: 'geometry', name: '📏 计算几何' }
   ];
 
-  const renderAttributeGroup = (attributeList, title) => (
+  const renderAttributeGroup = (attributeList: { key: keyof Attributes; name: string }[], title: string) => (
     <AttributeGroup>
       <h3>{title}</h3>
       <AttributesGrid>

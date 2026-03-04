@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { GameState } from '../../types';
 
 const GameStartSection = styled.section`
   background-color: ${props => props.theme.colors.surface};
@@ -46,7 +47,7 @@ const GameStatusWrapper = styled.div`
   align-items: center;
 `;
 
-const StatusChip = styled.span`
+const StatusChip = styled.span<{ $alert?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -76,12 +77,12 @@ const StatusChip = styled.span`
   }
 `;
 
-const StatusChipStrong = styled.strong`
+const StatusChipStrong = styled.strong<{ $ap?: boolean; $alert?: boolean }>`
   color: ${props => props.theme.colors.textMain};
   font-weight: 700;
 
   ${props => props.$ap && `
-    color: ${props => props.theme.colors.primary};
+    color: ${props.theme.colors.primary};
   `}
 
   ${props => props.$alert && `
@@ -97,7 +98,7 @@ const ApBarContainer = styled.div`
   overflow: hidden;
 `;
 
-const ApBarFill = styled.div`
+const ApBarFill = styled.div<{ $width: number; $color: string }>`
   height: 100%;
   border-radius: 2px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -105,7 +106,14 @@ const ApBarFill = styled.div`
   background: ${props => props.$color};
 `;
 
-function GameControls({ gameState, onStart, onReset, onAdvanceMonth }) {
+interface GameControlsProps {
+  gameState: GameState;
+  onStart: () => void;
+  onReset: () => void;
+  onAdvanceMonth: () => void;
+}
+
+function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
   const getYearMonth = () => {
     const gameMonth = gameState.month;
     const monthsSinceStart = gameMonth - 1;
