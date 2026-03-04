@@ -85,7 +85,18 @@ const LeaderboardEmpty = styled.td`
   color: #999;
 `;
 
-function GlobalStatistics({ leaderboardData, playerScore }) {
+interface PlayerScore {
+  name: string;
+  score: number;
+  contests: number;
+}
+
+interface GlobalStatisticsProps {
+  leaderboardData: PlayerScore[];
+  playerScore?: number;
+}
+
+function GlobalStatistics({ leaderboardData }: GlobalStatisticsProps) {
   const totalPlayers = leaderboardData.length;
   const avgScore = totalPlayers > 0
     ? Math.floor(leaderboardData.reduce((sum, p) => sum + p.score, 0) / totalPlayers)
@@ -138,7 +149,7 @@ function GlobalStatistics({ leaderboardData, playerScore }) {
           <tbody>
             {sortedLeaderboard.length === 0 ? (
               <tr>
-                <LeaderboardEmpty colSpan="4">
+                <LeaderboardEmpty colSpan={4}>
                   暂无排行榜数据
                 </LeaderboardEmpty>
               </tr>

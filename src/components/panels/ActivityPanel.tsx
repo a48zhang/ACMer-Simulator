@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
+import type { Activity } from '../../types';
 
 const ActivityPanelWrapper = styled.section`
   background-color: ${props => props.theme.colors.surface};
@@ -121,8 +122,15 @@ const ActivityButton = styled.button`
   }
 `;
 
+interface ActivityCardItemProps {
+  activity: Activity;
+  canExecute: boolean;
+  remainingAP: number;
+  onExecute: (id: string) => void;
+}
+
 // 独立的活动卡片组件
-const ActivityCardItem = memo(({ activity, canExecute, remainingAP, onExecute }) => {
+const ActivityCardItem = memo(function ActivityCardItem({ activity, canExecute, remainingAP, onExecute }: ActivityCardItemProps) {
   const handleClick = useCallback(() => {
     onExecute(activity.id);
   }, [activity.id, onExecute]);
@@ -150,25 +158,31 @@ const ActivityCardItem = memo(({ activity, canExecute, remainingAP, onExecute })
 
 ActivityCardItem.displayName = 'ActivityCardItem';
 
-function ActivityPanel({ activities, remainingAP, onExecuteActivity, isRunning, isPaused, gameEnded }) {
+interface ActivityPanelProps {
+  activities: Activity[];
+  remainingAP: number;
+  onExecuteActivity: (activityId: string) => void;
+  isRunning: boolean;
+  isPaused: boolean;
+  gameEnded: boolean;
+}
+
+function ActivityPanel({ activities, remainingAP, onExecuteActivity, isRunning, isPaused, gameEnded }: ActivityPanelProps) {
   // 缓存 canExecute 检查函数
-  const canExecute = useCallback((activity) => {
+  const canExecute = useCallback((activity: Activity) => {
     return isRunning && !isPaused && !gameEnded && remainingAP >= activity.cost;
   }, [isRunning, isPaused, gameEnded, remainingAP]);
 
   // 缓存 onExecute 回调
-  const handleExecute = useCallback((activityId) => {
+  const handleExecute = useCallback((activityId: string) => {
     onExecuteActivity(activityId);
   }, [onExecuteActivity]);
-
-  // 缓存活动列表
-  const memoizedActivities = useMemo(() => activities, [activities]);
 
   return (
     <ActivityPanelWrapper>
       <ActivityTitle>📋 本月活动</ActivityTitle>
       <ActivityList>
-        {memoizedActivities.map(activity => (
+        {activities.map(activity => (
           <ActivityCardItem
             key={activity.id}
             activity={activity}

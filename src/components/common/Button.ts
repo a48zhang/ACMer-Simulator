@@ -1,6 +1,12 @@
 import styled from 'styled-components';
 
-export const Button = styled.button`
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'success' | 'info' | 'danger';
+  size?: 'sm' | 'lg';
+  block?: boolean;
+}
+
+export const Button = styled.button<ButtonProps>`
   padding: 0.5rem 1rem;
   border-radius: ${props => props.theme.radius.md};
   font-weight: 500;
