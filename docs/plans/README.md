@@ -11,7 +11,7 @@
 | ~~测试覆盖~~ | 添加单元测试，覆盖率 >80% | ✅ 已完成 |
 | ~~TypeScript基础设施~~ | 配置 tsconfig，基础类型 | ✅ 已完成 |
 | ~~性能优化~~ | 减少不必要的 React 渲染 | ✅ 已完成 |
-| **TypeScript 迁移** | 将所有模块迁移到 TypeScript | 待开始 |
+| **TypeScript 迁移** | 将所有模块迁移到 TypeScript | **进行中（部分完成）** |
 
 ## 执行策略
 
@@ -78,9 +78,16 @@ open docs/plans/EXECUTION_PLAN.md
 - ✅ 函数复杂度达标
 - ✅ 测试通过 >80% 覆盖
 - ✅ 性能优化 (React.memo, useMemo, useCallback)
+- ✅ TypeScript 类型定义
+- ✅ TypeScript 工具模块 (constants, gameBalance, utils)
+- ✅ TypeScript 数据层 (traits, activities, contests)
 
 ### 待完成
 
+- [ ] TypeScript 数据层 (events)
+- [ ] TypeScript 游戏逻辑
+- [ ] TypeScript 状态管理
+- [ ] TypeScript UI 组件
 - [ ] TypeScript 零错误
 - [ ] 性能优化效果在 TypeScript 迁移后保留
 
