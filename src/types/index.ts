@@ -149,7 +149,7 @@ export interface ContestConfig {
   durationMinutes: number;
   difficulties?: number[];
   isRated?: boolean;
-  ratingSource?: string;
+  ratingSource?: string | null;
 }
 
 export interface ContestOutcome {
@@ -189,6 +189,7 @@ export interface Teammate {
   name: string;
   attributes: Partial<Attributes>;
   description?: string;
+  unlocked?: boolean;
 }
 
 export interface Trait {
