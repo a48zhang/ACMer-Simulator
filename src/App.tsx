@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react'
 import GameControls from './components/game/GameControls'
 import PlayerPanel from './components/panels/PlayerPanel'
-import GlobalStatistics from './components/panels/GlobalStatistics'
 import Notification from './components/game/Notification'
-import TraitSelectionDialog from './components/dialogs/TraitSelectionDialog'
 import TeammateSelectionDialog from './components/dialogs/TeammateSelectionDialog'
 import ActivityPanel from './components/panels/ActivityPanel'
 import EventPanel from './components/panels/EventPanel'
@@ -46,31 +44,39 @@ import {
   applyContestResult,
   createAddLog
 } from './gameLogics'
+import type { GameState, LogEntry, LogicResult, Event, ContestOutcome, ContestConfig } from './types'
+
+type GamePhase = 'intro' | 'traitSelection' | 'playing'
+
+type ConfirmDialogState = {
+  message: string
+  onConfirm: () => void
+} | null
 
 function App() {
   // 游戏状态
-  const [gameState, setGameState] = useState(createInitialGameState())
-  const [gamePhase, setGamePhase] = useState('intro')
-  const [gameOverReason, setGameOverReason] = useState(null)
+  const [gameState, setGameState] = useState<GameState>(createInitialGameState() as GameState)
+  const [gamePhase, setGamePhase] = useState<GamePhase>('intro')
+  const [gameOverReason, setGameOverReason] = useState<string | null>(null)
 
   // UI 状态
-  const [notification, setNotification] = useState(null)
+  const [notification, setNotification] = useState<string | null>(null)
   const [showEventDialog, setShowEventDialog] = useState(false)
-  const [currentEvent, setCurrentEvent] = useState(null)
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null)
   const [showContestResult, setShowContestResult] = useState(false)
-  const [contestOutcome, setContestOutcome] = useState(null)
+  const [contestOutcome, setContestOutcome] = useState<ContestOutcome | null>(null)
   const [showTeammateDialog, setShowTeammateDialog] = useState(false)
   const [showPracticeContestDialog, setShowPracticeContestDialog] = useState(false)
-  const [pendingEventChoice, setPendingEventChoice] = useState(null)
-  const [confirmDialog, setConfirmDialog] = useState(null)
+  const [pendingEventChoice, setPendingEventChoice] = useState<{ eventId: string; choiceId: string } | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>(null)
 
   // 日志
-  const [logs, setLogs] = useState([])
+  const [logs, setLogs] = useState<LogEntry[]>([])
   const addLog = createAddLog(setLogs)
   const clearLogs = useCallback(() => setLogs([]), [])
 
   // ========== 辅助函数：应用逻辑结果 ==========
-  const applyLogicResult = useCallback((result) => {
+  const applyLogicResult = useCallback((result: LogicResult | null | undefined) => {
     if (!result) return
 
     // 更新游戏状态
@@ -80,21 +86,21 @@ function App() {
 
     // 添加日志
     if (result.logs && result.logs.length > 0) {
-      result.logs.forEach(log => addLog(log.message, log.type))
+      result.logs.forEach((log: LogEntry) => addLog(log.message, log.type))
     }
 
     // 更新 UI 状态
     if (result.uiState) {
       const ui = result.uiState
       if (ui.showEventDialog !== undefined) setShowEventDialog(ui.showEventDialog)
-      if (ui.currentEvent !== undefined) setCurrentEvent(ui.currentEvent)
+      if (ui.currentEvent !== undefined) setCurrentEvent(ui.currentEvent ?? null)
       if (ui.showContestResult !== undefined) setShowContestResult(ui.showContestResult)
-      if (ui.contestOutcome !== undefined) setContestOutcome(ui.contestOutcome)
+      if (ui.contestOutcome !== undefined) setContestOutcome(ui.contestOutcome ?? null)
       if (ui.showTeammateDialog !== undefined) setShowTeammateDialog(ui.showTeammateDialog)
       if (ui.showPracticeContestDialog !== undefined) setShowPracticeContestDialog(ui.showPracticeContestDialog)
-      if (ui.pendingEventChoice !== undefined) setPendingEventChoice(ui.pendingEventChoice)
-      if (ui.confirmDialog !== undefined) setConfirmDialog(ui.confirmDialog)
-      if (ui.gameOverReason !== undefined) setGameOverReason(ui.gameOverReason)
+      if (ui.pendingEventChoice !== undefined) setPendingEventChoice(ui.pendingEventChoice ?? null)
+      if (ui.confirmDialog !== undefined) setConfirmDialog(ui.confirmDialog ?? null)
+      if (ui.gameOverReason !== undefined) setGameOverReason(ui.gameOverReason ?? null)
     }
 
     // 游戏结束原因
@@ -129,61 +135,61 @@ function App() {
 
   // ========== 包装逻辑函数 ==========
   const wrappedFinishContest = useCallback(() => {
-    const result = finishContest(gameState)
+    const result = finishContest(gameState) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedReadContestProblem = useCallback((problemId) => {
-    const result = readContestProblem(gameState, problemId)
+  const wrappedReadContestProblem = useCallback((problemId: string) => {
+    const result = readContestProblem(gameState, problemId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedThinkContestProblem = useCallback((problemId) => {
-    const result = thinkContestProblem(gameState, problemId)
+  const wrappedThinkContestProblem = useCallback((problemId: string) => {
+    const result = thinkContestProblem(gameState, problemId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedCodeContestProblem = useCallback((problemId) => {
-    const result = codeContestProblem(gameState, problemId)
+  const wrappedCodeContestProblem = useCallback((problemId: string) => {
+    const result = codeContestProblem(gameState, problemId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedDebugContestProblem = useCallback((problemId) => {
-    const result = debugContestProblem(gameState, problemId)
+  const wrappedDebugContestProblem = useCallback((problemId: string) => {
+    const result = debugContestProblem(gameState, problemId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedAttemptContestProblem = useCallback((problemId) => {
-    const result = attemptContestProblem(gameState, problemId)
+  const wrappedAttemptContestProblem = useCallback((problemId: string) => {
+    const result = attemptContestProblem(gameState, problemId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedExecuteActivity = useCallback((activityId) => {
-    const result = executeActivity(gameState, activityId)
+  const wrappedExecuteActivity = useCallback((activityId: string) => {
+    const result = executeActivity(gameState, activityId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
   const wrappedAdvanceMonth = useCallback(() => {
-    const result = advanceMonth(gameState)
+    const result = advanceMonth(gameState) as LogicResult
     applyLogicResult(result)
     if (result.gameOverReason) {
       // 游戏结束时不需要改变 phase，保持 playing 显示结局
     }
   }, [gameState, applyLogicResult])
 
-  const wrappedApplyEventChoice = useCallback((eventId, choiceId) => {
-    const result = applyEventChoice(gameState, eventId, choiceId)
+  const wrappedApplyEventChoice = useCallback((eventId: string, choiceId: string) => {
+    const result = applyEventChoice(gameState, eventId, choiceId) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
-  const wrappedHandleTraitConfirm = useCallback((selectedTraitIds) => {
-    const result = handleTraitConfirmLogic(gameState, selectedTraitIds)
+  const wrappedHandleTraitConfirm = useCallback((selectedTraitIds: string[]) => {
+    const result = handleTraitConfirmLogic(gameState, selectedTraitIds) as LogicResult
     applyLogicResult(result)
     setGamePhase('playing')
   }, [gameState, applyLogicResult])
 
-  const wrappedHandleTeammateConfirm = useCallback((selectedTeammateIds) => {
-    const result = handleTeammateConfirmLogic(gameState, pendingEventChoice, selectedTeammateIds)
+  const wrappedHandleTeammateConfirm = useCallback((selectedTeammateIds: string[]) => {
+    const result = handleTeammateConfirmLogic(gameState, pendingEventChoice!, selectedTeammateIds) as LogicResult
     applyLogicResult(result)
   }, [gameState, pendingEventChoice, applyLogicResult])
 
@@ -197,7 +203,7 @@ function App() {
     setConfirmDialog({
       message: '确定要退学重开吗？将退回首页重新开始！',
       onConfirm: () => {
-        const result = resetGameLogic()
+        const result = resetGameLogic() as LogicResult
         applyLogicResult(result)
         setGamePhase('intro')
       }
@@ -205,24 +211,24 @@ function App() {
   }, [applyLogicResult])
 
   const wrappedHandleGameOverRestart = useCallback(() => {
-    const result = handleGameOverRestartLogic()
+    const result = handleGameOverRestartLogic() as LogicResult
     applyLogicResult(result)
     setGamePhase('intro')
   }, [applyLogicResult])
 
-  const wrappedHandlePracticeContestSelect = useCallback((contestConfig) => {
-    const result = handlePracticeContestSelectLogic(gameState, contestConfig)
+  const wrappedHandlePracticeContestSelect = useCallback((contestConfig: ContestConfig) => {
+    const result = handlePracticeContestSelectLogic(gameState, contestConfig) as LogicResult
     applyLogicResult(result)
   }, [gameState, applyLogicResult])
 
   const wrappedApplyContestResult = useCallback(() => {
-    const result = applyContestResult(gameState, contestOutcome)
+    const result = applyContestResult(gameState, contestOutcome!) as LogicResult
     applyLogicResult(result)
   }, [gameState, contestOutcome, applyLogicResult])
 
   // 打开事件对话框
-  const openEventDialog = useCallback((eventId) => {
-    const ev = (gameState.pendingEvents || []).find(e => e.id === eventId)
+  const openEventDialog = useCallback((eventId: string) => {
+    const ev = (gameState.pendingEvents || []).find((e: Event) => e.id === eventId)
     if (!ev) return
     setCurrentEvent(ev)
     setShowEventDialog(true)
@@ -284,7 +290,7 @@ function App() {
                     contest={gameState.activeContest}
                     timeRemaining={gameState.contestTimeRemaining}
                     onAttempt={wrappedAttemptContestProblem}
-                    onFinish={() => wrappedFinishContest(true)}
+                    onFinish={() => wrappedFinishContest()}
                     onRead={wrappedReadContestProblem}
                     onThink={wrappedThinkContestProblem}
                     onCode={wrappedCodeContestProblem}

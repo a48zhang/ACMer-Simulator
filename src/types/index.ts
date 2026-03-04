@@ -217,6 +217,7 @@ export interface UIState {
     onConfirm: () => void;
     onCancel: () => void;
   } | null;
+  gameOverReason?: string | null;
 }
 
 // ========== 逻辑结果 ==========
@@ -225,10 +226,7 @@ export interface LogicResult {
   logs: LogEntry[];
   uiState: UIState;
   gameOverReason?: string;
-  notification?: {
-    message: string;
-    type: string;
-  };
+  notification?: string;
   clearLogs?: boolean;
 }
 
