@@ -1,98 +1,85 @@
-# 改进计划总览
+# TypeScript 迁移计划总览
 
-本文档包含 ACMer-Simulator 项目的剩余改进方案。
+本文档包含 ACMer-Simulator 项目剩余的 TypeScript 迁移计划。所有计划相互独立，可按任意顺序执行。
 
-## 计划清单
+## 已完成进度
 
-| 计划 | 目标 | 状态 |
+| 阶段 | 状态 |
+|------|------|
+| 性能优化 | ✅ 已完成 |
+| 类型定义 | ✅ 已完成 |
+| 工具模块迁移 | ✅ 已完成 |
+| 数据层迁移 | ✅ 已完成 |
+| 游戏逻辑迁移 | ✅ 已完成 |
+| 状态管理迁移 | ✅ 已完成 |
+
+---
+
+## 剩余计划（互不依赖）
+
+所有以下计划相互独立，可以按任意顺序执行。
+
+| 计划 | 文件 | 目标 |
 |------|------|------|
-| ~~配置提取与清理~~ | 提取配置常量到独立文件 | ✅ 已完成 |
-| ~~代码重构~~ | 拆分长函数，降低复杂度 | ✅ 已完成 |
-| ~~测试覆盖~~ | 添加单元测试，覆盖率 >80% | ✅ 已完成 |
-| ~~TypeScript基础设施~~ | 配置 tsconfig，基础类型 | ✅ 已完成 |
-| ~~性能优化~~ | 减少不必要的 React 渲染 | ✅ 已完成 |
-| **TypeScript 迁移** | 将所有模块迁移到 TypeScript | **进行中（部分完成）** |
+| **计划1** | [plan-1-cleanup-old-js.md](./plan-1-cleanup-old-js.md) | 删除已迁移的旧 .js 文件 |
+| **计划2** | [plan-2-common-components.md](./plan-2-common-components.md) | 通用组件迁移 (Button, Card, Layout) |
+| **计划3** | [plan-3-dialog-components.md](./plan-3-dialog-components.md) | Dialog 组件迁移 (7个文件) |
+| **计划4** | [plan-4-panel-components.md](./plan-4-panel-components.md) | Panel 组件迁移 (7个文件，含已优化的组件) |
+| **计划5** | [plan-5-game-components.md](./plan-5-game-components.md) | Game 组件迁移 (6个文件) |
+| **计划6** | [plan-6-main-app.md](./plan-6-main-app.md) | 主入口和 App 组件迁移 |
+| **计划7** | [plan-7-final-cleanup.md](./plan-7-final-cleanup.md) | 最终清理 (allowJs=false) |
 
-## 执行策略
+---
 
-详细执行方案请查看: [EXECUTION_PLAN.md](./EXECUTION_PLAN.md)
-
-### 重要提示
-
-**两个计划不能并行执行**，因为会修改相同的组件文件！
-
-采用**顺序执行策略**：
-1. **先执行性能优化** 并合并到 main
-2. **再执行 TypeScript 迁移**，包含已优化的代码
-
-### 性能优化步骤
-
-1. Profiler 基准测量
-2. PlayerPanel 优化
-3. ActivityPanel 优化
-4. EventPanel 优化
-5. App.jsx 优化
-6. 验证性能提升 ≥30%
-7. **合并到 main** (必须完成后才能开始迁移)
-
-### TypeScript 迁移批次
-
-在性能优化完成后开始：
-
-1. 类型定义
-2. 工具模块 (utils, constants, gameBalance)
-3. 数据层 (traits, activities, contests, events)
-4. 游戏逻辑
-5. 状态管理
-6. UI 组件 (包含已优化的代码)
-7. 清理验证
-
-## 依赖关系图
+## 计划依赖关系图
 
 ```
-已完成: ┌─────────────────────────────────────────────────┐
-         │  配置提取  代码重构  测试覆盖  TS基础设施        │
-         └─────────────────────────────────────────────────┘
+所有计划相互独立，无依赖关系：
 
-顺序:   ┌─────────────────────────────────────────────────┐
-         │  性能优化 (先执行) →  TypeScript 迁移 (后执行)   │
-         └─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  计划1: 清理旧 .js文件                                       │
+│  计划2: 通用组件 ─┐                                         │
+│  计划3: Dialog 组件 │                                         │
+│  计划4: Panel 组件  ├─> 可独立执行，互不影响                 │
+│  计划5: Game 组件   │                                         │
+│  计划6: 主入口/App  ─┘                                         │
+│  计划7: 最终清理 (需等其他UI计划完成后)                       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 快速启动
+---
 
-### 执行剩余计划
+## 推荐执行顺序
 
-查看详细执行方案：
+虽然计划互不依赖，但推荐按以下顺序执行：
+
+1. **计划1** - 先清理旧文件，避免混淆
+2. **计划2 → 计划3 → 计划4 → 计划5** - 按组件复杂度递增
+3. **计划6** - 主应用迁移
+4. **计划7** - 最终清理
+
+---
+
+## 当前状态
+
+- ✅ 74 个测试全部通过
+- ✅ 构建正常 (`npm run build`)
+- ✅ 核心模块已迁移至 TypeScript
+- ⏳ UI 组件待迁移
+- ⏳ `allowJs: true` (仍允许 .js 文件)
+
+---
+
+## 快速开始
+
+选择任意计划开始执行：
 
 ```bash
-# 详细执行方案
-open docs/plans/EXECUTION_PLAN.md
+# 查看计划1 (清理旧文件)
+cat docs/plans/plan-1-cleanup-old-js.md
+
+# 查看计划2 (通用组件)
+cat docs/plans/plan-2-common-components.md
+
+# 以此类推...
 ```
-
-## 验收标准
-
-### 已完成
-
-- ✅ 配置集中管理
-- ✅ 函数复杂度达标
-- ✅ 测试通过 >80% 覆盖
-- ✅ 性能优化 (React.memo, useMemo, useCallback)
-- ✅ TypeScript 类型定义
-- ✅ TypeScript 工具模块 (constants, gameBalance, utils)
-- ✅ TypeScript 数据层 (traits, activities, contests)
-
-### 待完成
-
-- [ ] TypeScript 数据层 (events)
-- [ ] TypeScript 游戏逻辑
-- [ ] TypeScript 状态管理
-- [ ] TypeScript UI 组件
-- [ ] TypeScript 零错误
-- [ ] 性能优化效果在 TypeScript 迁移后保留
-
-## 文件位置
-
-- 配置: `src/config/gameBalance.js`
-- 类型: `src/gameLogics/types.js` (现有JSDoc)
-- 测试: `__tests__/*.test.js`
