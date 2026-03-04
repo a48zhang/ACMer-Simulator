@@ -2,7 +2,7 @@ import { END_MONTH } from '../constants';
 import { clampGPA } from '../utils';
 import { scheduleMonthlyEvents } from '../data/events';
 import { GPA_CONFIG } from '../config/gameBalance';
-import type { GameState, LogicResult, LogEntry } from '../types';
+import type { GameState, LogicResult, LogEntry, Event } from '../types';
 
 /**
  * 推进到下一月 - 主函数
@@ -15,7 +15,7 @@ export function advanceMonth(gameState: GameState): LogicResult {
 
   const endCheck = checkGameEnd(gameState, newMonth);
   if (endCheck.isEnded) {
-    return endCheck.result;
+    return endCheck.result!;
   }
 
   const gpaResult = calculateGPAChange(gameState, newMonth);
@@ -184,7 +184,7 @@ interface NewMonthUpdates {
   gpa: number;
   balance: number;
   remainingAP: number;
-  pendingEvents: unknown[];
+  pendingEvents: Event[];
 }
 
 /**

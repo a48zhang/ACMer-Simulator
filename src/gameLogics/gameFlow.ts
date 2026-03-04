@@ -1,5 +1,5 @@
 import { INITIAL_SAN, INITIAL_BALANCE, INITIAL_GPA, START_MONTH } from '../constants';
-import { createBaseAttributes, clampValue } from '../utils';
+import { clampValue } from '../utils';
 import { applyTraitEffects } from '../data/traits';
 import { scheduleMonthlyEvents } from '../data/events';
 import { createInitialGameState } from '../gameState';
@@ -101,7 +101,9 @@ export function handleGameOverRestart(): LogicResult {
   };
 }
 
-interface PracticeContestConfig extends ContestConfig {
+export interface PracticeContestConfig extends ContestConfig {
+  id: string;
+  description: string;
   cost: number;
 }
 
