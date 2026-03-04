@@ -1,6 +1,7 @@
 import { memo, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { Event, Choice } from '../../types';
 
 const EventPanelWrapper = styled.section`
   background-color: ${props => props.theme.colors.surface};
@@ -39,7 +40,7 @@ const EventList = styled.div`
   gap: 0.75rem;
 `;
 
-const EventCard = styled.div`
+const EventCard = styled.div<{ $isSimple?: boolean }>`
   background-color: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.md};
   padding: 0.875rem;
@@ -155,9 +156,15 @@ const EventBlockWarning = styled.div`
   text-align: center;
 `;
 
+interface InlineChoiceButtonProps {
+  choice: Choice;
+  eventId: string;
+  onDirectChoice: (eventId: string, choiceId: string) => void;
+}
+
 // 独立的内联选择按钮组件
-const InlineChoiceButton = memo(({ choice, eventId, onDirectChoice }) => {
-  const handleClick = useCallback((e) => {
+const InlineChoiceButton = memo(function InlineChoiceButton({ choice, eventId, onDirectChoice }: InlineChoiceButtonProps) {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onDirectChoice(eventId, choice.id);
   }, [choice.id, eventId, onDirectChoice]);
@@ -171,8 +178,14 @@ const InlineChoiceButton = memo(({ choice, eventId, onDirectChoice }) => {
 
 InlineChoiceButton.displayName = 'InlineChoiceButton';
 
+interface EventCardItemProps {
+  event: Event;
+  onOpenEvent: (eventId: string) => void;
+  onDirectChoice: (eventId: string, choiceId: string) => void;
+}
+
 // 独立的事件卡片组件
-const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }) => {
+const EventCardItem = memo(function EventCardItem({ event, onOpenEvent, onDirectChoice }: EventCardItemProps) {
   // 检查是否为简单事件（可以内联选择）
   const isSimple = useMemo(() => {
     return event.choices?.length === 2 &&
@@ -185,7 +198,7 @@ const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }) => {
     }
   }, [event.id, isSimple, onOpenEvent]);
 
-  const handleActionClick = useCallback((e) => {
+  const handleActionClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onOpenEvent(event.id);
   }, [event.id, onOpenEvent]);
@@ -230,18 +243,25 @@ const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }) => {
 
 EventCardItem.displayName = 'EventCardItem';
 
-function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }) {
+interface EventPanelProps {
+  pendingEvents: Event[] | null | undefined;
+  onOpenEvent: (eventId: string) => void;
+  onDirectChoice: (eventId: string, choiceId: string) => void;
+  canAdvance: boolean;
+}
+
+function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }: EventPanelProps) {
   const count = pendingEvents?.length || 0;
 
   // 缓存事件列表
   const sorted = useMemo(() => pendingEvents || [], [pendingEvents]);
 
   // 缓存回调
-  const handleOpenEvent = useCallback((eventId) => {
+  const handleOpenEvent = useCallback((eventId: string) => {
     onOpenEvent(eventId);
   }, [onOpenEvent]);
 
-  const handleDirectChoice = useCallback((eventId, choiceId) => {
+  const handleDirectChoice = useCallback((eventId: string, choiceId: string) => {
     onDirectChoice(eventId, choiceId);
   }, [onDirectChoice]);
 

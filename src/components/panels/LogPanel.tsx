@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import type { LogEntry } from '../../types';
 
 const LogPanelWrapper = styled.section`
   background-color: ${props => props.theme.colors.surface};
@@ -93,7 +94,7 @@ const LogEmpty = styled.div`
   font-style: italic;
 `;
 
-const LogEntry = styled.div`
+const LogEntryRow = styled.div`
   display: flex;
   gap: 0.5rem;
   line-height: 1.4;
@@ -105,7 +106,7 @@ const LogTime = styled.span`
   flex-shrink: 0;
 `;
 
-const LogMessage = styled.span`
+const LogMessage = styled.span<{ $type?: string }>`
   color: #d4d4d4;
   word-break: break-word;
 
@@ -126,8 +127,17 @@ const LogMessage = styled.span`
   `}
 `;
 
-function LogPanel({ logs }) {
-    const containerRef = useRef(null);
+interface LogEntryWithMeta extends LogEntry {
+  id: number;
+  time: string;
+}
+
+interface LogPanelProps {
+  logs: LogEntryWithMeta[];
+}
+
+function LogPanel({ logs }: LogPanelProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         if (containerRef.current) {
@@ -150,10 +160,10 @@ function LogPanel({ logs }) {
                     <LogEmpty>暂无消息...</LogEmpty>
                 ) : (
                     logs.map((log) => (
-                        <LogEntry key={log.id}>
+                        <LogEntryRow key={log.id}>
                             <LogTime>[{log.time}]</LogTime>
                             <LogMessage $type={log.type}>{log.message}</LogMessage>
-                        </LogEntry>
+                        </LogEntryRow>
                     ))
                 )}
             </LogContainer>

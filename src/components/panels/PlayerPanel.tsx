@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { Attributes, Buffs } from '../../types';
 
 const PlayerPanelWrapper = styled.aside`
   width: 280px;
@@ -93,7 +94,7 @@ const StatusCards = styled.div`
   gap: 0.625rem;
 `;
 
-const StatusCard = styled.div`
+const StatusCard = styled.div<{ $accentColor?: string }>`
   background: ${props => props.theme.colors.surface};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.lg};
@@ -139,7 +140,7 @@ const StatusLabel = styled.div`
   letter-spacing: 0.05em;
 `;
 
-const StatusValue = styled.div`
+const StatusValue = styled.div<{ $color?: string }>`
   font-weight: 800;
   font-size: 1.125rem;
   color: ${props => props.$color || props.theme.colors.textMain};
@@ -154,7 +155,7 @@ const BuffsDisplay = styled.div`
   margin-top: 0.75rem;
 `;
 
-const BuffItem = styled.span`
+const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
   font-size: 0.75rem;
   padding: 0.375rem 0.625rem;
   border-radius: ${props => props.theme.radius.md};
@@ -250,7 +251,7 @@ const AttrProgressBg = styled.div`
   overflow: hidden;
 `;
 
-const AttrProgressFill = styled.div`
+const AttrProgressFill = styled.div<{ $width: number; $primary?: boolean; $secondary?: boolean; $gradient?: boolean }>`
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -290,8 +291,15 @@ const AttrProgressFill = styled.div`
   `}
 `;
 
+interface AttributeCardProps {
+  name: string;
+  short: string;
+  value: number;
+  isPrimary: boolean;
+}
+
 // 独立的属性卡片组件，使用 memo 包装
-const AttributeCard = memo(({ attrKey, name, short, value, isPrimary }) => {
+const AttributeCard = memo(function AttributeCard({ name, short, value, isPrimary }: AttributeCardProps) {
   return (
     <AttrCard>
       <AttrHeader>
@@ -312,8 +320,16 @@ const AttributeCard = memo(({ attrKey, name, short, value, isPrimary }) => {
 
 AttributeCard.displayName = 'AttributeCard';
 
+interface StatusCardItemProps {
+  icon: string;
+  label: string;
+  value: string | number;
+  accentColor?: string;
+  valueColor?: string;
+}
+
 // 独立的状态卡片组件，使用 memo 包装
-const StatusCardItem = memo(({ icon, label, value, accentColor, valueColor }) => {
+const StatusCardItem = memo(function StatusCardItem({ icon, label, value, accentColor, valueColor }: StatusCardItemProps) {
   return (
     <StatusCard $accentColor={accentColor}>
       <StatusIcon>{icon}</StatusIcon>
@@ -325,17 +341,27 @@ const StatusCardItem = memo(({ icon, label, value, accentColor, valueColor }) =>
 
 StatusCardItem.displayName = 'StatusCardItem';
 
+interface PlayerPanelProps {
+  attributes: Attributes;
+  balance: number;
+  remainingAP: number;
+  monthlyAP: number;
+  san: number;
+  rating: number;
+  gpa: number;
+  buffs: Buffs;
+  onReset: () => void;
+}
+
 function PlayerPanel({
   attributes,
   balance,
-  remainingAP,
-  monthlyAP,
   san,
   rating,
   gpa,
   buffs,
   onReset
-}) {
+}: PlayerPanelProps) {
   // 缓存属性列表
   const generalAttributes = useMemo(() => [
     { key: 'coding', name: '💻 编程', short: '编程' },
@@ -357,19 +383,19 @@ function PlayerPanel({
 
   // 缓存颜色计算
   const colors = useMemo(() => {
-    const getSanColor = (value) => {
+    const getSanColor = (value: number) => {
       if (value >= 70) return '#059669';
       if (value >= 40) return '#d97706';
       return '#dc2626';
     };
 
-    const getGpaColor = (value) => {
+    const getGpaColor = (value: number) => {
       if (value >= 3.5) return '#059669';
       if (value >= 2.5) return '#d97706';
       return '#dc2626';
     };
 
-    const getRatingAccent = (value) => {
+    const getRatingAccent = (value: number) => {
       if (value >= 2400) return '#f59e0b';
       if (value >= 2100) return '#ec4899';
       if (value >= 1900) return '#8b5cf6';
@@ -454,10 +480,9 @@ function PlayerPanel({
               {generalAttributes.map(({ key, name, short }) => (
                 <AttributeCard
                   key={key}
-                  attrKey={key}
                   name={name}
                   short={short}
-                  value={attributes[key]}
+                  value={attributes[key as keyof Attributes]}
                   isPrimary={true}
                 />
               ))}
@@ -472,10 +497,9 @@ function PlayerPanel({
               {specializedAttributes.map(({ key, name, short }) => (
                 <AttributeCard
                   key={key}
-                  attrKey={key}
                   name={name}
                   short={short}
-                  value={attributes[key]}
+                  value={attributes[key as keyof Attributes]}
                   isPrimary={false}
                 />
               ))}

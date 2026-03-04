@@ -127,7 +127,11 @@ const IntroStartButton = styled(Button)`
   }
 `;
 
-function IntroPanel({ onStart }) {
+interface IntroPanelProps {
+  onStart: () => void;
+}
+
+function IntroPanel({ onStart }: IntroPanelProps) {
   return (
     <IntroPanelWrapper>
       <IntroHero>

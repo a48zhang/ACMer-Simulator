@@ -15,15 +15,6 @@ const floatIn = keyframes`
   }
 `;
 
-const shimmer = keyframes`
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-`;
-
 const TraitPanelWrapper = styled.section`
   width: 100%;
   max-width: 1200px;
@@ -161,7 +152,7 @@ const TpLabel = styled.span`
   letter-spacing: 0.05em;
 `;
 
-const TpValue = styled.span`
+const TpValue = styled.span<{ $consumed?: boolean; $negative?: boolean; $positive?: boolean }>`
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
@@ -215,7 +206,7 @@ const TraitCategory = styled.div`
   flex-direction: column;
 `;
 
-const CategoryHeader = styled.div`
+const CategoryHeader = styled.div<{ $negative?: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -224,7 +215,7 @@ const CategoryHeader = styled.div`
   border-bottom: 2px solid ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
 `;
 
-const CategoryIcon = styled.span`
+const CategoryIcon = styled.span<{ $negative?: boolean }>`
   font-size: 1.25rem;
   display: flex;
   align-items: center;
@@ -235,7 +226,7 @@ const CategoryIcon = styled.span`
   background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)'};
 `;
 
-const CategoryTitle = styled.h2`
+const CategoryTitle = styled.h2<{ $negative?: boolean }>`
   font-size: 1.15rem;
   font-weight: 700;
   color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
@@ -243,7 +234,7 @@ const CategoryTitle = styled.h2`
   flex: 1;
 `;
 
-const CategoryHint = styled.span`
+const CategoryHint = styled.span<{ $negative?: boolean }>`
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.6rem;
@@ -259,7 +250,7 @@ const TraitGrid = styled.div`
   flex: 1;
 `;
 
-const TraitCard = styled.div`
+const TraitCard = styled.div<{ $selected?: boolean; $negative?: boolean }>`
   border: 2px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.lg};
   padding: 0.75rem 0.9rem;
@@ -301,7 +292,7 @@ const TraitName = styled.span`
   line-height: 1.2;
 `;
 
-const TraitCost = styled.span`
+const TraitCost = styled.span<{ $negative?: boolean }>`
   font-size: 0.8rem;
   font-weight: 800;
   padding: 0.22rem 0.55rem;
@@ -318,7 +309,7 @@ const TraitDesc = styled.div`
   line-height: 1.4;
 `;
 
-const SelectedBadge = styled.div`
+const SelectedBadge = styled.div<{ $negative?: boolean }>`
   position: absolute;
   top: 0.55rem;
   right: 0.55rem;
@@ -335,8 +326,12 @@ const SelectedBadge = styled.div`
   letter-spacing: 0.05em;
 `;
 
-function TraitSelectionPanel({ onConfirm }) {
-  const [selectedTraits, setSelectedTraits] = useState([]);
+interface TraitSelectionPanelProps {
+  onConfirm: (selectedTraits: string[]) => void;
+}
+
+function TraitSelectionPanel({ onConfirm }: TraitSelectionPanelProps) {
+  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
 
   const traitCost = calculateTraitCost(selectedTraits);
   const remainingTP = INITIAL_TRAIT_POINTS - traitCost;
@@ -345,7 +340,7 @@ function TraitSelectionPanel({ onConfirm }) {
   const positiveTraits = TRAITS.filter(t => t.type === TRAIT_TYPES.POSITIVE);
   const negativeTraits = TRAITS.filter(t => t.type === TRAIT_TYPES.NEGATIVE);
 
-  const toggleTrait = (traitId) => {
+  const toggleTrait = (traitId: string) => {
     setSelectedTraits(prev => {
       if (prev.includes(traitId)) {
         return prev.filter(id => id !== traitId);
