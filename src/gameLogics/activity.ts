@@ -116,8 +116,8 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
   const newState: GameState = {
     ...gameState,
     remainingAP: nextRemainingAP,
-    playerContests: getFieldValue(effects as Record<string, unknown>, gameState as unknown as Record<string, unknown>, 'playerContests', 'playerContestsDelta') as number,
-    playerProblems: getFieldValue(effects as Record<string, unknown>, gameState as unknown as Record<string, unknown>, 'playerProblems', 'playerProblemsDelta') as number,
+    playerContests: getFieldValue(effects as Record<string, unknown>, gameState, 'playerContests', 'playerContestsDelta') as number,
+    playerProblems: getFieldValue(effects as Record<string, unknown>, gameState, 'playerProblems', 'playerProblemsDelta') as number,
     attributes: updatedAttributes,
     worldFlags,
     balance,

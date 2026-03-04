@@ -203,8 +203,8 @@ function buildNewStateForEvent(
   const newState: GameState = {
     ...gameState,
     remainingAP: Math.min(gameState.monthlyAP, Math.max(0, gameState.remainingAP + (effects.apBonus || 0))),
-    playerContests: getFieldValue(effects as unknown as Record<string, unknown>, gameState as unknown as Record<string, unknown>, 'playerContests', 'playerContestsDelta') as number,
-    playerProblems: getFieldValue(effects as unknown as Record<string, unknown>, gameState as unknown as Record<string, unknown>, 'playerProblems', 'playerProblemsDelta') as number,
+    playerContests: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerContests', 'playerContestsDelta') as number,
+    playerProblems: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerProblems', 'playerProblemsDelta') as number,
     attributes: updatedAttributes
   };
 

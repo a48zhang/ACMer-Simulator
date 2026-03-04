@@ -159,7 +159,6 @@ function PracticeContestSelectionDialog({ onSelect, onCancel }: PracticeContestS
             durationMinutes: 120,
             difficulties: [2, 3, 4, 5, 6],
             isRated: false,
-            ratingSource: undefined,
             cost: 8
         }
     ];

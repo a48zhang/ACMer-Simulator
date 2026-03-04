@@ -72,7 +72,7 @@ export const applyAttributeChanges = (
  * @param deltaField - 增量字段名
  * @returns 计算后的值
  */
-export const getFieldValue = <T extends Record<string, unknown>, K extends keyof T>(
+export const getFieldValue = <T, K extends keyof T>(
   effects: Record<string, unknown>,
   prevState: T,
   field: K,
