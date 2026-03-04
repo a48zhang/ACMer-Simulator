@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { Attributes } from '../../types';
 
 const DialogOverlay = styled.div`
   position: fixed;
@@ -147,9 +148,14 @@ const DialogFooter = styled.div`
   justify-content: flex-end;
 `;
 
-function AttributeDialog({ onConfirm, initialPoints = 20 }) {
+interface AttributeDialogProps {
+  onConfirm: (attributes: Attributes) => void;
+  initialPoints?: number;
+}
+
+function AttributeDialog({ onConfirm, initialPoints = 20 }: AttributeDialogProps) {
   const [availablePoints, setAvailablePoints] = useState(initialPoints);
-  const [attributes, setAttributes] = useState({
+  const [attributes, setAttributes] = useState<Attributes>({
     coding: 0,
     algorithm: 0,
     speed: 0,
@@ -164,14 +170,14 @@ function AttributeDialog({ onConfirm, initialPoints = 20 }) {
     geometry: 0
   });
 
-  const generalAttributes = [
+  const generalAttributes: { key: keyof Attributes; name: string }[] = [
     { key: 'coding', name: '💻 编程能力' },
     { key: 'algorithm', name: '🧮 算法思维' },
     { key: 'speed', name: '🏃 速度' },
     { key: 'stress', name: '🧘 抗压能力' }
   ];
 
-  const specializedAttributes = [
+  const specializedAttributes: { key: keyof Attributes; name: string }[] = [
     { key: 'math', name: '📐 数学' },
     { key: 'dp', name: '🔄 动态规划' },
     { key: 'graph', name: '🕸️ 图论' },
@@ -182,7 +188,7 @@ function AttributeDialog({ onConfirm, initialPoints = 20 }) {
     { key: 'geometry', name: '📏 计算几何' }
   ];
 
-  const increaseAttribute = (key) => {
+  const increaseAttribute = (key: keyof Attributes) => {
     if (availablePoints > 0) {
       setAttributes(prev => ({
         ...prev,
@@ -192,7 +198,7 @@ function AttributeDialog({ onConfirm, initialPoints = 20 }) {
     }
   };
 
-  const decreaseAttribute = (key) => {
+  const decreaseAttribute = (key: keyof Attributes) => {
     if (attributes[key] > 0) {
       setAttributes(prev => ({
         ...prev,

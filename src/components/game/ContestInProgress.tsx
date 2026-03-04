@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Button } from '../common/Button';
+import type { ContestSession } from '../../types';
 
 const ContestSection = styled.section`
   background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
@@ -69,7 +70,7 @@ const ContestProblemGrid = styled.div`
   }
 `;
 
-const ContestProblemCard = styled.div`
+const ContestProblemCard = styled.div<{ $status?: string }>`
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.md};
   padding: 0.6rem 0.75rem;
@@ -163,8 +164,19 @@ const SmallButton = styled(Button)`
   font-size: 0.85rem;
 `;
 
+interface ContestInProgressProps {
+  contest: ContestSession;
+  timeRemaining: number;
+  onAttempt: (problemId: string) => void;
+  onFinish: () => void;
+  onRead: (problemId: string) => void;
+  onThink: (problemId: string) => void;
+  onCode: (problemId: string) => void;
+  onDebug: (problemId: string) => void;
+}
+
 // ContestInProgress 组件 - 在比赛进行时显示并支持做题
-function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onCode, onDebug }) {
+function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead, onThink, onCode, onDebug }: ContestInProgressProps) {
   const solvedCount = contest.problems.filter(p => p.status === 'solved').length;
   const totalCount = contest.problems.length;
   const allSolved = solvedCount === totalCount;
@@ -182,7 +194,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
       </ContestHeader>
 
       <ContestProblemGrid>
-        {contest.problems.map((p, idx) => {
+        {contest.problems.map((p) => {
           const isSolved = p.status === 'solved';
           const isPending = p.status === 'pending';
           const isCoding = p.status === 'coding';
