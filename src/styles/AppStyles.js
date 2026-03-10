@@ -74,7 +74,7 @@ export const Main = styled.main`
 
   &.full-width {
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 2rem;
     overflow: auto;
   }

@@ -175,7 +175,7 @@ InlineChoiceButton.displayName = 'InlineChoiceButton';
 const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }) => {
   // 检查是否为简单事件（可以内联选择）
   const isSimple = useMemo(() => {
-    return event.choices?.length === 2 &&
+    return event.choices?.length > 0 &&
       event.choices.every(c => !c.requiresTeamSelection && !c.specialAction);
   }, [event.choices]);
 
