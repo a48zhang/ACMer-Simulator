@@ -320,7 +320,7 @@ const TraitDesc = styled.div`
 
 const SelectedBadge = styled.div`
   position: absolute;
-  top: 0.55rem;
+  bottom: 0.55rem;
   right: 0.55rem;
   background: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
   color: white;
