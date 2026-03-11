@@ -17,6 +17,7 @@ export interface Attributes {
 export interface Buffs {
   failedCourses: number;
   academicWarnings: number;
+  contestAwards: Record<string, number>;
 }
 
 export interface WorldFlags {
@@ -79,6 +80,7 @@ export interface Event {
   title: string;
   description: string;
   mandatory: boolean;
+  defaultChoiceId?: string;
   chanceToAppear?: number;
   conditions: (state: GameState) => boolean;
   choices: Choice[];
@@ -150,6 +152,16 @@ export interface ContestSession {
   config?: ContestConfig;
 }
 
+export type ContestCategory =
+  | 'practice'
+  | 'qualifier'
+  | 'invitational'
+  | 'provincial'
+  | 'regional'
+  | 'school'
+  | 'freshman'
+  | 'other';
+
 export interface ContestConfig {
   name: string;
   problemCount: number | [number, number];
@@ -157,6 +169,16 @@ export interface ContestConfig {
   difficulties?: number[];
   isRated?: boolean;
   ratingSource?: string;
+  category?: ContestCategory;
+  awardEligible?: boolean;
+  resultFlagKey?: string;
+  series?: 'icpc' | 'ccpc';
+  stationId?: string;
+}
+
+export interface ContestAward {
+  tier: 'gold' | 'silver' | 'bronze' | 'honorable';
+  label: string;
 }
 
 export interface PracticeSession {
@@ -189,6 +211,7 @@ export interface PracticeOption {
 
 export interface ContestOutcome {
   contestId: string;
+  contestName: string;
   total: number;
   solved: number;
   attempts: number;
@@ -200,6 +223,15 @@ export interface ContestOutcome {
   performanceRating: number | null;
   isRated: boolean;
   ratingSource: string | null;
+  contestCategory: ContestCategory;
+  resultFlagKey?: string | null;
+  series?: 'icpc' | 'ccpc' | null;
+  stationId?: string | null;
+  ranking: {
+    rank: number;
+    participants: number;
+  } | null;
+  award: ContestAward | null;
 }
 
 // ========== 活动系统 ==========
@@ -286,7 +318,10 @@ export interface GPAConfig {
   MIN: number;
   MAX: number;
   MONTHLY_DEDUCTION: number;
+  MONTHLY_FLUCTUATION: number;
   ATTEND_CLASS_BONUS: number;
+  ATTEND_CLASS_LUCKY_PROBABILITY: number;
+  ATTEND_CLASS_LUCKY_BONUS: number;
   SKIP_CLASS_DEDUCTION: number;
   SKIP_CLASS_PROBABILITY: number;
   HOLIDAY_MONTHS: number[];

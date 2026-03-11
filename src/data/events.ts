@@ -13,7 +13,7 @@ interface SchoolMonth {
 }
 
 // 将游戏月份转换为学年和日历月份（gameMonth 1 = 大一9月）
-const getSchoolMonth = (gameMonth: number): SchoolMonth => {
+export const getSchoolMonth = (gameMonth: number): SchoolMonth => {
     const monthsSinceStart = gameMonth - 1; // 0-based
     const startCalendarMonth = 9; // September
     const totalCalendarMonth = startCalendarMonth + monthsSinceStart;
@@ -36,6 +36,92 @@ const getSchoolMonth = (gameMonth: number): SchoolMonth => {
     }
 
     return { year, month };
+};
+
+const getFlagNumber = (flags: WorldFlags, key: string): number => {
+  const value = flags?.[key];
+  return typeof value === 'number' ? value : 0;
+};
+
+const REGIONAL_PATH_SCHOOL = 1;
+const REGIONAL_PATH_WILDCARD = 2;
+const REGIONAL_SERIES_LIMIT = 2;
+
+export const REGIONAL_QUOTA_EVENT_ID = 'september_regional_quota';
+
+const REGIONAL_STATIONS = [
+  {
+    id: 'october_icpc_jinan',
+    month: 10,
+    series: 'icpc' as const,
+    title: '10月 ICPC 济南站',
+    description: '第一批 ICPC 赛站开始确认名单了。学校和教练都在盯着这站。',
+    contestName: 'ICPC区域赛（济南站）'
+  },
+  {
+    id: 'october_ccpc_guilin',
+    month: 10,
+    series: 'ccpc' as const,
+    title: '10月 CCPC 桂林站',
+    description: 'CCPC 桂林站开放确认，队伍成型的话可以直接去冲。',
+    contestName: 'CCPC区域赛（桂林站）'
+  },
+  {
+    id: 'november_icpc_nanjing',
+    month: 11,
+    series: 'icpc' as const,
+    title: '11月 ICPC 南京站',
+    description: '11 月的 ICPC 站点到了，通常是学校最看重的一站。',
+    contestName: 'ICPC区域赛（南京站）'
+  },
+  {
+    id: 'november_ccpc_chongqing',
+    month: 11,
+    series: 'ccpc' as const,
+    title: '11月 CCPC 重庆站',
+    description: 'CCPC 重庆站开始统计名单，想去就得尽快把队伍拉齐。',
+    contestName: 'CCPC区域赛（重庆站）'
+  },
+  {
+    id: 'december_icpc_kunming',
+    month: 12,
+    series: 'icpc' as const,
+    title: '12月 ICPC 昆明站',
+    description: '赛季尾声还有一站 ICPC，可以作为最后一次冲区域赛成绩的机会。',
+    contestName: 'ICPC区域赛（昆明站）'
+  },
+  {
+    id: 'december_ccpc_harbin',
+    month: 12,
+    series: 'ccpc' as const,
+    title: '12月 CCPC 哈尔滨站',
+    description: '最后一批 CCPC 名单开放，如果还有名额，这站也能继续上。',
+    contestName: 'CCPC区域赛（哈尔滨站）'
+  }
+];
+
+const hasRegionalSeasonAccess = (state: GameState): boolean => {
+  const { year } = getSchoolMonth(state.month);
+  const flags = state.worldFlags || {};
+  return hasFlag(flags, 'joinedClub')
+    && year >= 2
+    && getFlagNumber(flags, 'regionalSeasonYear') === year
+    && getFlagNumber(flags, 'regionalQuotaPath') > 0;
+};
+
+const createRegionalStationCondition = (
+  targetMonth: number,
+  series: 'icpc' | 'ccpc'
+) => {
+  return (state: GameState): boolean => {
+    const { month } = getSchoolMonth(state.month);
+    if (month !== targetMonth || !hasRegionalSeasonAccess(state)) {
+      return false;
+    }
+
+    const usedKey = series === 'icpc' ? 'regionalICPCUsed' : 'regionalCCPCUsed';
+    return getFlagNumber(state.worldFlags || {}, usedKey) < REGIONAL_SERIES_LIMIT;
+  };
 };
 
 /**
@@ -61,13 +147,17 @@ const createMonthlyCondition = (
   };
 };
 
+const ACTIVE_SEMESTER_MONTHS = [3, 4, 5, 9, 10, 11];
+const ASSIGNMENT_MONTHS = [4, 5, 10, 11];
+
 // 事件库（可扩展）
 export const EVENTS: Event[] = [
     {
         id: 'club_intro',
         title: 'ACM社团招新',
-        description: '算法队开始招新了。要不要先进来看看？这个月不选就当你没报。',
+        description: 'ACM社团开始招新了。要加入吗？',
         mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
             return (month === 9 || month === 6) && !hasFlag(state.worldFlags, 'joinedClub');
@@ -100,7 +190,8 @@ export const EVENTS: Event[] = [
         id: 'march_invitational_signup',
         title: '3月邀请赛',
         description: '有场 3 月邀请赛在报名。要去的话，先把队友定下来。',
-        mandatory: true,
+        mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: createMonthlyCondition(3, 1, ['joinedClub']),
         choices: [
             {
@@ -117,7 +208,10 @@ export const EVENTS: Event[] = [
                     problemCount: [10, 12],
                     durationMinutes: 300,
                     difficulties: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'invitational',
+                    awardEligible: true,
+                    resultFlagKey: 'marchInvitational'
                 }
             },
             {
@@ -136,7 +230,8 @@ export const EVENTS: Event[] = [
         id: 'april_provincial',
         title: '4月XCPC省赛',
         description: '省赛快到了。要上的话，得先把队伍定好。',
-        mandatory: true,
+        mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: createMonthlyCondition(4, 1, ['joinedClub']),
         choices: [
             {
@@ -153,7 +248,10 @@ export const EVENTS: Event[] = [
                     problemCount: [10, 13],
                     durationMinutes: 300,
                     difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'provincial',
+                    awardEligible: true,
+                    resultFlagKey: 'aprilProvincial'
                 }
             },
             {
@@ -172,7 +270,8 @@ export const EVENTS: Event[] = [
         id: 'may_invitational',
         title: '5月邀请赛',
         description: '又来一场邀请赛。想打的话，还是得先把人凑齐。',
-        mandatory: true,
+        mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: createMonthlyCondition(5, 1, ['joinedClub']),
         choices: [
             {
@@ -189,7 +288,10 @@ export const EVENTS: Event[] = [
                     problemCount: [10, 12],
                     durationMinutes: 300,
                     difficulties: [1, 2, 3, 4, 5, 5, 6, 7, 7, 8, 9, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'invitational',
+                    awardEligible: true,
+                    resultFlagKey: 'mayInvitational'
                 }
             },
             {
@@ -226,7 +328,8 @@ export const EVENTS: Event[] = [
         id: 'july_summer_training',
         title: '7月多校集训',
         description: '暑假多校开了。去上强度，还是先回家缓一缓？',
-        mandatory: true,
+        mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
             return month === 7;
@@ -258,8 +361,9 @@ export const EVENTS: Event[] = [
     {
         id: 'september_online_qualifier',
         title: '9月网络预选赛',
-        description: '区域赛前的网络预选来了。个人赛，成绩会影响后面的入场资格。',
-        mandatory: true,
+        description: '区域赛名额开抢前，先打一场网络预选。它会和邀请赛、省赛成绩一起决定你抢校内名额时的分量。',
+        mandatory: false,
+        defaultChoiceId: 'skip',
         conditions: createMonthlyCondition(9, 2, ['joinedClub']),
         choices: [
             {
@@ -275,7 +379,10 @@ export const EVENTS: Event[] = [
                     problemCount: [8, 10],
                     durationMinutes: 180,
                     difficulties: [2, 3, 4, 5, 5, 6, 7, 8, 9, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'qualifier',
+                    awardEligible: false,
+                    resultFlagKey: 'septemberQualifier'
                 }
             },
             {
@@ -286,33 +393,86 @@ export const EVENTS: Event[] = [
                     log: '😌 这场先不打，留点精力。',
                     logType: 'info'
                 },
-                setFlags: { septemberQualifierParticipating: false }
+                setFlags: {
+                    septemberQualifierParticipating: false,
+                    septemberQualifierScore: 0,
+                    septemberQualifierSettled: 1
+                }
             }
         ]
     },
     {
-        id: 'october_regional',
-        title: '10月区域赛站点',
-        description: '这个月刷到一个区域赛站。要不要组队去打？',
+        id: REGIONAL_QUOTA_EVENT_ID,
+        title: '9月区域赛抢名额',
+        description: '教练开始按邀请赛、省赛、网络预选的综合表现分配区域赛资格。校内名额抢不过，也可以直接去申请外卡。',
         mandatory: false,
-        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
-        conditions: createMonthlyCondition(10, 2, ['joinedClub']),
+        defaultChoiceId: 'skip',
+        conditions: (): boolean => false,
+        choices: [
+            {
+                id: 'school_quota',
+                label: '按战绩抢校内名额',
+                effects: {
+                    sanDelta: -6
+                },
+                specialAction: 'PROCESS_REGIONAL_QUALIFICATION'
+            },
+            {
+                id: 'wildcard',
+                label: '申请外卡',
+                effects: {
+                    sanDelta: -3,
+                    balanceDelta: -600
+                },
+                specialAction: 'PROCESS_REGIONAL_QUALIFICATION'
+            },
+            {
+                id: 'skip',
+                label: '这赛季先不报',
+                effects: {
+                    sanDelta: 6,
+                    log: '😌 这赛季区域赛先放掉，集中刷题。',
+                    logType: 'info'
+                },
+                setFlags: {
+                    regionalSeasonYear: 0,
+                    regionalQuotaPath: 0,
+                    regionalQualificationScore: 0,
+                    regionalICPCUsed: 0,
+                    regionalCCPCUsed: 0
+                }
+            }
+        ]
+    },
+    ...REGIONAL_STATIONS.map((station) => ({
+        id: `regional_station_${station.id}`,
+        title: station.title,
+        description: station.description,
+        mandatory: false,
+        defaultChoiceId: 'skip',
+        conditions: createRegionalStationCondition(station.month, station.series),
         choices: [
             {
                 id: 'participate',
-                label: '组队参赛',
+                label: '确认名单并组队参赛',
                 effects: {
                     sanDelta: -15
                 },
-                setFlags: { octoberRegionalParticipating: true },
+                setFlags: {
+                    [`${station.id}Participating`]: true
+                },
                 requiresTeamSelection: true,
                 specialAction: 'START_CONTEST',
                 contestConfig: {
-                    name: 'XCPC区域赛（10月站）',
+                    name: station.contestName,
                     problemCount: [11, 13],
                     durationMinutes: 300,
                     difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'regional',
+                    awardEligible: true,
+                    series: station.series,
+                    stationId: station.id
                 }
             },
             {
@@ -320,87 +480,15 @@ export const EVENTS: Event[] = [
                 label: '这站不去',
                 effects: {
                     sanDelta: 0,
-                    log: '😔 这个站没去。',
+                    log: `😔 ${station.title} 这站放了。`,
                     logType: 'info'
                 },
-                setFlags: { octoberRegionalParticipating: false }
-            }
-        ]
-    },
-    {
-        id: 'november_regional',
-        title: '11月区域赛站点',
-        description: '又刷到一个区域赛站。继续组队往前打，还是这站先算了？',
-        mandatory: false,
-        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
-        conditions: createMonthlyCondition(11, 2, ['joinedClub']),
-        choices: [
-            {
-                id: 'participate',
-                label: '组队参赛',
-                effects: {
-                    sanDelta: -15
-                },
-                setFlags: { novemberRegionalParticipating: true },
-                requiresTeamSelection: true,
-                specialAction: 'START_CONTEST',
-                contestConfig: {
-                    name: 'XCPC区域赛（11月站）',
-                    problemCount: [11, 13],
-                    durationMinutes: 300,
-                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
-                    isRated: false
+                setFlags: {
+                    [`${station.id}Participating`]: false
                 }
-            },
-            {
-                id: 'skip',
-                label: '这站不去',
-                effects: {
-                    sanDelta: 0,
-                    log: '😔 这个站先放了。',
-                    logType: 'info'
-                },
-                setFlags: { novemberRegionalParticipating: false }
             }
         ]
-    },
-    {
-        id: 'december_regional',
-        title: '12月区域赛站点',
-        description: '区域赛季差不多到头了。这一站要不要上？',
-        mandatory: false,
-        chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
-        conditions: createMonthlyCondition(12, 2, ['joinedClub']),
-        choices: [
-            {
-                id: 'participate',
-                label: '组队参赛',
-                effects: {
-                    sanDelta: -15
-                },
-                setFlags: { decemberRegionalParticipating: true },
-                requiresTeamSelection: true,
-                specialAction: 'START_CONTEST',
-                contestConfig: {
-                    name: 'XCPC区域赛（12月站）',
-                    problemCount: [11, 13],
-                    durationMinutes: 300,
-                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
-                    isRated: false
-                }
-            },
-            {
-                id: 'skip',
-                label: '这站不去',
-                effects: {
-                    sanDelta: 0,
-                    log: '😔 最后一站也没去。',
-                    logType: 'info'
-                },
-                setFlags: { decemberRegionalParticipating: false }
-            }
-        ]
-    },
+    })),
     {
         id: 'january_finals_week',
         title: '1月期末周',
@@ -424,6 +512,7 @@ export const EVENTS: Event[] = [
         title: '新生程序设计大赛',
         description: '校里要办新生赛了。个人赛，难度不算高，正好看看自己现在大概什么水平。',
         mandatory: false,
+        defaultChoiceId: 'skip',
         chanceToAppear: EVENT_CHANCES.FRESHMAN_CONTEST,
         conditions: (state: GameState): boolean => {
             const { month, year } = getSchoolMonth(state.month);
@@ -443,7 +532,9 @@ export const EVENTS: Event[] = [
                     problemCount: [4, 5],
                     durationMinutes: 120,
                     difficulties: [1, 2, 3, 4, 5],
-                    isRated: false
+                    isRated: false,
+                    category: 'freshman',
+                    awardEligible: false
                 }
             },
             {
@@ -463,6 +554,7 @@ export const EVENTS: Event[] = [
         title: '校内程序设计大赛',
         description: '校赛来了，需要先把队伍定下来。',
         mandatory: false,
+        defaultChoiceId: 'skip',
         chanceToAppear: EVENT_CHANCES.SCHOOL_CONTEST,
         conditions: createMonthlyCondition([10, 11, 12], 2, ['joinedClub']),
         choices: [
@@ -480,7 +572,9 @@ export const EVENTS: Event[] = [
                     problemCount: [8, 10],
                     durationMinutes: 240,
                     difficulties: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                    isRated: false
+                    isRated: false,
+                    category: 'school',
+                    awardEligible: false
                 }
             },
             {
@@ -495,7 +589,195 @@ export const EVENTS: Event[] = [
             }
         ]
     },
+    {
+        id: 'attendance_spot_check',
+        title: '课堂点名抽查',
+        description: '这周老师突然开始抓人点名。去补一下出勤，还是当没看见？',
+        mandatory: false,
+        defaultChoiceId: 'play_dead',
+        chanceToAppear: EVENT_CHANCES.ATTENDANCE_SPOT_CHECK,
+        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, []),
+        choices: [
+            {
+                id: 'rush_to_class',
+                label: '赶去教室',
+                effects: {
+                    gpaDelta: 0.05,
+                    sanDelta: -4,
+                    log: '🏃 临时冲去上课，点名算是糊过去了。GPA+0.05，SAN-4。',
+                    logType: 'success'
+                },
+                setFlags: { attendedClassThisMonth: true }
+            },
+            {
+                id: 'play_dead',
+                label: '装死',
+                effects: {
+                    gpaDelta: -0.08,
+                    sanDelta: 2,
+                    log: '🙈 这次就当没看见，平时分掉了一点。GPA-0.08。',
+                    logType: 'warning'
+                }
+            }
+        ]
+    },
+    {
+        id: 'assignment_crunch',
+        title: '大作业DDL',
+        description: '课程大作业快到截止时间了。现在补，还来得及；再拖，平时分大概率要掉。',
+        mandatory: false,
+        defaultChoiceId: 'delay',
+        chanceToAppear: EVENT_CHANCES.ASSIGNMENT_CRUNCH,
+        conditions: createMonthlyCondition(ASSIGNMENT_MONTHS, 1, []),
+        choices: [
+            {
+                id: 'rush_deadline',
+                label: '熬夜赶完',
+                effects: {
+                    gpaDelta: 0.06,
+                    sanDelta: -8,
+                    log: '💻 把大作业硬赶完了，平时分算是保住。GPA+0.06，SAN-8。',
+                    logType: 'success'
+                }
+            },
+            {
+                id: 'delay',
+                label: '先拖着',
+                effects: {
+                    gpaDelta: -0.10,
+                    sanDelta: 1,
+                    log: '🫠 DDL 又往后拖了，老师那边记了一笔。GPA-0.10。',
+                    logType: 'warning'
+                }
+            }
+        ]
+    },
+    {
+        id: 'club_training_session',
+        title: '队内补题会',
+        description: '今晚队里有人约补题和讲题。去蹭一波强度，还是先自己安排？',
+        mandatory: false,
+        defaultChoiceId: 'skip',
+        chanceToAppear: EVENT_CHANCES.CLUB_TRAINING_SESSION,
+        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, ['joinedClub']),
+        choices: [
+            {
+                id: 'join_session',
+                label: '去补题会',
+                effects: {
+                    attributeChanges: { algorithm: 1 },
+                    playerProblemsDelta: 2,
+                    sanDelta: -6,
+                    log: '🧠 跟着队里补了一晚上题，思维+1，额外解决 2 题，SAN-6。',
+                    logType: 'success'
+                }
+            },
+            {
+                id: 'skip',
+                label: '先不去',
+                effects: {
+                    sanDelta: 2,
+                    log: '😌 今晚没去队里，自己缓了一下。',
+                    logType: 'info'
+                }
+            }
+        ]
+    },
+    {
+        id: 'senior_code_review',
+        title: '学长拉你看代码',
+        description: '有学长说可以帮你看看最近的代码风格和常犯问题。要不要拿过去挨喷？',
+        mandatory: false,
+        defaultChoiceId: 'pass',
+        chanceToAppear: EVENT_CHANCES.SENIOR_CODE_REVIEW,
+        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, ['joinedClub']),
+        choices: [
+            {
+                id: 'take_review',
+                label: '拿去看看',
+                effects: {
+                    attributeChanges: { coding: 1 },
+                    sanDelta: -4,
+                    log: '🧾 被学长喷了一轮，但代码习惯确实顺了点。代码+1，SAN-4。',
+                    logType: 'success'
+                }
+            },
+            {
+                id: 'pass',
+                label: '算了下次',
+                effects: {
+                    sanDelta: 1,
+                    log: '😌 这次先不去挨喷，自己再改改。',
+                    logType: 'info'
+                }
+            }
+        ]
+    },
+    {
+        id: 'dorm_power_outage',
+        title: '宿舍断网断电',
+        description: '宿舍今晚又断了。是换地方继续学，还是干脆摆一天？',
+        mandatory: false,
+        defaultChoiceId: 'slack_off',
+        chanceToAppear: EVENT_CHANCES.DORM_POWER_OUTAGE,
+        conditions: createMonthlyCondition([3, 4, 5, 9, 10, 11, 12], 1, []),
+        choices: [
+            {
+                id: 'move_to_library',
+                label: '去图书馆',
+                effects: {
+                    playerProblemsDelta: 1,
+                    sanDelta: -2,
+                    log: '📚 换到图书馆继续搞，至少没把今晚全浪费掉。',
+                    logType: 'info'
+                }
+            },
+            {
+                id: 'slack_off',
+                label: '今天算了',
+                effects: {
+                    sanDelta: 5,
+                    log: '🛏️ 宿舍一断，你也顺势摆了半天，SAN+5。',
+                    logType: 'info'
+                }
+            }
+        ]
+    },
+    {
+        id: 'campus_clinic',
+        title: '状态有点扛不住',
+        description: '这几天明显有点顶不住了。去校医院看看，还是继续硬扛？',
+        mandatory: false,
+        defaultChoiceId: 'tough_it_out',
+        chanceToAppear: EVENT_CHANCES.CAMPUS_CLINIC,
+        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, []),
+        choices: [
+            {
+                id: 'visit_clinic',
+                label: '去校医院',
+                effects: {
+                    balanceDelta: -80,
+                    sanDelta: 8,
+                    log: '💊 去校医院开了点药，状态稍微稳住了。SAN+8，余额-80。',
+                    logType: 'success'
+                }
+            },
+            {
+                id: 'tough_it_out',
+                label: '继续硬扛',
+                effects: {
+                    sanDelta: -6,
+                    log: '🥴 你决定继续硬扛，结果状态更差了。SAN-6。',
+                    logType: 'warning'
+                }
+            }
+        ]
+    },
 ];
+
+export function getEventById(eventId: string): Event | undefined {
+    return EVENTS.find((event) => event.id === eventId);
+}
 
 // 调度器：根据月份和状态生成当月事件
 export function scheduleMonthlyEvents(state: GameState, month: number): Event[] {
@@ -521,6 +803,11 @@ export function scheduleMonthlyEvents(state: GameState, month: number): Event[] 
         if (!seen.has(ev.id)) { unique.push(ev); seen.add(ev.id); }
     });
     unique.sort((a, b) => {
+        const ab = a.defaultChoiceId ? 0 : 1;
+        const bb = b.defaultChoiceId ? 0 : 1;
+        if (ab !== bb) {
+          return bb - ab;
+        }
         const am = a.mandatory ? 1 : 0;
         const bm = b.mandatory ? 1 : 0;
         return bm - am;

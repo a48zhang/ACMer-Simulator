@@ -7,8 +7,33 @@ import {
   getCurrentMonthlyAPCap
 } from '../utils';
 import { createContestSession } from '../data/contests';
+import { getEventById, getSchoolMonth, REGIONAL_QUOTA_EVENT_ID } from '../data/events';
 import { ACADEMIC_CONFIG } from '../config/gameBalance';
 import type { GameState, LogicResult, LogEntry, Effects, Buffs, Event, Choice, Teammate } from '../types';
+
+const REGIONAL_PATH_SCHOOL = 1;
+const REGIONAL_PATH_WILDCARD = 2;
+
+const getNumericFlag = (state: GameState, key: string): number => {
+  const value = state.worldFlags?.[key];
+  return typeof value === 'number' ? value : 0;
+};
+
+const appendPendingEventIfMissing = (state: GameState, eventId: string): GameState => {
+  if ((state.pendingEvents || []).some(event => event.id === eventId)) {
+    return state;
+  }
+
+  const event = getEventById(eventId);
+  if (!event) {
+    return state;
+  }
+
+  return {
+    ...state,
+    pendingEvents: [event, ...(state.pendingEvents || [])]
+  };
+};
 
 /**
  * 检查是否触发学业警告或退学
@@ -34,12 +59,12 @@ export function checkAcademicWarning(gpa: number, buffs: Buffs): {
 
     if (newWarnings >= ACADEMIC_CONFIG.WARNINGS_FOR_EXPULSION) {
       logs.push({ message: '❌ 累计2个学业警告，进入退学结局！', type: 'error' });
-      return {
-        isExpelled: true,
-        reason: `GPA长期低于${ACADEMIC_CONFIG.WARNING_THRESHOLD}，累计获得${newWarnings}次学业警告，被迫退学。`,
-        newState: { isRunning: false, buffs: { ...buffs, academicWarnings: newWarnings } },
-        logs
-      };
+        return {
+          isExpelled: true,
+          reason: `GPA长期低于${ACADEMIC_CONFIG.WARNING_THRESHOLD}，累计获得${newWarnings}次学业警告，被迫退学。`,
+          newState: { isRunning: false, buffs: { ...buffs, academicWarnings: newWarnings } },
+          logs
+        };
     }
 
     return { isExpelled: false, buffChanges: { academicWarnings: 1 }, logs };
@@ -62,7 +87,7 @@ export function checkAcademicWarning(gpa: number, buffs: Buffs): {
         return {
           isExpelled: true,
           reason: `GPA长期低于${ACADEMIC_CONFIG.FAILURE_THRESHOLD}，累计挂科${newFailures}次（转换为${newWarnings}次学业警告），被迫退学。`,
-          newState: { isRunning: false, buffs: { failedCourses: 0, academicWarnings: newWarnings } },
+          newState: { isRunning: false, buffs: { ...buffs, failedCourses: 0, academicWarnings: newWarnings } },
           logs
         };
       }
@@ -105,7 +130,7 @@ interface FinalsWeekResult {
 function processFinalsWeek(gameState: GameState, effects: Effects, _ev: Event): FinalsWeekResult {
   const logs: LogEntry[] = [];
   const gpa = gameState.gpa;
-  const buffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
+  const buffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0, contestAwards: {} };
 
   const warningResult = checkAcademicWarning(gpa, buffs);
   logs.push(...warningResult.logs);
@@ -193,6 +218,96 @@ function processStartContest(
   };
 }
 
+function calculateRegionalQualificationSnapshot(gameState: GameState): {
+  year: number;
+  invitationalScore: number;
+  provincialScore: number;
+  qualifierScore: number;
+  combinedScore: number;
+} {
+  const { year } = getSchoolMonth(gameState.month);
+  const invitationalEntries = ['marchInvitationalScore', 'mayInvitationalScore']
+    .map(key => getNumericFlag(gameState, key))
+    .filter(score => score > 0);
+  const invitationalScore = invitationalEntries.length > 0
+    ? Math.round(invitationalEntries.reduce((sum, score) => sum + score, 0) / invitationalEntries.length)
+    : 0;
+  const provincialScore = getNumericFlag(gameState, 'aprilProvincialScore');
+  const qualifierScore = getNumericFlag(gameState, 'septemberQualifierScore');
+  const summerTrainingBonus = gameState.worldFlags?.julySummerTrainingParticipating ? 5 : 0;
+  const combinedScore = Math.round(
+    invitationalScore * 0.3 + provincialScore * 0.35 + qualifierScore * 0.35 + summerTrainingBonus
+  );
+
+  return {
+    year,
+    invitationalScore,
+    provincialScore,
+    qualifierScore,
+    combinedScore
+  };
+}
+
+function processRegionalQualification(
+  gameState: GameState,
+  ev: Event,
+  choice: Choice,
+  effects: Effects,
+  logs: LogEntry[]
+): ProcessEventChoiceResult {
+  const snapshot = calculateRegionalQualificationSnapshot(gameState);
+  let quotaPath = choice.id === 'school_quota' ? REGIONAL_PATH_SCHOOL : REGIONAL_PATH_WILDCARD;
+
+  logs.push({
+    message: `📊 抢名额评估：邀请赛 ${snapshot.invitationalScore} / 省赛 ${snapshot.provincialScore} / 预选 ${snapshot.qualifierScore}，综合分 ${snapshot.combinedScore}`,
+    type: 'info'
+  });
+
+  if (choice.id === 'school_quota') {
+    if (snapshot.combinedScore >= 28) {
+      logs.push({
+        message: '🏫 综合表现足够，抢到了校内区域赛名额。本赛季最多可打 2 个 ICPC 站和 2 个 CCPC 站。',
+        type: 'success'
+      });
+    } else {
+      quotaPath = REGIONAL_PATH_WILDCARD;
+      logs.push({
+        message: '⚠️ 校内竞争没抢过，教练建议你转去申请外卡，本赛季仍可继续报名区域赛站点。',
+        type: 'warning'
+      });
+    }
+  } else {
+    logs.push({
+      message: '📝 你选择了外卡路线。本赛季仍然最多可打 2 个 ICPC 站和 2 个 CCPC 站。',
+      type: 'success'
+    });
+  }
+
+  const newState = buildNewStateForEvent(
+    gameState,
+    ev,
+    choice,
+    effects,
+    {
+      regionalSeasonYear: snapshot.year,
+      regionalQuotaPath: quotaPath,
+      regionalInvitationalScore: snapshot.invitationalScore,
+      regionalProvincialScore: snapshot.provincialScore,
+      regionalQualifierScore: snapshot.qualifierScore,
+      regionalQualificationScore: snapshot.combinedScore,
+      regionalICPCUsed: 0,
+      regionalCCPCUsed: 0
+    },
+    null
+  );
+
+  return {
+    newState,
+    logs,
+    uiState: { showEventDialog: false, currentEvent: null }
+  };
+}
+
 /**
  * 构建事件的新状态（内部函数）
  */
@@ -246,10 +361,11 @@ function buildNewStateForEvent(
   newState.worldFlags = { ...(gameState.worldFlags || {}), ...setFlags };
 
   if (effects.buffChanges) {
-    const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0 };
+    const currentBuffs = gameState.buffs || { failedCourses: 0, academicWarnings: 0, contestAwards: {} };
     newState.buffs = {
       failedCourses: Math.max(0, currentBuffs.failedCourses + (effects.buffChanges.failedCourses || 0)),
-      academicWarnings: Math.max(0, currentBuffs.academicWarnings + (effects.buffChanges.academicWarnings || 0))
+      academicWarnings: Math.max(0, currentBuffs.academicWarnings + (effects.buffChanges.academicWarnings || 0)),
+      contestAwards: { ...(currentBuffs.contestAwards || {}) }
     };
   }
 
@@ -266,6 +382,10 @@ interface ProcessEventChoiceResult {
   logs: LogEntry[];
   uiState: Record<string, unknown>;
   gameOverReason?: string;
+}
+
+export function hasBlockingPendingEvents(pendingEvents: Event[] | null | undefined): boolean {
+  return (pendingEvents || []).some(event => !event.defaultChoiceId);
 }
 
 /**
@@ -297,6 +417,10 @@ function processEventChoice(
     }
   }
 
+  if (choice.specialAction === 'PROCESS_REGIONAL_QUALIFICATION') {
+    return processRegionalQualification(gameState, ev, choice, effects, logs);
+  }
+
   // 处理特殊动作：启动比赛
   if (choice.specialAction === 'START_CONTEST') {
     return processStartContest(gameState, ev, choice, effects, setFlags, logs, selectedTeammateIds) as ProcessEventChoiceResult;
@@ -311,7 +435,13 @@ function processEventChoice(
     logs.push({ message: effects.log, type: effects.logType || 'info' });
   }
 
-  const newState = buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selectedTeammateIds);
+  let newState = buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selectedTeammateIds);
+  if (ev.id === 'september_online_qualifier') {
+    const { month, year } = getSchoolMonth(gameState.month);
+    if (month === 9 && year >= 2) {
+      newState = appendPendingEventIfMissing(newState, REGIONAL_QUOTA_EVENT_ID);
+    }
+  }
 
   return {
     newState,
@@ -349,6 +479,47 @@ export function applyEventChoice(gameState: GameState, eventId: string, choiceId
   }
 
   return processEventChoice(gameState, ev, choice);
+}
+
+export function autoResolveDefaultEvents(gameState: GameState): LogicResult {
+  let currentState = gameState;
+  const logs: LogEntry[] = [];
+
+  while (true) {
+    const nextEvent = (currentState.pendingEvents || []).find(event => event.defaultChoiceId);
+    if (!nextEvent || !nextEvent.defaultChoiceId) {
+      break;
+    }
+
+    const defaultChoice = nextEvent.choices.find(choice => choice.id === nextEvent.defaultChoiceId);
+    if (!defaultChoice || defaultChoice.requiresTeamSelection) {
+      break;
+    }
+
+    logs.push({
+      message: `⏭️ ${nextEvent.title} 本月未处理，按“${defaultChoice.label}”结算。`,
+      type: 'info'
+    });
+
+    const result = applyEventChoice(currentState, nextEvent.id, nextEvent.defaultChoiceId);
+    currentState = result.newState || currentState;
+    logs.push(...result.logs);
+
+    if (result.gameOverReason) {
+      return {
+        newState: currentState,
+        logs,
+        uiState: {},
+        gameOverReason: result.gameOverReason
+      };
+    }
+  }
+
+  return {
+    newState: currentState,
+    logs,
+    uiState: {}
+  };
 }
 
 interface PendingEventChoice {

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { applyEventChoice, handleTeammateConfirm } from '../src/gameLogics/event';
 import { EVENTS, scheduleMonthlyEvents } from '../src/data/events';
+import { applyContestResult } from '../src/gameLogics/gameFlow';
 import { createInitialGameState } from '../src/gameState';
 
 describe('事件系统', () => {
@@ -63,7 +64,7 @@ describe('事件系统', () => {
   });
 });
 
-describe('社团事件链', () => {
+describe('社团与区域赛事件链', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -71,10 +72,7 @@ describe('社团事件链', () => {
   const gatedEventCases = [
     { month: 7, eventId: 'march_invitational_signup' },
     { month: 8, eventId: 'april_provincial' },
-    { month: 9, eventId: 'may_invitational' },
-    { month: 14, eventId: 'october_regional' },
-    { month: 15, eventId: 'november_regional' },
-    { month: 16, eventId: 'december_regional' }
+    { month: 9, eventId: 'may_invitational' }
   ];
 
   gatedEventCases.forEach(({ month, eventId }) => {
@@ -104,6 +102,119 @@ describe('社团事件链', () => {
       expect(events.some(event => event.id === eventId)).toBe(true);
     });
   });
+
+  it('9月跳过网络预选后应插入抢名额事件', () => {
+    const state = {
+      ...createInitialGameState(),
+      month: 13,
+      worldFlags: { joinedClub: true },
+      pendingEvents: EVENTS.filter(event => event.id === 'september_online_qualifier')
+    };
+
+    const result = applyEventChoice(state, 'september_online_qualifier', 'skip');
+
+    expect(result.newState.pendingEvents.some(event => event.id === 'september_regional_quota')).toBe(true);
+    expect(result.newState.worldFlags.septemberQualifierScore).toBe(0);
+  });
+
+  it('9月网络预选结算后应插入抢名额事件并记录成绩', () => {
+    const state = {
+      ...createInitialGameState(),
+      month: 13,
+      worldFlags: { joinedClub: true },
+      pendingEvents: [],
+      buffs: { failedCourses: 0, academicWarnings: 0, contestAwards: {} }
+    };
+
+    const contestOutcome = {
+      contestId: 'c1',
+      contestName: '9月网络预选赛',
+      total: 10,
+      solved: 3,
+      attempts: 6,
+      ratingDelta: 0,
+      scoreDelta: 30,
+      sanDelta: 4,
+      timeUsed: 120,
+      weakAttr: null,
+      performanceRating: null,
+      isRated: false,
+      ratingSource: null,
+      contestCategory: 'qualifier',
+      resultFlagKey: 'septemberQualifier',
+      ranking: null,
+      award: null
+    };
+
+    const result = applyContestResult(state, contestOutcome);
+
+    expect(result.newState.worldFlags.septemberQualifierScore).toBeGreaterThan(0);
+    expect(result.newState.pendingEvents.some(event => event.id === 'september_regional_quota')).toBe(true);
+  });
+
+  it('10-12月区域赛站点应按月份均匀分布', () => {
+    const months = [
+      { month: 14, ids: ['regional_station_october_icpc_jinan', 'regional_station_october_ccpc_guilin'] },
+      { month: 15, ids: ['regional_station_november_icpc_nanjing', 'regional_station_november_ccpc_chongqing'] },
+      { month: 16, ids: ['regional_station_december_icpc_kunming', 'regional_station_december_ccpc_harbin'] }
+    ];
+
+    months.forEach(({ month, ids }) => {
+      const state = {
+        ...createInitialGameState(),
+        month,
+        worldFlags: {
+          joinedClub: true,
+          regionalSeasonYear: 2,
+          regionalQuotaPath: 1,
+          regionalICPCUsed: 0,
+          regionalCCPCUsed: 0
+        }
+      };
+
+      const events = scheduleMonthlyEvents(state, month);
+      expect(events.map(event => event.id)).toEqual(expect.arrayContaining(ids));
+    });
+  });
+
+  it('单条赛道用满2个名额后不再刷出对应赛站', () => {
+    const state = {
+      ...createInitialGameState(),
+      month: 15,
+      worldFlags: {
+        joinedClub: true,
+        regionalSeasonYear: 2,
+        regionalQuotaPath: 1,
+        regionalICPCUsed: 2,
+        regionalCCPCUsed: 1
+      }
+    };
+
+    const events = scheduleMonthlyEvents(state, 15);
+
+    expect(events.some(event => event.id === 'regional_station_november_icpc_nanjing')).toBe(false);
+    expect(events.some(event => event.id === 'regional_station_november_ccpc_chongqing')).toBe(true);
+  });
+
+  it('抢校内名额时应根据历史成绩记录综合分', () => {
+    const state = {
+      ...createInitialGameState(),
+      month: 13,
+      worldFlags: {
+        joinedClub: true,
+        marchInvitationalScore: 40,
+        aprilProvincialScore: 35,
+        mayInvitationalScore: 50,
+        septemberQualifierScore: 45
+      },
+      pendingEvents: EVENTS.filter(event => event.id === 'september_regional_quota')
+    };
+
+    const result = applyEventChoice(state, 'september_regional_quota', 'school_quota');
+
+    expect(result.newState.worldFlags.regionalQualificationScore).toBeGreaterThan(0);
+    expect(result.newState.worldFlags.regionalQuotaPath).toBe(1);
+  });
 });
 
 describe('期末周GPA审核', () => {
@@ -112,7 +223,7 @@ describe('期末周GPA审核', () => {
   beforeEach(() => {
     gameState = {
       ...createInitialGameState(),
-      buffs: { failedCourses: 0, academicWarnings: 0 }
+      buffs: { failedCourses: 0, academicWarnings: 0, contestAwards: {} }
     };
   });
 
@@ -134,7 +245,7 @@ describe('期末周GPA审核', () => {
 
   it('GPA<2.5且已有1次学业警告时应触发退学', () => {
     gameState.gpa = 2.0;
-    gameState.buffs = { failedCourses: 0, academicWarnings: 1 };
+    gameState.buffs = { failedCourses: 0, academicWarnings: 1, contestAwards: {} };
     gameState.pendingEvents = EVENTS.filter(e => e.id === 'june_finals_week');
     const result = applyEventChoice(gameState, 'june_finals_week', 'review');
     expect(result.newState.isRunning).toBe(false);
@@ -151,7 +262,7 @@ describe('期末周GPA审核', () => {
 
   it('累计2次挂科再挂应转换为学业警告', () => {
     gameState.gpa = 2.7;
-    gameState.buffs = { failedCourses: 2, academicWarnings: 0 };
+    gameState.buffs = { failedCourses: 2, academicWarnings: 0, contestAwards: {} };
     gameState.pendingEvents = EVENTS.filter(e => e.id === 'june_finals_week');
     const result = applyEventChoice(gameState, 'june_finals_week', 'review');
     const conversionLog = result.logs.find(l => l.message && l.message.includes('累计3次挂科'));
@@ -160,7 +271,7 @@ describe('期末周GPA审核', () => {
 
   it('累计挂科达3次且已有1次警告时应触发退学', () => {
     gameState.gpa = 2.7;
-    gameState.buffs = { failedCourses: 2, academicWarnings: 1 };
+    gameState.buffs = { failedCourses: 2, academicWarnings: 1, contestAwards: {} };
     gameState.pendingEvents = EVENTS.filter(e => e.id === 'june_finals_week');
     const result = applyEventChoice(gameState, 'june_finals_week', 'review');
     expect(result.newState.isRunning).toBe(false);

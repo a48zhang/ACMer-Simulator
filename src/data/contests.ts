@@ -7,7 +7,9 @@ import type {
   ContestSession,
   ContestConfig,
   ContestOutcome,
-  AttemptLog
+  AttemptLog,
+  ContestAward,
+  ContestCategory
 } from '../types';
 
 // 所有可能的属性类型
@@ -22,6 +24,55 @@ const ATTR_NAMES_CN: Partial<Record<string, string>> = {
     math: '数学',
     dp: '动态规划', graph: '图论', dataStructure: '数据结构',
     string: '字符串', search: '搜索', greedy: '贪心', geometry: '计算几何'
+};
+
+const getStableStringSeed = (value: string): number =>
+    value.split('').reduce((acc, ch, index) => acc + ch.charCodeAt(0) * (index + 1), 0);
+
+const getParticipantCount = (
+    category: ContestCategory,
+    total: number,
+    sessionName: string
+): number => {
+    const seed = getStableStringSeed(sessionName);
+    switch (category) {
+        case 'regional':
+            return 260 + (seed % 140) + total * 10;
+        case 'provincial':
+            return 180 + (seed % 120) + total * 8;
+        case 'invitational':
+            return 120 + (seed % 90) + total * 6;
+        default:
+            return 0;
+    }
+};
+
+const getContestAward = (
+    category: ContestCategory,
+    rank: number,
+    participants: number,
+    solved: number
+): ContestAward | null => {
+    if (participants <= 0 || solved <= 0) return null;
+
+    const ratio = rank / participants;
+
+    if (category === 'regional' || category === 'provincial') {
+        if (ratio <= 0.1) return { tier: 'gold', label: '金奖' };
+        if (ratio <= 0.25) return { tier: 'silver', label: '银奖' };
+        if (ratio <= 0.45) return { tier: 'bronze', label: '铜奖' };
+        if (ratio <= 0.65) return { tier: 'honorable', label: '优胜奖' };
+        return null;
+    }
+
+    if (category === 'invitational') {
+        if (ratio <= 0.12) return { tier: 'gold', label: '金奖' };
+        if (ratio <= 0.3) return { tier: 'silver', label: '银奖' };
+        if (ratio <= 0.55) return { tier: 'bronze', label: '铜奖' };
+        if (ratio <= 0.75) return { tier: 'honorable', label: '优胜奖' };
+    }
+
+    return null;
 };
 
 export const getProblemTagNames = (problem: Problem): string[] => {
@@ -337,7 +388,8 @@ export const createContestSession = (config: ContestConfig): ContestSession => {
         attempts: [],
         startedAt: Date.now(),
         isRated: Boolean(config?.isRated),
-        ratingSource: config?.ratingSource || null
+        ratingSource: config?.ratingSource || null,
+        config: { ...config }
     };
 };
 
@@ -439,6 +491,29 @@ export const calculateContestOutcome = (
 
     const sanDelta = S > 0 ? Math.min(10, S * 2) : -5;
     const scoreDelta = S * 10; // 保持积分增长，避免 NaN
+    const contestCategory = session.config?.category || 'other';
+    const isAwardEligible = Boolean(session.config?.awardEligible);
+    let ranking: ContestOutcome['ranking'] = null;
+    let award: ContestAward | null = null;
+
+    if (isAwardEligible) {
+        const participants = getParticipantCount(contestCategory, total, session.name);
+        const solveScore = T > 0 ? S / T : 0;
+        const speedScore = session.durationMinutes > 0 ? 1 - (timeUsed / session.durationMinutes) : 0;
+        const efficiencyScore = attempts > 0 ? S / attempts : (S > 0 ? 1 : 0);
+        const perfScore = performanceRating == null ? solveScore : Math.max(0, Math.min(1, performanceRating / 3200));
+        const placementScore = Math.max(
+            0,
+            Math.min(
+                1,
+                solveScore * 0.64 + speedScore * 0.16 + efficiencyScore * 0.1 + perfScore * 0.1
+            )
+        );
+        const placementRatio = Math.max(0, Math.min(1, 1 - placementScore));
+        const rank = Math.max(1, Math.min(participants, Math.round(1 + placementRatio * (participants - 1))));
+        ranking = { rank, participants };
+        award = getContestAward(contestCategory, rank, participants, solved);
+    }
 
     // 根据最弱属性给出改进建议
     const weaknessCount: Record<string, number> = {};
@@ -458,6 +533,7 @@ export const calculateContestOutcome = (
 
     return {
         contestId: session.id,
+        contestName: session.name,
         total,
         solved,
         attempts,
@@ -468,6 +544,12 @@ export const calculateContestOutcome = (
         weakAttr,
         performanceRating: performanceRating == null ? null : Math.round(performanceRating),
         isRated: Boolean(session?.isRated),
-        ratingSource: session?.ratingSource || null
+        ratingSource: session?.ratingSource || null,
+        contestCategory,
+        resultFlagKey: session.config?.resultFlagKey || null,
+        series: session.config?.series || null,
+        stationId: session.config?.stationId || null,
+        ranking,
+        award
     };
 };
