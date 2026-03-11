@@ -4,17 +4,17 @@ import styled from 'styled-components';
 const LogPanelWrapper = styled.section`
   background-color: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.lg};
-  padding: 0.875rem 1rem;
+  padding: 0.75rem 0.85rem;
   box-shadow: ${props => props.theme.shadows.sm};
   display: flex;
   flex-direction: column;
   height: 100%;
   border: 1px solid ${props => props.theme.colors.border};
-  width: 320px;
+  width: 300px;
   flex-shrink: 0;
 
   @media (max-width: 1024px) {
-    width: 280px;
+    width: 270px;
   }
 
   @media (max-width: 768px) {
@@ -36,23 +36,23 @@ const LogHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.45rem;
   border-bottom: 1px solid ${props => props.theme.colors.border};
 `;
 
 const LogTitle = styled.h2`
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: ${props => props.theme.colors.textMain};
   margin: 0;
 `;
 
 const LogCount = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: ${props => props.theme.colors.textSecondary};
   background: ${props => props.theme.colors.background};
-  padding: 0.25rem 0.5rem;
+  padding: 0.18rem 0.45rem;
   border-radius: ${props => props.theme.radius.full};
 `;
 
@@ -61,12 +61,12 @@ const LogContainer = styled.div`
   overflow-y: auto;
   background-color: #1e1e1e;
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.75rem;
+  padding: 0.68rem;
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -89,7 +89,7 @@ const LogContainer = styled.div`
 const LogEmpty = styled.div`
   color: #6b7280;
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 1.6rem;
   font-style: italic;
 `;
 

@@ -6,17 +6,20 @@ const ContestSection = styled.section`
   background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
   border: 2px solid #ffd4d4;
   border-radius: ${props => props.theme.radius.lg};
-  padding: 1rem;
+  padding: 0.85rem;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 `;
 
 const ContestHeader = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.45rem;
   border-bottom: 2px solid #ffe0e0;
 `;
 
@@ -27,7 +30,7 @@ const ContestTitleRow = styled.div`
 `;
 
 const ContestTitle = styled.h2`
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin: 0;
   color: ${props => props.theme.colors.textMain};
 `;
@@ -35,9 +38,9 @@ const ContestTitle = styled.h2`
 const ContestBadge = styled.span`
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: white;
-  padding: 0.2rem 0.6rem;
+  padding: 0.18rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
 `;
@@ -45,9 +48,9 @@ const ContestBadge = styled.span`
 const ContestMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 `;
 
 const ContestTime = styled.span`
@@ -58,8 +61,9 @@ const ContestTime = styled.span`
 const ContestProblemGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+  min-height: 0;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -73,11 +77,11 @@ const ContestProblemGrid = styled.div`
 const ContestProblemCard = styled.div<{ $status?: string }>`
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.6rem 0.75rem;
+  padding: 0.52rem 0.62rem;
   background: ${props => props.theme.colors.background};
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.42rem;
   box-shadow: ${props => props.theme.shadows.sm};
 
   ${props => props.$status === 'solved' && `
@@ -106,27 +110,27 @@ const ContestProblemTop = styled.div`
 const ContestProblemTitle = styled.div`
   font-weight: 700;
   color: ${props => props.theme.colors.textMain};
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
 const ContestProblemStatus = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   color: ${props => props.theme.colors.textSecondary};
 `;
 
 const ContestProblemInfo = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.75rem;
+  gap: 0.35rem;
+  font-size: 0.7rem;
   color: ${props => props.theme.colors.textSecondary};
 `;
 
 const ContestProblemTags = styled.span`
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.42rem;
   background: #f3f4f6;
   border-radius: ${props => props.theme.radius.sm};
 `;
@@ -135,12 +139,12 @@ const ContestProblemActions = styled.div`
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   flex-wrap: nowrap;
 `;
 
 const ContestProblemSolved = styled.span`
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #22c55e;
 `;
@@ -148,20 +152,20 @@ const ContestProblemSolved = styled.span`
 const ContestFooter = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   justify-content: space-between;
-  padding-top: 0.75rem;
+  padding-top: 0.6rem;
   border-top: 1px solid #ffe0e0;
 `;
 
 const ContestHint = styled.span`
   color: ${props => props.theme.colors.textSecondary};
-  font-size: 0.8rem;
+  font-size: 0.74rem;
 `;
 
 const SmallButton = styled(Button)`
-  padding: 0.4rem 0.8rem;
-  font-size: 0.85rem;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.74rem;
 `;
 
 interface RevealedInfo {

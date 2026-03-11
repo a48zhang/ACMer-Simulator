@@ -66,7 +66,7 @@ export const EVENTS: Event[] = [
     {
         id: 'club_intro',
         title: 'ACM社团招新',
-        description: 'ACM算法社团正在招新，是否加入？本月不选择将自动跳过。',
+        description: '算法队开始招新了。要不要先进来看看？这个月不选就当你没报。',
         mandatory: false,
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
@@ -79,7 +79,7 @@ export const EVENTS: Event[] = [
                 effects: {
                     attributeChanges: { stress: 1 },
                     apBonus: 2,
-                    log: '🎉 加入了ACM算法社团！抗压+1，本月额外获得2AP。',
+                    log: '🎉 进队了。抗压+1，本月额外获得2AP。',
                     logType: 'success'
                 },
                 setFlags: { joinedClub: true },
@@ -87,10 +87,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '不了',
+                label: '先不去',
                 effects: {
                     sanDelta: 1,
-                    log: '😌 暂时不加入社团。',
+                    log: '😌 这次先不进队。',
                     logType: 'info'
                 }
             }
@@ -98,8 +98,8 @@ export const EVENTS: Event[] = [
     },
     {
         id: 'march_invitational_signup',
-        title: '3月邀请赛名额抢夺',
-        description: '邀请赛开始报名，是否参加？如果参加，需要提前选择队友。',
+        title: '3月邀请赛',
+        description: '有场 3 月邀请赛在报名。要去的话，先把队友定下来。',
         mandatory: true,
         conditions: createMonthlyCondition(3, 1, ['joinedClub']),
         choices: [
@@ -122,10 +122,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '这场不去',
                 effects: {
                     sanDelta: 2,
-                    log: '😌 选择跳过3月邀请赛，稍作休息。',
+                    log: '😌 这场先不打，缓一口气。',
                     logType: 'info'
                 },
                 setFlags: { marchInvitationalParticipating: false }
@@ -135,7 +135,7 @@ export const EVENTS: Event[] = [
     {
         id: 'april_provincial',
         title: '4月XCPC省赛',
-        description: '省级竞赛即将举行，是否参加？如果参加，需要提前选择队友。',
+        description: '省赛快到了。要上的话，得先把队伍定好。',
         mandatory: true,
         conditions: createMonthlyCondition(4, 1, ['joinedClub']),
         choices: [
@@ -158,10 +158,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '这场不去',
                 effects: {
                     sanDelta: 3,
-                    log: '😌 选择跳过4月省赛，稍作休息。',
+                    log: '😌 这场先放掉，留点状态。',
                     logType: 'info'
                 },
                 setFlags: { aprilProvincialParticipating: false }
@@ -171,7 +171,7 @@ export const EVENTS: Event[] = [
     {
         id: 'may_invitational',
         title: '5月邀请赛',
-        description: '又一场邀请赛来临，是否参加？如果参加，需要提前选择队友。',
+        description: '又来一场邀请赛。想打的话，还是得先把人凑齐。',
         mandatory: true,
         conditions: createMonthlyCondition(5, 1, ['joinedClub']),
         choices: [
@@ -194,10 +194,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '这场不去',
                 effects: {
                     sanDelta: 2,
-                    log: '😌 选择跳过5月邀请赛，稍作休息。',
+                    log: '😌 这场先不接，休息一下。',
                     logType: 'info'
                 },
                 setFlags: { mayInvitationalParticipating: false }
@@ -207,7 +207,7 @@ export const EVENTS: Event[] = [
     {
         id: 'june_finals_week',
         title: '6月期末周',
-        description: '期末考试周到了，即将进行期末考试...',
+        description: '期末周到了。先看看这学期有没有把自己玩脱。',
         mandatory: true,
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
@@ -216,7 +216,7 @@ export const EVENTS: Event[] = [
         choices: [
             {
                 id: 'review',
-                label: '确认',
+                label: '看看成绩',
                 effects: {},
                 setFlags: { juneFinalsReviewed: true }
             }
@@ -224,8 +224,8 @@ export const EVENTS: Event[] = [
     },
     {
         id: 'july_summer_training',
-        title: '7月多校集训比赛',
-        description: '暑期多校集训系列比赛开始，这是提升实力的好机会！',
+        title: '7月多校集训',
+        description: '暑假多校开了。去上强度，还是先回家缓一缓？',
         mandatory: true,
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
@@ -234,21 +234,21 @@ export const EVENTS: Event[] = [
         choices: [
             {
                 id: 'participate',
-                label: '参加集训',
+                label: '去多校',
                 effects: {
                     attributeChanges: { algorithm: 1, coding: 1 },
                     sanDelta: -15,
-                    log: '🔥 参加了暑期多校集训！算法+1，代码+1，SAN-15。',
+                    log: '🔥 去多校上了一波强度。算法+1，代码+1，SAN-15。',
                     logType: 'success'
                 },
                 setFlags: { julySummerTrainingParticipating: true }
             },
             {
                 id: 'skip',
-                label: '跳过，回家休息',
+                label: '回家歇会',
                 effects: {
                     sanDelta: 20,
-                    log: '🏠 选择回家休息，放松身心，SAN+20。',
+                    log: '🏠 先回家缓口气，SAN+20。',
                     logType: 'info'
                 },
                 setFlags: { julySummerTrainingParticipating: false }
@@ -258,7 +258,7 @@ export const EVENTS: Event[] = [
     {
         id: 'september_online_qualifier',
         title: '9月网络预选赛',
-        description: '为区域赛做准备的网络预选赛，是否参加？个人赛，成绩影响区域赛入场资格。',
+        description: '区域赛前的网络预选来了。个人赛，成绩会影响后面的入场资格。',
         mandatory: true,
         conditions: createMonthlyCondition(9, 2, ['joinedClub']),
         choices: [
@@ -280,10 +280,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '这场不打',
                 effects: {
                     sanDelta: 5,
-                    log: '😌 选择休息，跳过了网络预选赛。',
+                    log: '😌 这场先不打，留点精力。',
                     logType: 'info'
                 },
                 setFlags: { septemberQualifierParticipating: false }
@@ -293,7 +293,7 @@ export const EVENTS: Event[] = [
     {
         id: 'october_regional',
         title: '10月区域赛站点',
-        description: '区域赛季开始了！本月有一个赛站，是否组队参赛？',
+        description: '这个月刷到一个区域赛站。要不要组队去打？',
         mandatory: false,
         chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
         conditions: createMonthlyCondition(10, 2, ['joinedClub']),
@@ -317,10 +317,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '放弃',
+                label: '这站不去',
                 effects: {
                     sanDelta: 0,
-                    log: '😔 放弃了10月区域赛站点。',
+                    log: '😔 这个站没去。',
                     logType: 'info'
                 },
                 setFlags: { octoberRegionalParticipating: false }
@@ -330,7 +330,7 @@ export const EVENTS: Event[] = [
     {
         id: 'november_regional',
         title: '11月区域赛站点',
-        description: '又有区域赛赛站了！是否继续组队参赛？',
+        description: '又刷到一个区域赛站。继续组队往前打，还是这站先算了？',
         mandatory: false,
         chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
         conditions: createMonthlyCondition(11, 2, ['joinedClub']),
@@ -354,10 +354,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '放弃',
+                label: '这站不去',
                 effects: {
                     sanDelta: 0,
-                    log: '😔 放弃了11月区域赛站点。',
+                    log: '😔 这个站先放了。',
                     logType: 'info'
                 },
                 setFlags: { novemberRegionalParticipating: false }
@@ -367,7 +367,7 @@ export const EVENTS: Event[] = [
     {
         id: 'december_regional',
         title: '12月区域赛站点',
-        description: '区域赛季的最后机会！是否组队参赛？',
+        description: '区域赛季差不多到头了。这一站要不要上？',
         mandatory: false,
         chanceToAppear: EVENT_CHANCES.REGIONAL_STATION,
         conditions: createMonthlyCondition(12, 2, ['joinedClub']),
@@ -391,10 +391,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '放弃',
+                label: '这站不去',
                 effects: {
                     sanDelta: 0,
-                    log: '😔 放弃了12月区域赛站点。',
+                    log: '😔 最后一站也没去。',
                     logType: 'info'
                 },
                 setFlags: { decemberRegionalParticipating: false }
@@ -404,7 +404,7 @@ export const EVENTS: Event[] = [
     {
         id: 'january_finals_week',
         title: '1月期末周',
-        description: '寒假前的期末考试，即将进行期末考试...',
+        description: '寒假前还得先过期末。看看这学期最后结算成什么样。',
         mandatory: true,
         conditions: (state: GameState): boolean => {
             const { month } = getSchoolMonth(state.month);
@@ -413,7 +413,7 @@ export const EVENTS: Event[] = [
         choices: [
             {
                 id: 'review',
-                label: '确认',
+                label: '看看成绩',
                 effects: {},
                 setFlags: { januaryFinalsReviewed: true }
             }
@@ -422,7 +422,7 @@ export const EVENTS: Event[] = [
     {
         id: 'freshman_contest',
         title: '新生程序设计大赛',
-        description: '学校举办新生程序设计大赛，这是展示自己的好机会！个人赛，难度相对较低。',
+        description: '校里要办新生赛了。个人赛，难度不算高，正好看看自己现在大概什么水平。',
         mandatory: false,
         chanceToAppear: EVENT_CHANCES.FRESHMAN_CONTEST,
         conditions: (state: GameState): boolean => {
@@ -448,10 +448,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '先不打',
                 effects: {
                     sanDelta: 3,
-                    log: '😌 选择跳过新生程序设计大赛，休息一下。',
+                    log: '😌 新生赛这次先不去。',
                     logType: 'info'
                 },
                 setFlags: { freshmanContestParticipated: false }
@@ -461,7 +461,7 @@ export const EVENTS: Event[] = [
     {
         id: 'school_contest',
         title: '校内程序设计大赛',
-        description: '学校举办校内程序设计比赛，需要组队参赛。',
+        description: '校赛来了，需要先把队伍定下来。',
         mandatory: false,
         chanceToAppear: EVENT_CHANCES.SCHOOL_CONTEST,
         conditions: createMonthlyCondition([10, 11, 12], 2, ['joinedClub']),
@@ -485,10 +485,10 @@ export const EVENTS: Event[] = [
             },
             {
                 id: 'skip',
-                label: '跳过',
+                label: '这场不去',
                 effects: {
                     sanDelta: 2,
-                    log: '😌 选择跳过校内程序设计大赛，休息一下。',
+                    log: '😌 校赛这次先不打。',
                     logType: 'info'
                 },
                 setFlags: { schoolContestParticipating: false }

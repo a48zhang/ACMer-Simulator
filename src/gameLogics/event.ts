@@ -304,7 +304,7 @@ function processEventChoice(
 
   // 普通事件处理
   logs.push({
-    message: `🗳️ 事件处理：${ev.title} → ${choice.label}`,
+    message: `📌 ${ev.title}：${choice.label}`,
     type: 'info'
   });
   if (effects.log) {
@@ -376,7 +376,7 @@ export function handleTeammateConfirm(
   const logs: LogEntry[] = [];
 
   logs.push({
-    message: `👥 组队成功！队友：${selectedTeammateIds.map(id => {
+    message: `👥 队伍定了：${selectedTeammateIds.map(id => {
       const tm = gameState.teammates.find((t: Teammate) => t.id === id);
       return tm ? tm.name : id;
     }).join('、')}`,

@@ -4,7 +4,7 @@ import { Button } from '../common/Button';
 import type { Attributes, Buffs } from '../../types';
 
 const PlayerPanelWrapper = styled.aside`
-  width: 280px;
+  width: 264px;
   background: linear-gradient(180deg, ${props => props.theme.colors.surface} 0%, #f8fafc 100%);
   border-right: 1px solid ${props => props.theme.colors.border};
   overflow-y: auto;
@@ -32,7 +32,7 @@ const PlayerPanelWrapper = styled.aside`
 
   @media (max-width: 768px) {
     width: 100%;
-    max-width: 240px;
+    max-width: 220px;
   }
 
   @media (max-width: 480px) {
@@ -45,10 +45,10 @@ const PlayerPanelWrapper = styled.aside`
 `;
 
 const PanelContent = styled.div`
-  padding: 1rem;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.95rem;
   flex: 1;
 `;
 
@@ -59,7 +59,7 @@ const PanelTitle = styled.h3`
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -83,7 +83,7 @@ const PanelTitleLeft = styled.div`
 `;
 
 const ResetButton = styled(Button)`
-  padding: 0.25rem 0.5rem;
+  padding: 0.22rem 0.45rem;
   font-size: 0.7rem;
   font-weight: 600;
 `;
@@ -91,14 +91,14 @@ const ResetButton = styled(Button)`
 const StatusCards = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.625rem;
+  gap: 0.5rem;
 `;
 
 const StatusCard = styled.div<{ $accentColor?: string }>`
   background: ${props => props.theme.colors.surface};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.lg};
-  padding: 0.75rem;
+  padding: 0.65rem;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
@@ -127,12 +127,12 @@ const StatusCard = styled.div<{ $accentColor?: string }>`
 `;
 
 const StatusIcon = styled.div`
-  font-size: 1.25rem;
-  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.18rem;
 `;
 
 const StatusLabel = styled.div`
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 500;
   color: ${props => props.theme.colors.textSecondary};
   margin-bottom: 0.125rem;
@@ -142,7 +142,7 @@ const StatusLabel = styled.div`
 
 const StatusValue = styled.div<{ $color?: string }>`
   font-weight: 800;
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: ${props => props.$color || props.theme.colors.textMain};
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -150,14 +150,14 @@ const StatusValue = styled.div<{ $color?: string }>`
 
 const BuffsDisplay = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
-  margin-top: 0.75rem;
+  margin-top: 0.6rem;
 `;
 
 const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
-  font-size: 0.75rem;
-  padding: 0.375rem 0.625rem;
+  font-size: 0.7rem;
+  padding: 0.28rem 0.55rem;
   border-radius: ${props => props.theme.radius.md};
   font-weight: 600;
   display: inline-flex;
@@ -178,7 +178,7 @@ const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
 `;
 
 const AttrCategory = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   flex-shrink: 0;
 `;
 
@@ -186,11 +186,11 @@ const CategoryHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 `;
 
 const CategoryLabel = styled.div`
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: ${props => props.theme.colors.textSecondary};
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -201,14 +201,14 @@ const CategoryLabel = styled.div`
 const AttrGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.4rem;
 `;
 
 const AttrCard = styled.div`
   background: ${props => props.theme.colors.surface};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.625rem;
+  padding: 0.52rem;
   transition: all 0.2s ease;
 
   &:hover {
@@ -223,12 +223,12 @@ const AttrHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.28rem;
   gap: 0.375rem;
 `;
 
 const AttrLabel = styled.span`
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 600;
   color: ${props => props.theme.colors.textSecondary};
   white-space: nowrap;
@@ -237,7 +237,7 @@ const AttrLabel = styled.span`
 `;
 
 const AttrValueText = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: ${props => props.theme.colors.textMain};
   line-height: 1;
@@ -245,7 +245,7 @@ const AttrValueText = styled.span`
 `;
 
 const AttrProgressBg = styled.div`
-  height: 5px;
+  height: 4px;
   background: ${props => props.theme.colors.border};
   border-radius: 3px;
   overflow: hidden;

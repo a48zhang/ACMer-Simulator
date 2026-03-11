@@ -7,10 +7,9 @@ const EventPanelWrapper = styled.section`
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9)),
     ${props => props.theme.colors.surface};
-  padding: 1rem 1.2rem;
+  padding: 0.82rem 1rem;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
-  margin-bottom: 1rem;
   border: 1px solid ${props => props.theme.colors.border};
 `;
 
@@ -19,7 +18,7 @@ const PanelHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 `;
 
 const PanelTitleGroup = styled.div`
@@ -29,7 +28,7 @@ const PanelTitleGroup = styled.div`
 `;
 
 const PanelTitle = styled.h2`
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin-bottom: 0;
   color: ${props => props.theme.colors.textMain};
   font-weight: 800;
@@ -37,14 +36,14 @@ const PanelTitle = styled.h2`
 
 const PanelSubtitle = styled.p`
   color: ${props => props.theme.colors.textSecondary};
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 `;
 
 const EventBadge = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: ${props => props.theme.colors.primary};
   background: rgba(37, 99, 235, 0.08);
-  padding: 0.3rem 0.65rem;
+  padding: 0.25rem 0.55rem;
   border-radius: ${props => props.theme.radius.full};
   font-weight: 700;
   white-space: nowrap;
@@ -53,18 +52,18 @@ const EventBadge = styled.span`
 const EventList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.65rem;
 `;
 
 const EventCard = styled.div<{ $interactive?: boolean }>`
   background: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.95rem;
+  padding: 0.8rem;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
   border: 1px solid ${props => props.theme.colors.border};
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 0.95rem;
+  gap: 0.75rem;
   align-items: start;
 
   ${props => props.$interactive && `
@@ -85,12 +84,12 @@ const EventCard = styled.div<{ $interactive?: boolean }>`
 `;
 
 const EventCardIcon = styled.div`
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   flex-shrink: 0;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.15));
 `;
@@ -103,36 +102,36 @@ const EventCardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.32rem;
   flex-wrap: wrap;
 `;
 
 const EventCardTitle = styled.h3`
-  font-size: 0.96rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: ${props => props.theme.colors.textMain};
   margin: 0;
 `;
 
 const TagMandatory = styled.span`
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 700;
   color: ${props => props.theme.colors.danger};
   background: rgba(239, 68, 68, 0.1);
-  padding: 0.15rem 0.5rem;
+  padding: 0.12rem 0.42rem;
   border-radius: ${props => props.theme.radius.sm};
 `;
 
 const EventCardDesc = styled.p`
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.8rem;
-  line-height: 1.55;
+  margin-bottom: 0.6rem;
+  line-height: 1.42;
 `;
 
 const EventInlineChoices = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
 `;
 
@@ -140,7 +139,7 @@ const InlineChoiceButton = styled.button<{ $primary?: boolean }>`
   padding: 0.45rem 0.82rem;
   border-radius: 999px;
   font-weight: 600;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   cursor: pointer;
   border: 1px solid ${props => props.$primary ? props.theme.colors.primary : props.theme.colors.border};
   font-family: inherit;
@@ -157,8 +156,8 @@ const InlineChoiceButton = styled.button<{ $primary?: boolean }>`
 `;
 
 const BtnEventAction = styled(Button)`
-  padding: 0.45rem 0.8rem;
-  font-size: 0.78rem;
+  padding: 0.36rem 0.7rem;
+  font-size: 0.72rem;
   align-self: center;
   flex-shrink: 0;
 
@@ -169,13 +168,13 @@ const BtnEventAction = styled(Button)`
 `;
 
 const EventBlockWarning = styled.div`
-  margin-top: 1rem;
-  padding: 0.75rem;
+  margin-top: 0.8rem;
+  padding: 0.62rem;
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: ${props => props.theme.radius.md};
   color: ${props => props.theme.colors.warning};
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
 `;

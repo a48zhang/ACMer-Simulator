@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const Container = styled.div`
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background:
@@ -13,7 +14,7 @@ export const Container = styled.div`
 export const Header = styled.header`
   background: rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid rgba(229, 231, 235, 0.9);
-  padding: 0.9rem 1.5rem;
+  padding: 0.72rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -39,7 +40,7 @@ export const Header = styled.header`
   }
 
   @media (max-width: 768px) {
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.95rem;
 
     h1 {
       font-size: 1rem;
@@ -77,15 +78,22 @@ export const Main = styled.main`
   background: transparent;
 
   &.landing-screen {
-    overflow-y: auto;
-    padding: clamp(1.25rem, 3vw, 2.5rem);
+    overflow: hidden;
+    padding: clamp(0.85rem, 2vw, 1.35rem);
   }
 
   &.trait-selection-screen {
-    overflow-y: auto;
-    padding: clamp(0.9rem, 2.4vw, 1.8rem);
-    justify-content: flex-start;
+    overflow: hidden;
+    padding: clamp(0.6rem, 1.8vw, 1rem);
+    justify-content: stretch;
     align-items: stretch;
+  }
+
+  @media (max-width: 980px) {
+    &.landing-screen,
+    &.trait-selection-screen {
+      overflow-y: auto;
+    }
   }
 `;
 
@@ -93,8 +101,8 @@ export const MainContentLayout = styled.div`
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 1rem;
-  padding: 1.1rem 1.1rem 1.3rem;
+  gap: 0.8rem;
+  padding: 0.8rem 0.8rem 0.9rem;
   min-height: 0;
 
   .main-content-left {
@@ -102,9 +110,10 @@ export const MainContentLayout = styled.div`
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.8rem;
     min-width: 0;
-    padding-right: 0.2rem;
+    min-height: 0;
+    padding-right: 0.15rem;
   }
 
   .main-content-right {
@@ -114,7 +123,7 @@ export const MainContentLayout = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 0.85rem;
+    padding: 0.7rem;
     gap: 0.75rem;
 
     .main-content-left {
@@ -139,9 +148,9 @@ export const MainContentLayout = styled.div`
 export const Footer = styled.footer`
   background-color: rgba(255, 255, 255, 0.88);
   border-top: 1px solid rgba(229, 231, 235, 0.92);
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.9rem;
   color: ${props => props.theme.colors.textSecondary};
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   text-align: center;
   flex-shrink: 0;
   backdrop-filter: blur(10px);

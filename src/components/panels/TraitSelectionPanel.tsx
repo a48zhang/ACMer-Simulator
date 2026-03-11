@@ -17,13 +17,14 @@ const floatIn = keyframes`
 const TraitPanelWrapper = styled.section`
   width: 100%;
   max-width: 1200px;
-  padding: 1rem;
+  margin: 0 auto;
+  padding: clamp(0.2rem, 0.9vw, 0.55rem);
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
   max-height: 100%;
-  height: auto;
-  min-height: min-content;
+  height: 100%;
+  min-height: 0;
 
   &::before {
     content: '';
@@ -45,21 +46,25 @@ const TraitPanelContainer = styled.div`
   max-width: 1100px;
   margin: 0 auto;
   animation: ${floatIn} 0.8s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 100%;
 `;
 
 const StatusBar = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1.25rem 1.5rem;
+  gap: 0.8rem;
+  padding: 0.95rem 1.2rem;
   background: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.xl};
   border: 1px solid ${props => props.theme.colors.border};
   box-shadow: ${props => props.theme.shadows.lg};
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 
   &::before {
     content: '';
@@ -80,8 +85,8 @@ const TitleDecoration = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 0.35rem;
+  gap: 0.65rem;
+  margin-bottom: 0.2rem;
 
   &::before,
   &::after {
@@ -93,7 +98,7 @@ const TitleDecoration = styled.div`
 `;
 
 const TraitPanelTitle = styled.h1`
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
@@ -107,13 +112,13 @@ const TraitPanelTitle = styled.h1`
   }
 
   @media (max-width: 480px) {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 `;
 
 const TraitPanelSubtitle = styled.p`
   color: ${props => props.theme.colors.textSecondary};
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   margin: 0.25rem 0 0 0;
   font-weight: 500;
 `;
@@ -122,19 +127,25 @@ const StatusContent = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
 `;
 
 const TpBox = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
+  gap: 0.2rem;
+  padding: 0.42rem 0.85rem;
   background: ${props => props.theme.colors.background};
   border-radius: ${props => props.theme.radius.lg};
-  min-width: 75px;
+  min-width: 68px;
   position: relative;
   transition: transform 0.2s ease;
 
@@ -144,7 +155,7 @@ const TpBox = styled.div`
 `;
 
 const TpLabel = styled.span`
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   color: ${props => props.theme.colors.textSecondary};
   font-weight: 600;
   text-transform: uppercase;
@@ -152,7 +163,7 @@ const TpLabel = styled.span`
 `;
 
 const TpValue = styled.span<{ $consumed?: boolean; $negative?: boolean; $positive?: boolean }>`
-  font-size: 1.5rem;
+  font-size: 1.28rem;
   font-weight: 800;
   line-height: 1;
   color: ${props => props.theme.colors.textMain};
@@ -171,15 +182,26 @@ const TpValue = styled.span<{ $consumed?: boolean; $negative?: boolean; $positiv
 `;
 
 const TpArrow = styled.span`
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: ${props => props.theme.colors.textSecondary};
 `;
 
 const ActionButtonWrapper = styled.div`
-  margin-left: 0.75rem;
-  padding-left: 1rem;
+  margin-left: 0.5rem;
+  padding-left: 0.8rem;
   border-left: 2px solid ${props => props.theme.colors.border};
+
+  @media (max-width: 640px) {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    margin-top: 0.2rem;
+  }
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -193,40 +215,55 @@ const ActionButtonWrapper = styled.div`
 const ContentWrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
+  gap: 0.8rem;
+  min-height: 0;
+  flex: 1;
+  align-items: stretch;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    flex: none;
   }
 `;
 
 const TraitCategory = styled.div`
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  padding: 0.85rem 0.9rem 0.9rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.radius.xl};
+  box-shadow: ${props => props.theme.shadows.md};
+
+  @media (max-width: 900px) {
+    min-height: auto;
+  }
 `;
 
 const CategoryHeader = styled.div<{ $negative?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+  padding-bottom: 0.35rem;
   border-bottom: 2px solid ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
+  flex-shrink: 0;
 `;
 
 const CategoryIcon = styled.span<{ $negative?: boolean }>`
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
   background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)'};
 `;
 
 const CategoryTitle = styled.h2<{ $negative?: boolean }>`
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
   margin: 0;
@@ -234,7 +271,7 @@ const CategoryTitle = styled.h2<{ $negative?: boolean }>`
 `;
 
 const CategoryHint = styled.span<{ $negative?: boolean }>`
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
@@ -244,15 +281,54 @@ const CategoryHint = styled.span<{ $negative?: boolean }>`
 
 const TraitGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
   flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  justify-content: center;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 1050px) {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding-right: 0;
+    max-width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+  }
 `;
 
 const TraitCard = styled.div<{ $selected?: boolean; $negative?: boolean }>`
   border: 2px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.lg};
-  padding: 0.8rem 0.95rem 2.2rem;
+  padding: 0.68rem 0.82rem 1.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -273,6 +349,10 @@ const TraitCard = styled.div<{ $selected?: boolean; $negative?: boolean }>`
   box-shadow: ${props => props.$selected
     ? (props.$negative ? '0 0 0 2px rgba(245, 158, 11, 0.2)' : '0 0 0 2px rgba(99, 102, 241, 0.2)')
     : 'none'};
+
+  @media (max-width: 640px) {
+    padding: 0.74rem 0.86rem 1.95rem;
+  }
 `;
 
 const TraitCardHeader = styled.div`
@@ -280,20 +360,20 @@ const TraitCardHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 `;
 
 const TraitName = styled.span`
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: ${props => props.theme.colors.textMain};
   line-height: 1.2;
 `;
 
 const TraitCost = styled.span<{ $negative?: boolean }>`
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 0.22rem 0.55rem;
+  padding: 0.18rem 0.48rem;
   border-radius: 999px;
   background: ${props => props.$negative ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.12)'};
   color: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
@@ -302,19 +382,19 @@ const TraitCost = styled.span<{ $negative?: boolean }>`
 `;
 
 const TraitDesc = styled.div`
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: ${props => props.theme.colors.textSecondary};
-  line-height: 1.4;
+  line-height: 1.32;
 `;
 
 const SelectedBadge = styled.div<{ $negative?: boolean }>`
   position: absolute;
-  bottom: 0.55rem;
-  right: 0.55rem;
+  bottom: 0.45rem;
+  right: 0.45rem;
   background: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
   color: white;
-  font-size: 0.65rem;
-  padding: 0.18rem 0.42rem;
+  font-size: 0.6rem;
+  padding: 0.14rem 0.34rem;
   border-radius: 999px;
   font-weight: 700;
   display: flex;

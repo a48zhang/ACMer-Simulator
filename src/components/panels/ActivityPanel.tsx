@@ -4,37 +4,40 @@ import type { Activity } from '../../types';
 
 const ActivityPanelWrapper = styled.section`
   background-color: ${props => props.theme.colors.surface};
-  padding: 0.875rem 1.25rem;
+  padding: 0.82rem 1rem;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
-  margin-bottom: 1rem;
   border: 1px solid ${props => props.theme.colors.border};
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 `;
 
 const ActivityTitle = styled.h2`
-  font-size: 1rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  margin: 0;
   color: ${props => props.theme.colors.textMain};
   font-weight: 700;
 `;
 
 const ActivityList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 0.625rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  align-content: start;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
   }
 
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
     gap: 0.375rem;
   }
 `;
@@ -42,13 +45,13 @@ const ActivityList = styled.div`
 const ActivityCard = styled.div`
   background-color: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.75rem;
+  padding: 0.62rem;
   box-shadow: ${props => props.theme.shadows.sm};
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
   border: 1px solid ${props => props.theme.colors.border};
   display: flex;
   flex-direction: column;
-  min-height: 160px;
+  height: 148px;
 
   &:hover {
     transform: translateY(-2px);
@@ -57,13 +60,13 @@ const ActivityCard = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 0.625rem;
-    min-height: 140px;
+    padding: 0.58rem;
+    height: 140px;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 560px) {
     padding: 0.5rem;
-    min-height: 120px;
+    height: 132px;
   }
 `;
 
@@ -71,37 +74,37 @@ const ActivityHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 `;
 
 const ActivityName = styled.h3`
-  font-size: 0.9375rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: ${props => props.theme.colors.textMain};
   margin: 0;
 `;
 
 const ActivityCost = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: ${props => props.theme.colors.primary};
   background: rgba(99, 102, 241, 0.1);
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.45rem;
   border-radius: ${props => props.theme.radius.sm};
 `;
 
 const ActivityDescription = styled.p`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.75rem;
-  line-height: 1.4;
+  margin-bottom: 0.65rem;
+  line-height: 1.32;
 `;
 
 const ActivityButton = styled.button`
-  padding: 0.375rem 0.75rem;
+  padding: 0.34rem 0.68rem;
   border-radius: ${props => props.theme.radius.md};
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   cursor: pointer;
   border: none;
   font-family: inherit;

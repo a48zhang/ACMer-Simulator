@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { applyEventChoice, handleTeammateConfirm } from '../src/gameLogics/event';
-import { EVENTS } from '../src/data/events';
+import { EVENTS, scheduleMonthlyEvents } from '../src/data/events';
 import { createInitialGameState } from '../src/gameState';
 
 describe('事件系统', () => {
@@ -27,7 +27,7 @@ describe('事件系统', () => {
       const joinChoice = event.choices.find(c => c.id === 'join');
       const result = applyEventChoice(gameState, event.id, joinChoice.id);
       expect(result.newState.worldFlags.joinedClub).toBe(true);
-      const detailLog = result.logs.find(l => l.message && l.message.includes('加入了ACM算法社团'));
+      const detailLog = result.logs.find(l => l.message && l.message.includes('进队了'));
       expect(detailLog).toBeDefined();
     }
   });
@@ -60,6 +60,49 @@ describe('事件系统', () => {
     gameState.pendingEvents = [];
     const result = applyEventChoice(gameState, 'any', 'any');
     expect(result.newState).toBe(gameState);
+  });
+});
+
+describe('社团事件链', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const gatedEventCases = [
+    { month: 7, eventId: 'march_invitational_signup' },
+    { month: 8, eventId: 'april_provincial' },
+    { month: 9, eventId: 'may_invitational' },
+    { month: 14, eventId: 'october_regional' },
+    { month: 15, eventId: 'november_regional' },
+    { month: 16, eventId: 'december_regional' }
+  ];
+
+  gatedEventCases.forEach(({ month, eventId }) => {
+    it(`未加入社团时不应刷出 ${eventId}`, () => {
+      const state = {
+        ...createInitialGameState(),
+        month,
+        worldFlags: {}
+      };
+
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      const events = scheduleMonthlyEvents(state, month);
+
+      expect(events.some(event => event.id === eventId)).toBe(false);
+    });
+
+    it(`加入社团后应可刷出 ${eventId}`, () => {
+      const state = {
+        ...createInitialGameState(),
+        month,
+        worldFlags: { joinedClub: true }
+      };
+
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      const events = scheduleMonthlyEvents(state, month);
+
+      expect(events.some(event => event.id === eventId)).toBe(true);
+    });
   });
 });
 
