@@ -252,7 +252,7 @@ const TraitGrid = styled.div`
 const TraitCard = styled.div<{ $selected?: boolean; $negative?: boolean }>`
   border: 2px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.lg};
-  padding: 0.75rem 0.9rem;
+  padding: 0.8rem 0.95rem 2.2rem;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -309,13 +309,13 @@ const TraitDesc = styled.div`
 
 const SelectedBadge = styled.div<{ $negative?: boolean }>`
   position: absolute;
-  top: 0.55rem;
+  bottom: 0.55rem;
   right: 0.55rem;
   background: ${props => props.$negative ? props.theme.colors.warning : props.theme.colors.primary};
   color: white;
   font-size: 0.65rem;
-  padding: 0.12rem 0.35rem;
-  border-radius: 5px;
+  padding: 0.18rem 0.42rem;
+  border-radius: 999px;
   font-weight: 700;
   display: flex;
   align-items: center;

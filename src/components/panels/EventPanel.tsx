@@ -4,8 +4,10 @@ import { Button } from '../common/Button';
 import type { Event, Choice } from '../../types';
 
 const EventPanelWrapper = styled.section`
-  background-color: ${props => props.theme.colors.surface};
-  padding: 0.875rem 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9)),
+    ${props => props.theme.colors.surface};
+  padding: 1rem 1.2rem;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   margin-bottom: 1rem;
@@ -16,42 +18,56 @@ const PanelHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+`;
+
+const PanelTitleGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
 `;
 
 const PanelTitle = styled.h2`
   font-size: 1rem;
   margin-bottom: 0;
   color: ${props => props.theme.colors.textMain};
-  font-weight: 700;
+  font-weight: 800;
+`;
+
+const PanelSubtitle = styled.p`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.8rem;
 `;
 
 const EventBadge = styled.span`
   font-size: 0.75rem;
-  color: ${props => props.theme.colors.textSecondary};
-  background: ${props => props.theme.colors.background};
-  padding: 0.25rem 0.5rem;
+  color: ${props => props.theme.colors.primary};
+  background: rgba(37, 99, 235, 0.08);
+  padding: 0.3rem 0.65rem;
   border-radius: ${props => props.theme.radius.full};
+  font-weight: 700;
+  white-space: nowrap;
 `;
 
 const EventList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.8rem;
 `;
 
-const EventCard = styled.div<{ $isSimple?: boolean }>`
-  background-color: ${props => props.theme.colors.surface};
+const EventCard = styled.div<{ $interactive?: boolean }>`
+  background: ${props => props.theme.colors.surface};
   border-radius: ${props => props.theme.radius.md};
-  padding: 0.875rem;
-  box-shadow: ${props => props.theme.shadows.sm};
+  padding: 0.95rem;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
   border: 1px solid ${props => props.theme.colors.border};
-  display: flex;
-  gap: 0.875rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.95rem;
+  align-items: start;
 
-  ${props => !props.$isSimple && `
+  ${props => props.$interactive && `
     cursor: pointer;
 
     &:hover {
@@ -62,23 +78,24 @@ const EventCard = styled.div<{ $isSimple?: boolean }>`
   `}
 
   @media (max-width: 768px) {
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.625rem;
-    gap: 0.625rem;
+    grid-template-columns: auto 1fr;
+    padding: 0.85rem;
+    gap: 0.8rem;
   }
 `;
 
 const EventCardIcon = styled.div`
-  font-size: 1.5rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
   flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.15));
 `;
 
 const EventCardContent = styled.div`
-  flex: 1;
   min-width: 0;
 `;
 
@@ -86,19 +103,20 @@ const EventCardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
+  flex-wrap: wrap;
 `;
 
 const EventCardTitle = styled.h3`
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 0.96rem;
+  font-weight: 700;
   color: ${props => props.theme.colors.textMain};
   margin: 0;
 `;
 
 const TagMandatory = styled.span`
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   color: ${props => props.theme.colors.danger};
   background: rgba(239, 68, 68, 0.1);
   padding: 0.15rem 0.5rem;
@@ -106,10 +124,10 @@ const TagMandatory = styled.span`
 `;
 
 const EventCardDesc = styled.p`
-  font-size: 0.8125rem;
+  font-size: 0.84rem;
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.75rem;
-  line-height: 1.4;
+  margin-bottom: 0.8rem;
+  line-height: 1.55;
 `;
 
 const EventInlineChoices = styled.div`
@@ -118,30 +136,36 @@ const EventInlineChoices = styled.div`
   flex-wrap: wrap;
 `;
 
-const BtnInlineChoice = styled.button`
-  padding: 0.375rem 0.75rem;
-  border-radius: ${props => props.theme.radius.md};
-  font-weight: 500;
-  font-size: 0.75rem;
+const InlineChoiceButton = styled.button<{ $primary?: boolean }>`
+  padding: 0.45rem 0.82rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.76rem;
   cursor: pointer;
-  border: 1px solid ${props => props.theme.colors.border};
+  border: 1px solid ${props => props.$primary ? props.theme.colors.primary : props.theme.colors.border};
   font-family: inherit;
   transition: all 0.15s;
-  background: ${props => props.theme.colors.surface};
-  color: ${props => props.theme.colors.textMain};
+  background: ${props => props.$primary ? props.theme.colors.primary : props.theme.colors.surface};
+  color: ${props => props.$primary ? '#ffffff' : props.theme.colors.textMain};
 
   &:hover {
-    background: ${props => props.theme.colors.primary};
-    color: white;
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.sm};
     border-color: ${props => props.theme.colors.primary};
+    background: ${props => props.$primary ? props.theme.colors.primaryHover : 'rgba(37, 99, 235, 0.08)'};
   }
 `;
 
 const BtnEventAction = styled(Button)`
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
   align-self: center;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    grid-column: 2;
+    justify-self: start;
+  }
 `;
 
 const EventBlockWarning = styled.div`
@@ -152,30 +176,31 @@ const EventBlockWarning = styled.div`
   border-radius: ${props => props.theme.radius.md};
   color: ${props => props.theme.colors.warning};
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
 `;
 
-interface InlineChoiceButtonProps {
+interface ChoiceButtonProps {
   choice: Choice;
   eventId: string;
+  index: number;
   onDirectChoice: (eventId: string, choiceId: string) => void;
 }
 
-const InlineChoiceButton = memo(({ choice, eventId, onDirectChoice }: InlineChoiceButtonProps) => {
+const ChoiceButton = memo(({ choice, eventId, index, onDirectChoice }: ChoiceButtonProps) => {
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onDirectChoice(eventId, choice.id);
   }, [choice.id, eventId, onDirectChoice]);
 
   return (
-    <BtnInlineChoice onClick={handleClick}>
+    <InlineChoiceButton $primary={index === 0} onClick={handleClick}>
       {choice.label}
-    </BtnInlineChoice>
+    </InlineChoiceButton>
   );
 });
 
-InlineChoiceButton.displayName = 'InlineChoiceButton';
+ChoiceButton.displayName = 'ChoiceButton';
 
 interface EventCardItemProps {
   event: Event;
@@ -184,16 +209,16 @@ interface EventCardItemProps {
 }
 
 const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }: EventCardItemProps) => {
-  const isSimple = useMemo(() => {
-    return event.choices?.length === 2 &&
-      event.choices.every((c: Choice) => !c.requiresTeamSelection && !c.specialAction);
+  const useInlineChoices = useMemo(() => {
+    const count = event.choices?.length || 0;
+    return count > 0 && count <= 3;
   }, [event.choices]);
 
   const handleCardClick = useCallback(() => {
-    if (!isSimple) {
+    if (!useInlineChoices) {
       onOpenEvent(event.id);
     }
-  }, [event.id, isSimple, onOpenEvent]);
+  }, [event.id, onOpenEvent, useInlineChoices]);
 
   const handleActionClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -201,37 +226,31 @@ const EventCardItem = memo(({ event, onOpenEvent, onDirectChoice }: EventCardIte
   }, [event.id, onOpenEvent]);
 
   return (
-    <EventCard
-      $isSimple={isSimple}
-      onClick={handleCardClick}
-    >
-      <EventCardIcon>📩</EventCardIcon>
+    <EventCard $interactive={!useInlineChoices} onClick={handleCardClick}>
+      <EventCardIcon>📌</EventCardIcon>
       <EventCardContent>
         <EventCardHeader>
           <EventCardTitle>{event.title}</EventCardTitle>
           {event.mandatory && <TagMandatory>必做</TagMandatory>}
         </EventCardHeader>
         <EventCardDesc>{event.description}</EventCardDesc>
-        {isSimple && (
+        {useInlineChoices && (
           <EventInlineChoices>
-            {event.choices.map((choice: Choice) => (
-              <InlineChoiceButton
+            {event.choices.map((choice, index) => (
+              <ChoiceButton
                 key={choice.id}
                 choice={choice}
                 eventId={event.id}
+                index={index}
                 onDirectChoice={onDirectChoice}
               />
             ))}
           </EventInlineChoices>
         )}
       </EventCardContent>
-      {!isSimple && (
-        <BtnEventAction
-          variant="secondary"
-          size="sm"
-          onClick={handleActionClick}
-        >
-          处理 →
+      {!useInlineChoices && (
+        <BtnEventAction variant="secondary" size="sm" onClick={handleActionClick}>
+          查看选项
         </BtnEventAction>
       )}
     </EventCard>
@@ -265,8 +284,11 @@ function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }: 
   return (
     <EventPanelWrapper>
       <PanelHeader>
-        <PanelTitle>📅 当月事件</PanelTitle>
-        <EventBadge>{count} 待处理</EventBadge>
+        <PanelTitleGroup>
+          <PanelTitle>当月事件</PanelTitle>
+          <PanelSubtitle>能直接决策的事件会在这里就地处理，不再额外弹窗。</PanelSubtitle>
+        </PanelTitleGroup>
+        <EventBadge>{count} 个待处理</EventBadge>
       </PanelHeader>
 
       <EventList>
@@ -282,7 +304,7 @@ function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }: 
 
       {!canAdvance && (
         <EventBlockWarning>
-          ⚠️ 请先处理完所有事件才能进入下一月
+          请先处理完本月事件，再进入下个月。
         </EventBlockWarning>
       )}
     </EventPanelWrapper>

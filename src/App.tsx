@@ -194,7 +194,8 @@ function App() {
   const wrappedHandleTeammateCancel = useCallback(() => {
     setShowTeammateDialog(false)
     setPendingEventChoice(null)
-    setShowEventDialog(true)
+    setShowEventDialog(false)
+    setCurrentEvent(null)
   }, [])
 
   const wrappedResetGame = useCallback(() => {
@@ -264,6 +265,12 @@ function App() {
     gpa: gameState.gpa
   }), [gameState.playerContests, gameState.playerProblems, gameState.rating, gameState.gpa])
 
+  const mainClassName = useMemo(() => {
+    if (gamePhase === 'intro') return 'landing-screen'
+    if (gamePhase === 'traitSelection') return 'trait-selection-screen'
+    return ''
+  }, [gamePhase])
+
   return (
     <Container>
       <Header>
@@ -286,7 +293,7 @@ function App() {
           />
         )}
 
-        <Main className={gamePhase !== 'playing' ? 'full-width' : ''}>
+        <Main className={mainClassName}>
           {gamePhase === 'intro' && (
             <IntroPanel onStart={startGame} />
           )}
