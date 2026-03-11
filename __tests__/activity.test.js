@@ -82,6 +82,7 @@ describe('活动系统', () => {
   it('practice_contest应打开练习赛对话框', () => {
     const result = executeActivity(gameState, 'practice_contest');
     expect(result.uiState.showPracticeContestDialog).toBe(true);
+    expect(result.newState.remainingAP).toBe(gameState.remainingAP);
   });
 
   it('兼职打工应增加余额', () => {

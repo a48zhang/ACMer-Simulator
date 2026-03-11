@@ -225,7 +225,7 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                 <ContestProblemInfo>
                   {revealedInfo.tags && revealedInfo.tags.length > 0 && (
                     <ContestProblemTags>
-                      ��️ {revealedInfo.tags.join(' | ')}
+                      标签: {revealedInfo.tags.join(' | ')}
                     </ContestProblemTags>
                   )}
                 </ContestProblemInfo>

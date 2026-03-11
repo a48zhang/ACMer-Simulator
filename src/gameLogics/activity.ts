@@ -1,6 +1,12 @@
 import { ACTIVITIES } from '../data/activities';
 import { createContestSession } from '../data/contests';
-import { applyAttributeChanges, getFieldValue, clampValue, clampGPA } from '../utils';
+import {
+  applyAttributeChanges,
+  getFieldValue,
+  clampValue,
+  clampGPA,
+  getCurrentMonthlyAPCap
+} from '../utils';
 import { INITIAL_SAN, END_MONTH } from '../constants';
 import type { GameState, LogicResult, Activity, LogEntry } from '../types';
 
@@ -56,7 +62,8 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
       ...gameState,
       remainingAP: Math.max(0, gameState.remainingAP - activity.cost),
       activeContest: session,
-      contestTimeRemaining: session.timeRemaining
+      contestTimeRemaining: session.timeRemaining,
+      selectedTeam: null
     };
 
     return { newState, logs, uiState: {} };
@@ -66,7 +73,7 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
   if (effects.specialAction === 'OPEN_PRACTICE_CONTEST_DIALOG') {
     return {
       newState: gameState,
-      logs: [],
+      logs: effects.log ? [{ message: effects.log, type: effects.logType || 'info' }] : [],
       uiState: { showPracticeContestDialog: true }
     };
   }
@@ -79,9 +86,10 @@ export function executeActivity(gameState: GameState, activityId: string): Logic
   // 计算新状态
   const updatedAttributes = applyAttributeChanges(gameState.attributes, effects.attributeChanges);
   const baseRemainingAP = Math.max(0, gameState.remainingAP - activity.cost);
-  let nextRemainingAP = Math.min(gameState.monthlyAP, baseRemainingAP);
+  const currentAPCap = getCurrentMonthlyAPCap(gameState);
+  let nextRemainingAP = Math.min(currentAPCap, baseRemainingAP);
   if (effects.apBonus !== undefined) {
-    nextRemainingAP = Math.max(0, Math.min(gameState.monthlyAP, nextRemainingAP + effects.apBonus));
+    nextRemainingAP = Math.max(0, Math.min(currentAPCap, nextRemainingAP + effects.apBonus));
   }
 
   // Build all newState updates at once

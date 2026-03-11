@@ -1,5 +1,20 @@
 import { MIN_GPA, MAX_GPA } from './constants';
-import type { Attributes } from './types';
+import type { Attributes, GameState } from './types';
+
+const ATTRIBUTE_KEYS: (keyof Attributes)[] = [
+  'coding',
+  'algorithm',
+  'speed',
+  'stress',
+  'math',
+  'dp',
+  'graph',
+  'dataStructure',
+  'string',
+  'search',
+  'greedy',
+  'geometry'
+];
 
 /**
  * 将值限制在指定范围内
@@ -46,6 +61,19 @@ export const createBaseAttributes = (): Attributes => ({
 });
 
 /**
+ * 获取当前月份可用的行动点上限
+ * @param gameState - 当前游戏状态
+ * @returns 当前月份 AP 上限
+ */
+export const getCurrentMonthlyAPCap = (
+  gameState: Pick<GameState, 'monthlyAP' | 'san' | 'worldFlags'>
+): number => {
+  const storedCap = gameState.worldFlags?.monthlyAPCap;
+  if (typeof storedCap === 'number') return storedCap;
+  return gameState.san <= 0 ? Math.floor(gameState.monthlyAP / 2) : gameState.monthlyAP;
+};
+
+/**
  * 应用属性变化
  * @param currentAttributes - 当前属性
  * @param changes - 属性变化对象
@@ -62,6 +90,29 @@ export const applyAttributeChanges = (
     updated[attr] = Math.max(0, updated[attr] + delta);
   });
   return updated;
+};
+
+/**
+ * 计算比赛中生效的属性（玩家属性 + 当前选中队友属性）
+ * @param gameState - 当前游戏状态
+ * @returns 比赛生效属性
+ */
+export const getEffectiveContestAttributes = (
+  gameState: Pick<GameState, 'attributes' | 'selectedTeam' | 'teammates'>
+): Attributes => {
+  const merged = { ...gameState.attributes };
+  if (!gameState.selectedTeam?.length) return merged;
+
+  gameState.selectedTeam.forEach((teammateId) => {
+    const teammate = gameState.teammates.find(({ id }) => id === teammateId);
+    if (!teammate) return;
+
+    ATTRIBUTE_KEYS.forEach((key) => {
+      merged[key] += teammate.attributes[key] ?? 0;
+    });
+  });
+
+  return merged;
 };
 
 /**

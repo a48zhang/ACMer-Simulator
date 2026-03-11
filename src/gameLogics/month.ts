@@ -195,11 +195,17 @@ interface NewMonthUpdates {
  * @returns 新游戏状态
  */
 function buildNewMonthState(gameState: GameState, month: number, updates: NewMonthUpdates): GameState {
+  const nextWorldFlags = {
+    ...(gameState.worldFlags || {}),
+    attendedClassThisMonth: false,
+    monthlyAPCap: updates.remainingAP
+  };
+
   return {
     ...gameState,
     month,
     ...updates,
     resolvedEvents: [],
-    worldFlags: { ...(gameState.worldFlags || {}), attendedClassThisMonth: false }
+    worldFlags: nextWorldFlags
   };
 }

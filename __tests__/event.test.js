@@ -27,6 +27,8 @@ describe('事件系统', () => {
       const joinChoice = event.choices.find(c => c.id === 'join');
       const result = applyEventChoice(gameState, event.id, joinChoice.id);
       expect(result.newState.worldFlags.joinedClub).toBe(true);
+      const detailLog = result.logs.find(l => l.message && l.message.includes('加入了ACM算法社团'));
+      expect(detailLog).toBeDefined();
     }
   });
 
@@ -175,6 +177,15 @@ describe('事件效果应用', () => {
     gameState.pendingEvents = [syntheticEvent];
     const result = applyEventChoice(gameState, 'test_balance', 'go');
     expect(result.newState.balance).toBe(9999);
+  });
+
+  it('SAN耗尽月份的AP奖励不应突破减半上限', () => {
+    gameState.remainingAP = 14;
+    gameState.worldFlags = { monthlyAPCap: 15 };
+    gameState.pendingEvents = EVENTS.filter(e => e.id === 'club_intro');
+
+    const result = applyEventChoice(gameState, 'club_intro', 'join');
+    expect(result.newState.remainingAP).toBe(15);
   });
 });
 

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { clampValue, clampGPA, applyAttributeChanges } from '../src/utils';
+import {
+  clampValue,
+  clampGPA,
+  applyAttributeChanges,
+  getCurrentMonthlyAPCap,
+  getEffectiveContestAttributes
+} from '../src/utils';
 
 describe('工具函数', () => {
   it('clampValue应正确限制范围', () => {
@@ -64,5 +70,43 @@ describe('工具函数', () => {
     const current = { math: 5 };
     const result = applyAttributeChanges(current, null);
     expect(result).toBe(current);
+  });
+
+  it('getCurrentMonthlyAPCap应优先使用本月缓存上限', () => {
+    const result = getCurrentMonthlyAPCap({
+      monthlyAP: 30,
+      san: 0,
+      worldFlags: { monthlyAPCap: 15 }
+    });
+    expect(result).toBe(15);
+  });
+
+  it('getEffectiveContestAttributes应叠加已选队友属性', () => {
+    const result = getEffectiveContestAttributes({
+      attributes: {
+        coding: 2,
+        algorithm: 3,
+        speed: 1,
+        stress: 1,
+        math: 0,
+        dp: 0,
+        graph: 0,
+        dataStructure: 0,
+        string: 0,
+        search: 0,
+        greedy: 0,
+        geometry: 0
+      },
+      selectedTeam: ['tm1', 'tm2'],
+      teammates: [
+        { id: 'tm1', name: 'A', attributes: { coding: 1, graph: 2 } },
+        { id: 'tm2', name: 'B', attributes: { algorithm: 2, speed: 3 } }
+      ]
+    });
+
+    expect(result.coding).toBe(3);
+    expect(result.algorithm).toBe(5);
+    expect(result.speed).toBe(4);
+    expect(result.graph).toBe(2);
   });
 });

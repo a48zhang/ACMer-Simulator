@@ -1,5 +1,11 @@
 import { INITIAL_SAN } from '../constants';
-import { clampValue, clampGPA, applyAttributeChanges, getFieldValue } from '../utils';
+import {
+  clampValue,
+  clampGPA,
+  applyAttributeChanges,
+  getFieldValue,
+  getCurrentMonthlyAPCap
+} from '../utils';
 import { createContestSession } from '../data/contests';
 import { ACADEMIC_CONFIG } from '../config/gameBalance';
 import type { GameState, LogicResult, LogEntry, Effects, Buffs, Event, Choice, Teammate } from '../types';
@@ -153,6 +159,9 @@ function processStartContest(
   }
 
   const session = createContestSession(contestConfig);
+  if (effects.log) {
+    logs.push({ message: effects.log, type: effects.logType || 'info' });
+  }
   logs.push({
     message: `🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`,
     type: 'info'
@@ -172,13 +181,10 @@ function processStartContest(
     worldFlags: { ...(gameState.worldFlags || {}), ...setFlags },
     activeContest: session,
     contestTimeRemaining: session.timeRemaining,
+    selectedTeam: selectedTeammateIds ?? null,
     pendingEvents: remaining,
     resolvedEvents: [...(gameState.resolvedEvents || []), resolvedItem]
   };
-
-  if (selectedTeammateIds) {
-    newState.selectedTeam = selectedTeammateIds;
-  }
 
   return {
     newState,
@@ -199,10 +205,11 @@ function buildNewStateForEvent(
   selectedTeammateIds: string[] | null
 ): GameState {
   const updatedAttributes = applyAttributeChanges(gameState.attributes, effects.attributeChanges);
+  const currentAPCap = getCurrentMonthlyAPCap(gameState);
 
   const newState: GameState = {
     ...gameState,
-    remainingAP: Math.min(gameState.monthlyAP, Math.max(0, gameState.remainingAP + (effects.apBonus || 0))),
+    remainingAP: Math.min(currentAPCap, Math.max(0, gameState.remainingAP + (effects.apBonus || 0))),
     playerContests: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerContests', 'playerContestsDelta') as number,
     playerProblems: getFieldValue(effects as unknown as Record<string, unknown>, gameState, 'playerProblems', 'playerProblemsDelta') as number,
     attributes: updatedAttributes
@@ -300,6 +307,9 @@ function processEventChoice(
     message: `🗳️ 事件处理：${ev.title} → ${choice.label}`,
     type: 'info'
   });
+  if (effects.log) {
+    logs.push({ message: effects.log, type: effects.logType || 'info' });
+  }
 
   const newState = buildNewStateForEvent(gameState, ev, choice, effects, setFlags, selectedTeammateIds);
 
@@ -331,6 +341,7 @@ export function applyEventChoice(gameState: GameState, eventId: string, choiceId
       logs: [],
       uiState: {
         showEventDialog: false,
+        currentEvent: ev,
         showTeammateDialog: true,
         pendingEventChoice: { eventId, choiceId }
       }

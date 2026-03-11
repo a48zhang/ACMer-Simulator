@@ -89,6 +89,10 @@ function App() {
   const applyLogicResult = useCallback((result: LogicResult | null | undefined) => {
     if (!result) return
 
+    if (result.clearLogs) {
+      clearLogs()
+    }
+
     if (result.newState) {
       setGameState(result.newState)
     }
@@ -116,10 +120,6 @@ function App() {
 
     if (result.notification) {
       setNotification(result.notification as string | { message: string; type: string })
-    }
-
-    if (result.clearLogs) {
-      clearLogs()
     }
   }, [addLog, clearLogs])
 

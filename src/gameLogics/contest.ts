@@ -1,4 +1,5 @@
 import { calculateContestOutcome, readProblem, thinkProblem, codeProblem, debugProblem, evaluateAttempt } from '../data/contests';
+import { getEffectiveContestAttributes } from '../utils';
 import type { GameState, LogicResult, Problem, ContestSession } from '../types';
 
 /**
@@ -41,11 +42,12 @@ export function readContestProblem(gameState: GameState, problemId: string): Log
   const session = gameState.activeContest;
   if (!session) return { newState: gameState, logs: [], uiState: {} };
   if (gameState.contestTimeRemaining <= 0) return { newState: gameState, logs: [], uiState: {} };
+  const effectiveAttributes = getEffectiveContestAttributes(gameState);
 
   const problem = session.problems.find((p: Problem) => p.id === problemId);
   if (!problem || problem.status !== 'pending') return { newState: gameState, logs: [], uiState: {} };
 
-  const readResult = readProblem(problem, gameState.attributes);
+  const readResult = readProblem(problem, effectiveAttributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - readResult.readTime);
 
   const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
@@ -115,6 +117,7 @@ export function thinkContestProblem(gameState: GameState, problemId: string): Lo
   const session = gameState.activeContest;
   if (!session) return { newState: gameState, logs: [], uiState: {} };
   if (gameState.contestTimeRemaining <= 0) return { newState: gameState, logs: [], uiState: {} };
+  const effectiveAttributes = getEffectiveContestAttributes(gameState);
 
   const problem = session.problems.find((p: Problem) => p.id === problemId);
   if (!problem) return { newState: gameState, logs: [], uiState: {} };
@@ -122,7 +125,7 @@ export function thinkContestProblem(gameState: GameState, problemId: string): Lo
     return { newState: gameState, logs: [], uiState: {} };
   }
 
-  const thinkResult = thinkProblem(problem, gameState.attributes);
+  const thinkResult = thinkProblem(problem, effectiveAttributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - thinkResult.thinkTime);
 
   const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
@@ -198,6 +201,7 @@ export function codeContestProblem(gameState: GameState, problemId: string): Log
   const session = gameState.activeContest;
   if (!session) return { newState: gameState, logs: [], uiState: {} };
   if (gameState.contestTimeRemaining <= 0) return { newState: gameState, logs: [], uiState: {} };
+  const effectiveAttributes = getEffectiveContestAttributes(gameState);
 
   const problem = session.problems.find((p: Problem) => p.id === problemId);
   if (!problem) return { newState: gameState, logs: [], uiState: {} };
@@ -206,7 +210,7 @@ export function codeContestProblem(gameState: GameState, problemId: string): Log
   }
   if (problem.hasWrittenCode) return { newState: gameState, logs: [], uiState: {} };
 
-  const codeResult = codeProblem(problem, gameState.attributes);
+  const codeResult = codeProblem(problem, effectiveAttributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - codeResult.codeTime);
 
   const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
@@ -276,6 +280,7 @@ export function debugContestProblem(gameState: GameState, problemId: string): Lo
   const session = gameState.activeContest;
   if (!session) return { newState: gameState, logs: [], uiState: {} };
   if (gameState.contestTimeRemaining <= 0) return { newState: gameState, logs: [], uiState: {} };
+  const effectiveAttributes = getEffectiveContestAttributes(gameState);
 
   const problem = session.problems.find((p: Problem) => p.id === problemId);
   if (!problem) return { newState: gameState, logs: [], uiState: {} };
@@ -283,7 +288,7 @@ export function debugContestProblem(gameState: GameState, problemId: string): Lo
     return { newState: gameState, logs: [], uiState: {} };
   }
 
-  const debugResult = debugProblem(problem, gameState.attributes);
+  const debugResult = debugProblem(problem, effectiveAttributes);
   const timeRemaining = Math.max(0, gameState.contestTimeRemaining - debugResult.debugTime);
 
   const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
@@ -359,6 +364,7 @@ export function attemptContestProblem(gameState: GameState, problemId: string): 
   const session = gameState.activeContest;
   if (!session) return { newState: gameState, logs: [], uiState: {} };
   if (gameState.contestTimeRemaining <= 0) return { newState: gameState, logs: [], uiState: {} };
+  const effectiveAttributes = getEffectiveContestAttributes(gameState);
 
   const problem = session.problems.find((p: Problem) => p.id === problemId);
   if (!problem || problem.status === 'solved') return { newState: gameState, logs: [], uiState: {} };
@@ -371,7 +377,7 @@ export function attemptContestProblem(gameState: GameState, problemId: string): 
     if (blocked) return { newState: gameState, logs: [], uiState: {} };
   }
 
-  const attempt = evaluateAttempt(problem, gameState.attributes, problem.thinkBonus, problem.debugBonus || 0);
+  const attempt = evaluateAttempt(problem, effectiveAttributes, problem.thinkBonus, problem.debugBonus || 0);
   const updatedProblems: Problem[] = session.problems.map((p: Problem) => {
     if (p.id !== problemId) return p;
     return {

@@ -149,8 +149,8 @@ export const ACTIVITIES: Activity[] = [
     {
         id: 'practice_contest',
         name: '参加练习赛',
-        cost: 10,
-        description: '选择参加各种编程练习赛',
+        cost: 0,
+        description: '打开练习赛列表，按所选赛事消耗 AP',
         effects: (): ActivityResult => ({
             specialAction: 'OPEN_PRACTICE_CONTEST_DIALOG',
             log: '🏁 准备参加练习赛...',

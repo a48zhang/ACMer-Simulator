@@ -121,6 +121,14 @@ export function handlePracticeContestSelect(gameState: GameState, contestConfig:
     return { newState: gameState, logs, uiState: { showPracticeContestDialog: false } };
   }
 
+  if (gameState.remainingAP < contestConfig.cost) {
+    logs.push({
+      message: `❌ 行动点不足！需要 ${contestConfig.cost} AP，剩余 ${gameState.remainingAP} AP`,
+      type: 'error'
+    });
+    return { newState: gameState, logs, uiState: { showPracticeContestDialog: true } };
+  }
+
   const session = createContestSession(contestConfig);
   logs.push({
     message: `🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`,
@@ -131,7 +139,8 @@ export function handlePracticeContestSelect(gameState: GameState, contestConfig:
     ...gameState,
     remainingAP: Math.max(0, gameState.remainingAP - contestConfig.cost),
     activeContest: session,
-    contestTimeRemaining: session.timeRemaining
+    contestTimeRemaining: session.timeRemaining,
+    selectedTeam: null
   };
 
   return {
@@ -154,7 +163,8 @@ export function applyContestResult(gameState: GameState, contestOutcome: Contest
       ? gameState.rating + contestOutcome.ratingDelta
       : gameState.rating,
     san: clampValue(gameState.san + contestOutcome.sanDelta, 0, INITIAL_SAN),
-    playerContests: gameState.playerContests + 1
+    playerContests: gameState.playerContests + 1,
+    selectedTeam: null
   };
 
   return {

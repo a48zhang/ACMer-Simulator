@@ -22,6 +22,7 @@ export interface Buffs {
 export interface WorldFlags {
   joinedClub?: boolean;
   attendedClassThisMonth?: boolean;
+  monthlyAPCap?: number;
   [key: string]: boolean | number | undefined;
 }
 
