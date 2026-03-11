@@ -263,9 +263,9 @@ function ContestInProgress({ contest, timeRemaining, onAttempt, onFinish, onRead
                       size="sm"
                       type="button"
                       onClick={() => onCode(p.id)}
-                      disabled={p.hasWrittenCode || timeRemaining <= 0}
+                      disabled={timeRemaining <= 0}
                     >
-                      写代码{p.hasWrittenCode ? '（已写）' : ''}
+                      {p.hasWrittenCode ? '重写代码' : '写代码'}
                     </SmallButton>
                     <SmallButton
                       variant="info"

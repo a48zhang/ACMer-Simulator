@@ -160,6 +160,71 @@ function processFinalsWeek(gameState: GameState, effects: Effects, _ev: Event): 
   return { logs, effects, gameOver: false };
 }
 
+function processCampusClinicChoice(choice: Choice): { effects: Effects; logs: LogEntry[] } {
+  const logs: LogEntry[] = [];
+
+  if (choice.id === 'go_hospital') {
+    const thoroughCheck = Math.random() < 0.45;
+    return {
+      effects: {
+        balanceDelta: thoroughCheck ? -240 : -180,
+        sanDelta: thoroughCheck ? 12 : 9
+      },
+      logs: [{
+        message: thoroughCheck
+          ? '🏥 去医院做了检查，花得多一点，但状态稳住了不少。SAN+12，余额-240。'
+          : '🏥 跑了一趟医院，折腾半天，总算把状态拉回来一些。SAN+9，余额-180。',
+        type: 'success'
+      }]
+    };
+  }
+
+  if (choice.id === 'go_campus_clinic') {
+    const gotMedicine = Math.random() < 0.5;
+    return {
+      effects: {
+        balanceDelta: gotMedicine ? -60 : -30,
+        sanDelta: gotMedicine ? 7 : 4
+      },
+      logs: [{
+        message: gotMedicine
+          ? '🏫 去校医院开了点药，恢复得还行。SAN+7，余额-60。'
+          : '🏫 去校医院看了下，问题不大，但也就缓了一点。SAN+4，余额-30。',
+        type: 'info'
+      }]
+    };
+  }
+
+  if (choice.id === 'buy_medicine') {
+    const worked = Math.random() < 0.55;
+    return {
+      effects: {
+        balanceDelta: worked ? -45 : -35,
+        sanDelta: worked ? 5 : -2
+      },
+      logs: [{
+        message: worked
+          ? '💊 先买了点药顶着，勉强把状态拉回来了。SAN+5，余额-45。'
+          : '💊 药是买了，但效果一般，心里还更烦了点。SAN-2，余额-35。',
+        type: worked ? 'info' : 'warning'
+      }]
+    };
+  }
+
+  const held = Math.random() < 0.3;
+  return {
+    effects: {
+      sanDelta: held ? -3 : -8
+    },
+    logs: [{
+      message: held
+        ? '😮‍💨 你决定先硬扛，好在这次还没彻底出事。SAN-3。'
+        : '🥴 你决定继续硬扛，结果状态明显更差了。SAN-8。',
+      type: held ? 'info' : 'warning'
+    }]
+  };
+}
+
 /**
  * 处理启动比赛（内部函数）
  */
@@ -415,6 +480,12 @@ function processEventChoice(
         gameOverReason: result.gameOverReason
       };
     }
+  }
+
+  if (ev.id === 'campus_clinic') {
+    const dynamicResult = processCampusClinicChoice(choice);
+    logs.push(...dynamicResult.logs);
+    effects = { ...effects, ...dynamicResult.effects };
   }
 
   if (choice.specialAction === 'PROCESS_REGIONAL_QUALIFICATION') {

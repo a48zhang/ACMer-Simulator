@@ -111,9 +111,10 @@ interface GameControlsProps {
   onStart: () => void;
   onReset: () => void;
   onAdvanceMonth: () => void;
+  canAdvance: boolean;
 }
 
-function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
+function GameControls({ gameState, onAdvanceMonth, canAdvance }: GameControlsProps) {
   const currentAPCap = Math.max(1, getCurrentMonthlyAPCap(gameState));
 
   const getYearMonth = () => {
@@ -150,8 +151,6 @@ function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
     return '#ef4444';
   };
 
-  const hasPendingEvents = (gameState.pendingEvents?.length || 0) > 0;
-
   return (
     <GameStartSection>
       <SectionTitle>游戏控制</SectionTitle>
@@ -159,7 +158,7 @@ function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
         <Button
           variant="success"
           onClick={onAdvanceMonth}
-          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest || hasActivePractice}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || !canAdvance || hasActiveContest || hasActivePractice}
         >
           下一月 ➡️
         </Button>

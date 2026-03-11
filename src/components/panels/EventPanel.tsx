@@ -179,6 +179,18 @@ const EventBlockWarning = styled.div`
   text-align: center;
 `;
 
+const EventBlockHint = styled.div`
+  margin-top: 0.8rem;
+  padding: 0.62rem;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: ${props => props.theme.radius.md};
+  color: ${props => props.theme.colors.primary};
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+`;
+
 interface ChoiceButtonProps {
   choice: Choice;
   eventId: string;
@@ -303,8 +315,13 @@ function EventPanel({ pendingEvents, onOpenEvent, onDirectChoice, canAdvance }: 
 
       {!canAdvance && (
         <EventBlockWarning>
-          请先处理完本月事件，再进入下个月。
+          请先处理完没有默认选项的事件，再进入下个月。
         </EventBlockWarning>
+      )}
+      {canAdvance && count > 0 && (
+        <EventBlockHint>
+          这些可选事件如果不处理，进入下个月时会按默认选项结算。
+        </EventBlockHint>
       )}
     </EventPanelWrapper>
   );

@@ -230,9 +230,9 @@ function PracticeInProgress({
                       size="sm"
                       type="button"
                       onClick={() => onCode(problem.id)}
-                      disabled={problem.hasWrittenCode}
+                      disabled={false}
                     >
-                      写代码
+                      {problem.hasWrittenCode ? '重写代码' : '写代码'}
                     </SmallButton>
                     <SmallButton
                       variant="info"

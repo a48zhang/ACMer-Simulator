@@ -75,6 +75,35 @@ const getContestAward = (
     return null;
 };
 
+const getLongTailRank = (
+    participants: number,
+    solved: number,
+    total: number,
+    timeUsed: number,
+    durationMinutes: number,
+    attempts: number
+): number => {
+    if (participants <= 1) return 1;
+
+    const solveRatio = total > 0 ? solved / total : 0;
+    const speedScore = solved > 0 && durationMinutes > 0
+        ? Math.max(0, Math.min(1, 1 - (timeUsed / durationMinutes)))
+        : 0;
+    const efficiencyScore = attempts > 0
+        ? Math.max(0, Math.min(1, solved / attempts))
+        : 0;
+    const tieBreakerScore = speedScore * 0.6 + efficiencyScore * 0.4;
+
+    // 让高解题数对应的人数快速衰减，避免名次近似线性平均分布。
+    const longTailRatio = solveRatio <= 0
+        ? 1
+        : Math.exp(-5.2 * Math.pow(solveRatio, 1.35));
+    const tieAdjustment = (1 - tieBreakerScore) * Math.max(0.008, 0.06 / Math.max(1, total));
+    const rankRatio = Math.max(0.0015, Math.min(0.999, longTailRatio + tieAdjustment));
+
+    return Math.max(1, Math.min(participants, Math.round(1 + rankRatio * (participants - 1))));
+};
+
 export const getProblemTagNames = (problem: Problem): string[] => {
     const attrKeys = Object.keys(problem.requires || {});
     const specializedKeys = attrKeys.filter(k =>
@@ -203,37 +232,90 @@ interface CodeProblemResult {
     codeTime: number;
     hasBug: boolean;
     hasWrittenCode: boolean;
+    codeScore: number;
+    bugCount: number;
+    fixedBugCount: number;
+    codeAttempts: number;
 }
 
-// 写代码阶段：返回耗时和可能产生的bug
+function getAttributeRatios(problem: Problem, attributes: Partial<Attributes>) {
+    const attrKeys = Object.keys(problem.requires || {});
+    let ratioSum = 0;
+    let weakestKey: string | null = null;
+    let weakestValue = Infinity;
+
+    for (const key of attrKeys) {
+        const playerVal = ((attributes as Record<string, number>)?.[key] ?? 0) + 1;
+        const reqVal = ((problem.requires as Record<string, number>)?.[key] ?? 0) + 1;
+        const ratio = playerVal / reqVal;
+        ratioSum += ratio;
+        if (ratio < weakestValue) {
+            weakestKey = key;
+            weakestValue = ratio;
+        }
+    }
+
+    return {
+        avgRatio: ratioSum / Math.max(attrKeys.length, 1),
+        weakestKey
+    };
+}
+
+const getProblemPassThreshold = (problem: Problem): number =>
+    problem.passThreshold || Math.round(54 + problem.difficulty * 4.8 + problem.trickiness * 16);
+
+// 写代码阶段：隐藏生成当前代码分数与 bug 数
 export const codeProblem = (problem: Problem, attributes: Partial<Attributes> = {}): CodeProblemResult => {
     const baseTime = 6 + problem.difficulty * 1.5;
     const speedRatio = (attributes.speed ?? 0) / 10;
     const codingRatio = (attributes.coding ?? 0) / 10;
     const timeMultiplier = Math.max(0.3, 1.0 - (speedRatio + codingRatio) * 0.35);
     const codeTime = Math.max(1, Math.round(baseTime * timeMultiplier));
+    const { avgRatio } = getAttributeRatios(problem, attributes);
+    const currentBestScore = problem.codeScore || 0;
+    const currentCodeAttempts = problem.codeAttempts || 0;
+    const algorithmValue = attributes.algorithm ?? 0;
+    const codingValue = attributes.coding ?? 0;
+    const rewriteGain = Math.min(10, currentCodeAttempts * 2.2);
+    const scoreRoll = (
+        avgRatio * 58 +
+        codingValue * 3.4 +
+        algorithmValue * 2.1 +
+        (problem.thinkBonus || 0) * 11 +
+        rewriteGain -
+        problem.difficulty * 2.4 -
+        problem.trickiness * 14 +
+        (-8 + Math.random() * 22)
+    );
+    const rolledScore = Math.max(18, Math.min(128, Math.round(scoreRoll)));
+    const codeScore = Math.max(currentBestScore, rolledScore);
 
-    let hasBug = false;
-    if (!problem.hasBug) {
-        // coding属性越高，越不容易产生bug
-        const bugChance = Math.max(0.05, 0.35 - codingRatio * 0.3);
-        if (Math.random() < bugChance) {
-            hasBug = true;
-        }
-    }
+    const bugRoll = (
+        problem.difficulty * 0.38 +
+        problem.trickiness * 3.2 -
+        codingValue * 0.14 -
+        algorithmValue * 0.08 -
+        (problem.thinkBonus || 0) * 0.55 +
+        (-0.7 + Math.random() * 1.7)
+    );
+    const bugCount = Math.max(0, Math.min(4, Math.round(bugRoll)));
 
     return {
         codeTime,
-        hasBug: hasBug ? true : (problem.hasBug || false),
-        hasWrittenCode: true
+        hasBug: bugCount > 0,
+        hasWrittenCode: true,
+        codeScore,
+        bugCount,
+        fixedBugCount: 0,
+        codeAttempts: currentCodeAttempts + 1
     };
 };
 
 interface DebugProblemResult {
     debugTime: number;
     foundBug: boolean;
-    bonusIncrease: number;
     newDebugBonus: number;
+    fixedBugCount: number;
 }
 
 // 对拍阶段：返回对拍结果，可能获得额外加成或发现bug
@@ -241,24 +323,29 @@ interface DebugProblemResult {
 export const debugProblem = (problem: Problem, attributes: Partial<Attributes> = {}): DebugProblemResult => {
     const baseTime = 3 + problem.difficulty;
     const speedRatio = (attributes.speed ?? 0) / 10;
+    const algorithmRatio = (attributes.algorithm ?? 0) / 10;
     const timeMultiplier = Math.max(0.3, 1.0 - speedRatio * 0.7);
     const debugTime = Math.max(1, Math.round(baseTime * timeMultiplier));
+    const unresolvedBugs = Math.max(0, (problem.bugCount || 0) - (problem.fixedBugCount || 0));
+    const inspectionPower = 0.24 + speedRatio * 0.18 + algorithmRatio * 0.14 + (problem.debugBonus || 0) * 0.04;
+    let fixedBugCount = problem.fixedBugCount || 0;
 
-    let foundBug = false;
-    let bonusIncrease = 0;
-
-    if (problem.hasBug && Math.random() < 0.4) {
-        foundBug = true;
-    } else if (!problem.hasBug && Math.random() < 0.2) {
-        const bonusMultiplier = 1 + Math.random();
-        bonusIncrease = (0.3 / (problem.debugBonus + 1)) * bonusMultiplier;
+    if (unresolvedBugs > 0) {
+        const maxFix = unresolvedBugs >= 2 && inspectionPower > 0.55 ? 2 : 1;
+        const fixedNow = Math.min(
+            unresolvedBugs,
+            Math.max(0, Math.round((Math.random() < inspectionPower ? 1 : 0) + (maxFix === 2 && Math.random() < inspectionPower * 0.45 ? 1 : 0)))
+        );
+        fixedBugCount += fixedNow;
     }
+
+    const foundBug = fixedBugCount > (problem.fixedBugCount || 0);
 
     return {
         debugTime,
         foundBug,
-        bonusIncrease,
-        newDebugBonus: problem.debugBonus + 1
+        newDebugBonus: (problem.debugBonus || 0) + 1,
+        fixedBugCount
     };
 };
 
@@ -306,10 +393,15 @@ const generateProblem = (difficulty: number): Omit<Problem, 'letter' | 'order'> 
         status: 'pending', // pending | reading | coding | submitted_fail | solved
         attempts: 0,
         thinkBonus: 0, // 思考加成次数，最多 2 次，每次 +15% 成功率
-        debugBonus: 0, // 对拍加成次数
+        debugBonus: 0, // 对拍次数，会降低提交时的隐藏惩罚
         hasBug: false, // 是否有 bug（对玩家不可见）
         bugFound: false, // bug 是否已被发现
         hasWrittenCode: false, // 是否已经写过代码
+        passThreshold: Math.round(54 + difficulty * 4.8 + trickiness * 16 + Math.random() * 8),
+        codeScore: 0,
+        bugCount: 0,
+        fixedBugCount: 0,
+        codeAttempts: 0,
         editorialViewed: false,
         revealedInfo: null // { tags }
     };
@@ -324,6 +416,11 @@ export const resetProblemProgress = (problem: Problem, overrides: Partial<Proble
     hasBug: false,
     bugFound: false,
     hasWrittenCode: false,
+    passThreshold: getProblemPassThreshold(problem),
+    codeScore: 0,
+    bugCount: 0,
+    fixedBugCount: 0,
+    codeAttempts: 0,
     editorialViewed: false,
     revealedInfo: null,
     ...overrides
@@ -406,44 +503,24 @@ export const evaluateAttempt = (
     thinkBonus = 0,
     debugBonus = 0
 ): EvaluateAttemptResult => {
-    const attrKeys = Object.keys(problem.requires || {});
-    const randomFactor = 0.65 + Math.random() * 0.9; // 0.65 - 1.55
-    let ratioSum = 0;
-    let weakestKey: string | null = null;
-    let weakestValue = Infinity;
+    const { avgRatio, weakestKey } = getAttributeRatios(problem, attributes);
+    const passThreshold = getProblemPassThreshold(problem);
+    const unresolvedBugs = Math.max(0, (problem.bugCount || 0) - (problem.fixedBugCount || 0));
+    const bugPenaltyPer = 7 + problem.difficulty * 1.6;
+    const debugReliefFactor = Math.max(0.28, 1 - debugBonus * 0.14);
+    const hiddenPenalty = unresolvedBugs * bugPenaltyPer * debugReliefFactor;
+    const hiddenScore = (problem.codeScore || 0) - hiddenPenalty;
+    const success = (problem.hasWrittenCode || (problem.codeScore || 0) > 0) && hiddenScore >= passThreshold;
 
-    for (const key of attrKeys) {
-        const playerVal = ((attributes as Record<string, number>)?.[key] ?? 0) + 1;
-        const reqVal = ((problem.requires as Record<string, number>)?.[key] ?? 0) + 1;
-        const ratio = playerVal / reqVal;
-        ratioSum += ratio;
-        if (ratio < weakestValue) {
-            weakestKey = key;
-            weakestValue = ratio;
-        }
-    }
-
-    const avgRatio = ratioSum / Math.max(attrKeys.length, 1);
-    // 思考加成：每一层 +15% 成功率（现在是小数累积）
-    const thinkBonusMultiplier = 1 + thinkBonus * 0.15;
-    // 对拍加成：额外 +10% 成功率
-    const debugBonusMultiplier = 1 + debugBonus * 0.1;
-    // Bug 惩罚：如果有 bug 未发现，-30% 成功率
-    const bugPenalty = (problem.hasBug && !problem.bugFound) ? 0.7 : 1.0;
-
-    const adjustedRatio = avgRatio * randomFactor * (1 - problem.trickiness * 0.3) * thinkBonusMultiplier * debugBonusMultiplier * bugPenalty;
-    const success = adjustedRatio >= 1;
-
-    // 时间消耗与难度相关，能力越强耗时越少
-    const baseTime = 5 + problem.trickiness * 20;
-    const timeMultiplier = Math.max(0.5, 1.2 - avgRatio * 0.3);
-    const timeCost = Math.min(30, Math.round(baseTime * timeMultiplier));
+    const baseTime = 4 + problem.trickiness * 10 + Math.max(0, unresolvedBugs - 1) * 2;
+    const timeMultiplier = Math.max(0.55, 1.15 - avgRatio * 0.2);
+    const timeCost = Math.min(20, Math.max(2, Math.round(baseTime * timeMultiplier)));
 
     return {
         success,
         timeCost,
         weakestAttr: weakestKey,
-        adjustedRatio,
+        adjustedRatio: hiddenScore / Math.max(1, passThreshold),
     };
 };
 
@@ -498,19 +575,14 @@ export const calculateContestOutcome = (
 
     if (isAwardEligible) {
         const participants = getParticipantCount(contestCategory, total, session.name);
-        const solveScore = T > 0 ? S / T : 0;
-        const speedScore = session.durationMinutes > 0 ? 1 - (timeUsed / session.durationMinutes) : 0;
-        const efficiencyScore = attempts > 0 ? S / attempts : (S > 0 ? 1 : 0);
-        const perfScore = performanceRating == null ? solveScore : Math.max(0, Math.min(1, performanceRating / 3200));
-        const placementScore = Math.max(
-            0,
-            Math.min(
-                1,
-                solveScore * 0.64 + speedScore * 0.16 + efficiencyScore * 0.1 + perfScore * 0.1
-            )
+        const rank = getLongTailRank(
+            participants,
+            solved,
+            total,
+            timeUsed,
+            session.durationMinutes,
+            attempts
         );
-        const placementRatio = Math.max(0, Math.min(1, 1 - placementScore));
-        const rank = Math.max(1, Math.min(participants, Math.round(1 + placementRatio * (participants - 1))));
         ranking = { rank, participants };
         award = getContestAward(contestCategory, rank, participants, solved);
     }

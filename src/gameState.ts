@@ -33,7 +33,8 @@ export const createInitialGameState = (): GameStateType => ({
   selectedTeam: null,
   buffs: {
     failedCourses: 0,
-    academicWarnings: 0
+    academicWarnings: 0,
+    contestAwards: {}
   }
 });
 

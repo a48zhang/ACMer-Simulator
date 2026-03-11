@@ -16,6 +16,11 @@ const makeProblem = (overrides = {}) => ({
   hasBug: false,
   bugFound: false,
   hasWrittenCode: false,
+  passThreshold: 70,
+  codeScore: 0,
+  bugCount: 0,
+  fixedBugCount: 0,
+  codeAttempts: 0,
   editorialViewed: false,
   revealedInfo: null,
   ...overrides
@@ -50,6 +55,8 @@ describe('练习系统', () => {
     const problem = makeProblem({
       status: 'coding',
       hasWrittenCode: true,
+      codeScore: 92,
+      passThreshold: 70,
       backlogId: 'b1',
       sourceContestId: 'c1',
       sourceContestName: '测试赛'
@@ -92,8 +99,7 @@ describe('练习系统', () => {
     let callCount = 0;
     vi.spyOn(Math, 'random').mockImplementation(() => {
       callCount += 1;
-      if (callCount === 1) return 0.5; // attempt
-      if (callCount === 2) return 0.1; // reward chance
+      if (callCount === 1) return 0.1; // reward chance
       return 0.2;
     });
 

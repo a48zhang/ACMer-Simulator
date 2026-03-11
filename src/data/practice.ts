@@ -62,7 +62,9 @@ function buildSheetOption(preset: SheetPreset): PracticeOption {
     problemCount: preset.difficulties.length,
     durationMinutes: 120,
     difficulties: preset.difficulties,
-    isRated: false
+    isRated: false,
+    category: 'practice',
+    awardEligible: false
   });
 
   const problems = session.problems.map((problem, index) =>

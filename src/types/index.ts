@@ -125,6 +125,11 @@ export interface Problem {
   hasBug: boolean;
   bugFound: boolean;
   hasWrittenCode: boolean;
+  passThreshold: number;
+  codeScore: number;
+  bugCount: number;
+  fixedBugCount: number;
+  codeAttempts: number;
   editorialViewed?: boolean;
   backlogId?: string;
   sourceContestId?: string;

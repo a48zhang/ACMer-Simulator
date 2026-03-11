@@ -70,12 +70,39 @@ describe('社团与区域赛事件链', () => {
   });
 
   const gatedEventCases = [
-    { month: 7, eventId: 'march_invitational_signup' },
-    { month: 8, eventId: 'april_provincial' },
-    { month: 9, eventId: 'may_invitational' }
+    {
+      month: 7,
+      eventId: 'march_invitational_signup',
+      unlockedFlags: { joinedClub: true }
+    },
+    {
+      month: 8,
+      eventId: 'april_provincial',
+      unlockedFlags: { joinedClub: true }
+    },
+    {
+      month: 9,
+      eventId: 'may_invitational',
+      unlockedFlags: { joinedClub: true }
+    },
+    {
+      month: 14,
+      eventId: 'regional_station_october_icpc_jinan',
+      unlockedFlags: { joinedClub: true, regionalSeasonYear: 2, regionalQuotaPath: 1 }
+    },
+    {
+      month: 15,
+      eventId: 'regional_station_november_icpc_nanjing',
+      unlockedFlags: { joinedClub: true, regionalSeasonYear: 2, regionalQuotaPath: 1 }
+    },
+    {
+      month: 16,
+      eventId: 'regional_station_december_icpc_kunming',
+      unlockedFlags: { joinedClub: true, regionalSeasonYear: 2, regionalQuotaPath: 1 }
+    }
   ];
 
-  gatedEventCases.forEach(({ month, eventId }) => {
+  gatedEventCases.forEach(({ month, eventId, unlockedFlags }) => {
     it(`未加入社团时不应刷出 ${eventId}`, () => {
       const state = {
         ...createInitialGameState(),
@@ -93,7 +120,7 @@ describe('社团与区域赛事件链', () => {
       const state = {
         ...createInitialGameState(),
         month,
-        worldFlags: { joinedClub: true }
+        worldFlags: unlockedFlags
       };
 
       vi.spyOn(Math, 'random').mockReturnValue(0);
@@ -101,6 +128,16 @@ describe('社团与区域赛事件链', () => {
 
       expect(events.some(event => event.id === eventId)).toBe(true);
     });
+  });
+
+  it('有默认选项的事件应带 defaultChoiceId', () => {
+    const event = EVENTS.find(item => item.id === 'club_intro');
+    expect(event?.defaultChoiceId).toBe('skip');
+  });
+
+  it('强制处理事件不应带 defaultChoiceId', () => {
+    const event = EVENTS.find(item => item.id === 'june_finals_week');
+    expect(event?.defaultChoiceId).toBeUndefined();
   });
 
   it('9月跳过网络预选后应插入抢名额事件', () => {

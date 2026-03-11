@@ -252,7 +252,7 @@ export function codePracticeProblem(gameState: GameState, problemId: string): Lo
   if (!session) return { newState: gameState, logs: [], uiState: {} };
 
   const problem = session.problems.find((item) => item.id === problemId);
-  if (!problem || (problem.status !== 'coding' && problem.status !== 'submitted_fail') || problem.hasWrittenCode) {
+  if (!problem || (problem.status !== 'coding' && problem.status !== 'submitted_fail')) {
     return { newState: gameState, logs: [], uiState: {} };
   }
 
@@ -261,8 +261,15 @@ export function codePracticeProblem(gameState: GameState, problemId: string): Lo
     ...session,
     problems: session.problems.map((item) => item.id !== problemId ? item : {
       ...item,
+      status: 'coding',
       hasWrittenCode: true,
-      hasBug: codeResult.hasBug
+      hasBug: codeResult.hasBug,
+      bugFound: false,
+      codeScore: codeResult.codeScore,
+      bugCount: codeResult.bugCount,
+      fixedBugCount: codeResult.fixedBugCount,
+      codeAttempts: codeResult.codeAttempts,
+      debugBonus: 0
     })
   };
 
@@ -291,21 +298,22 @@ export function debugPracticeProblem(gameState: GameState, problemId: string): L
   const debugResult = debugProblem(problem, gameState.attributes);
   const nextSession: PracticeSession = {
     ...session,
-    problems: session.problems.map((item) => item.id !== problemId ? item : {
-      ...item,
-      debugBonus: debugResult.newDebugBonus,
-      bugFound: item.bugFound || debugResult.foundBug,
-      thinkBonus: debugResult.bonusIncrease > 0 ? item.thinkBonus + debugResult.bonusIncrease : item.thinkBonus,
-      hasBug: debugResult.foundBug ? false : item.hasBug,
-      hasWrittenCode: debugResult.foundBug ? false : item.hasWrittenCode
+    problems: session.problems.map((item) => {
+      if (item.id !== problemId) return item;
+      const hasRemainingBugs = (item.bugCount || 0) > debugResult.fixedBugCount;
+      return {
+        ...item,
+        debugBonus: debugResult.newDebugBonus,
+        bugFound: item.bugFound || debugResult.foundBug,
+        hasBug: hasRemainingBugs,
+        fixedBugCount: debugResult.fixedBugCount
+      };
     })
   };
 
   const message = debugResult.foundBug
-    ? `🔍 练习对拍 ${problem.letter}：发现 bug，建议重写。`
-    : debugResult.bonusIncrease > 0
-      ? `🔍 练习对拍 ${problem.letter}：发现了更稳的做法。`
-      : `🔍 练习对拍 ${problem.letter}：暂时没找到明显问题。`;
+    ? `🔍 练习对拍 ${problem.letter}：修掉了一部分隐藏问题。`
+    : `🔍 练习对拍 ${problem.letter}：暂时没找到明显问题。`;
 
   return {
     newState: {

@@ -282,6 +282,7 @@ const CategoryHint = styled.span<{ $negative?: boolean }>`
 const TraitGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 132px;
   gap: 0.5rem;
   flex: 1;
   min-height: 0;
@@ -305,6 +306,7 @@ const TraitGrid = styled.div`
 
   @media (max-width: 1050px) {
     grid-template-columns: 1fr;
+    grid-auto-rows: 124px;
     max-width: 420px;
     width: 100%;
     margin: 0 auto;
@@ -312,6 +314,7 @@ const TraitGrid = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 128px;
     overflow: visible;
     padding-right: 0;
     max-width: 100%;
@@ -319,6 +322,7 @@ const TraitGrid = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    grid-auto-rows: 120px;
     max-width: 420px;
     width: 100%;
     margin: 0 auto;
@@ -333,6 +337,9 @@ const TraitCard = styled.div<{ $selected?: boolean; $negative?: boolean }>`
   transition: all 0.2s ease;
   position: relative;
   background: ${props => props.theme.colors.surface};
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     transform: translateY(-1px);

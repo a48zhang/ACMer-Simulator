@@ -76,6 +76,38 @@ const DialogHint = styled.p`
   }
 `;
 
+const AwardBanner = styled.div<{ $tier?: string }>`
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: ${props => props.theme.radius.md};
+  border: 1px solid ${props => props.$tier === 'gold'
+    ? 'rgba(245, 158, 11, 0.45)'
+    : props.$tier === 'silver'
+      ? 'rgba(148, 163, 184, 0.5)'
+      : props.$tier === 'bronze'
+        ? 'rgba(180, 83, 9, 0.42)'
+        : 'rgba(37, 99, 235, 0.28)'};
+  background: ${props => props.$tier === 'gold'
+    ? 'linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(255, 251, 235, 0.95))'
+    : props.$tier === 'silver'
+      ? 'linear-gradient(135deg, rgba(241, 245, 249, 0.96), rgba(248, 250, 252, 0.96))'
+      : props.$tier === 'bronze'
+        ? 'linear-gradient(135deg, rgba(254, 215, 170, 0.9), rgba(255, 237, 213, 0.95))'
+        : 'linear-gradient(135deg, rgba(219, 234, 254, 0.95), rgba(239, 246, 255, 0.95))'};
+  color: ${props => props.theme.colors.textMain};
+`;
+
+const AwardTitle = styled.div`
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+`;
+
+const AwardText = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
 const DialogActions = styled.div`
   display: flex;
   gap: 0.75rem;
@@ -89,7 +121,7 @@ interface ContestResultDialogProps {
 
 function ContestResultDialog({ outcome, onConfirm }: ContestResultDialogProps) {
     if (!outcome) return null;
-    const { total, solved, attempts, ratingDelta, sanDelta, timeUsed, performanceRating, weakAttr } = outcome;
+    const { total, solved, attempts, ratingDelta, sanDelta, timeUsed, performanceRating, weakAttr, ranking, award } = outcome;
     const ratingText = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;
     const sanText = `${sanDelta >= 0 ? '+' : ''}${sanDelta}`;
 
@@ -105,6 +137,17 @@ function ContestResultDialog({ outcome, onConfirm }: ContestResultDialogProps) {
             <DialogBox onClick={(e) => e.stopPropagation()}>
                 <DialogTitle>📊 比赛结算</DialogTitle>
                 <DialogSubtitle>本次比赛用时 {timeUsed} 分钟，解出 {solved}/{total} 题</DialogSubtitle>
+
+                {ranking && (
+                    <AwardBanner $tier={award?.tier}>
+                        <AwardTitle>
+                            {award ? `🏅 获得 ${award.label}` : '📈 获得正式比赛排名'}
+                        </AwardTitle>
+                        <AwardText>
+                            最终排名第 <strong>{ranking.rank}</strong> / <strong>{ranking.participants}</strong> 名
+                        </AwardText>
+                    </AwardBanner>
+                )}
 
                 <ContestResultGrid>
                     <ResultItem>
@@ -125,6 +168,12 @@ function ContestResultDialog({ outcome, onConfirm }: ContestResultDialogProps) {
                         <ResultLabel>尝试次数</ResultLabel>
                         <ResultValue>{attempts}</ResultValue>
                     </ResultItem>
+                    {ranking && (
+                        <ResultItem>
+                            <ResultLabel>比赛排名</ResultLabel>
+                            <ResultValue>{ranking.rank}</ResultValue>
+                        </ResultItem>
+                    )}
                 </ContestResultGrid>
 
                 {weakAttr && (

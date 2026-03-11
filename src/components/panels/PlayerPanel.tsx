@@ -155,7 +155,7 @@ const BuffsDisplay = styled.div`
   margin-top: 0.6rem;
 `;
 
-const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
+const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean; $awardTier?: string }>`
   font-size: 0.7rem;
   padding: 0.28rem 0.55rem;
   border-radius: ${props => props.theme.radius.md};
@@ -163,6 +163,7 @@ const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  border: 1px solid transparent;
 
   ${props => props.$warning && `
     color: #d97706;
@@ -174,6 +175,34 @@ const BuffItem = styled.span<{ $warning?: boolean; $danger?: boolean }>`
     color: #dc2626;
     background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
     border: 1px solid #fca5a5;
+  `}
+
+  ${props => props.$awardTier === 'gold' && `
+    color: #92400e;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-color: #f59e0b;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  `}
+
+  ${props => props.$awardTier === 'silver' && `
+    color: #475569;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-color: #94a3b8;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  `}
+
+  ${props => props.$awardTier === 'bronze' && `
+    color: #9a3412;
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    border-color: #ea580c;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  `}
+
+  ${props => props.$awardTier === 'honorable' && `
+    color: #1d4ed8;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #60a5fa;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
   `}
 `;
 
@@ -409,8 +438,25 @@ function PlayerPanel({
   }, [san, gpa, rating]);
 
   const shouldShowBuffs = useMemo(() => {
-    return buffs && (buffs.failedCourses > 0 || buffs.academicWarnings > 0);
+    return buffs && (
+      buffs.failedCourses > 0 ||
+      buffs.academicWarnings > 0 ||
+      Object.keys(buffs.contestAwards || {}).length > 0
+    );
   }, [buffs]);
+
+  const awardEntries = useMemo(() => {
+    return Object.entries(buffs?.contestAwards || {})
+      .filter(([, count]) => count > 0)
+      .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'));
+  }, [buffs]);
+
+  const getAwardMeta = (label: string) => {
+    if (label.includes('金牌')) return { icon: '🥇', tier: 'gold' };
+    if (label.includes('银牌')) return { icon: '🥈', tier: 'silver' };
+    if (label.includes('铜牌')) return { icon: '🥉', tier: 'bronze' };
+    return { icon: '🎖️', tier: 'honorable' };
+  };
 
   return (
     <PlayerPanelWrapper>
@@ -453,6 +499,14 @@ function PlayerPanel({
           </StatusCards>
           {shouldShowBuffs && (
             <BuffsDisplay>
+              {awardEntries.map(([label, count]) => {
+                const awardMeta = getAwardMeta(label);
+                return (
+                <BuffItem key={label} $awardTier={awardMeta.tier}>
+                  {awardMeta.icon} {label}{count > 1 ? `x${count}` : ''}
+                </BuffItem>
+                );
+              })}
               {buffs.failedCourses > 0 && (
                 <BuffItem $warning>📉 挂科×{buffs.failedCourses}</BuffItem>
               )}

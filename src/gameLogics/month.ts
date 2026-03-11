@@ -2,6 +2,7 @@ import { END_MONTH } from '../constants';
 import { clampGPA } from '../utils';
 import { scheduleMonthlyEvents } from '../data/events';
 import { GPA_CONFIG } from '../config/gameBalance';
+import { autoResolveDefaultEvents, hasBlockingPendingEvents } from './event';
 import type { GameState, LogicResult, LogEntry, Event } from '../types';
 
 /**
@@ -11,27 +12,51 @@ import type { GameState, LogicResult, LogEntry, Event } from '../types';
  */
 export function advanceMonth(gameState: GameState): LogicResult {
   const logs: LogEntry[] = [];
-  const newMonth = gameState.month + 1;
-
-  const endCheck = checkGameEnd(gameState, newMonth);
-  if (endCheck.isEnded) {
-    return endCheck.result!;
+  if (hasBlockingPendingEvents(gameState.pendingEvents)) {
+    return {
+      newState: gameState,
+      logs: [{ message: '⚠️ 还有必须处理的事件，先把它们决定掉。', type: 'warning' }],
+      uiState: {}
+    };
   }
 
-  const gpaResult = calculateGPAChange(gameState, newMonth);
+  const defaultResolution = autoResolveDefaultEvents(gameState);
+  const currentState = defaultResolution.newState || gameState;
+  logs.push(...defaultResolution.logs);
+
+  if (defaultResolution.gameOverReason) {
+    return {
+      newState: currentState,
+      logs,
+      uiState: {},
+      gameOverReason: defaultResolution.gameOverReason
+    };
+  }
+
+  const newMonth = currentState.month + 1;
+
+  const endCheck = checkGameEnd(currentState, newMonth);
+  if (endCheck.isEnded) {
+    return {
+      ...endCheck.result!,
+      logs: [...logs, ...(endCheck.result?.logs || [])]
+    };
+  }
+
+  const gpaResult = calculateGPAChange(currentState, newMonth);
   logs.push(...gpaResult.logs);
 
-  const economyResult = processEconomy(gameState);
+  const economyResult = processEconomy(currentState);
   logs.push(...economyResult.logs);
 
-  const sanResult = processSanPenalty(gameState);
+  const sanResult = processSanPenalty(currentState);
   if (sanResult.log) logs.push(sanResult.log);
 
-  const events = scheduleMonthlyEvents(gameState, newMonth);
+  const events = scheduleMonthlyEvents(currentState, newMonth);
   const academicYear = calculateAcademicYear(newMonth);
   logs.push(formatMonthLog(academicYear, getCalendarMonth(newMonth), events.length));
 
-  const newState = buildNewMonthState(gameState, newMonth, {
+  const newState = buildNewMonthState(currentState, newMonth, {
     gpa: gpaResult.gpa,
     balance: economyResult.balance,
     remainingAP: sanResult.nextAP,
@@ -93,6 +118,22 @@ function calculateGPAChange(gameState: GameState, newMonth: number): GPAResult {
 
   let deduction = GPA_CONFIG.MONTHLY_DEDUCTION;
   const attended = gameState.worldFlags?.attendedClassThisMonth || false;
+  const fluctuation = (Math.random() * 2 - 1) * GPA_CONFIG.MONTHLY_FLUCTUATION;
+  deduction = Math.max(0, deduction + fluctuation);
+
+  if (Math.abs(fluctuation) >= 0.01) {
+    logs.push({
+      message: fluctuation > 0
+        ? '📉 这月课程压力偏高，GPA结算比平时更难看一点。'
+        : '📘 这月老师给分还算正常，GPA压力没那么大。',
+      type: fluctuation > 0 ? 'warning' : 'info'
+    });
+  }
+
+  if (attended && Math.random() < GPA_CONFIG.ATTEND_CLASS_LUCKY_PROBABILITY) {
+    deduction = Math.max(0, deduction - GPA_CONFIG.ATTEND_CLASS_LUCKY_BONUS);
+    logs.push({ message: '✅ 这月出勤和作业没出岔子，平时分多保住了一点。', type: 'success' });
+  }
 
   if (!attended && Math.random() < GPA_CONFIG.SKIP_CLASS_PROBABILITY) {
     deduction += GPA_CONFIG.SKIP_CLASS_DEDUCTION;

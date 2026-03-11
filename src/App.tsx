@@ -292,7 +292,10 @@ function App() {
 
   const pendingEvents = useMemo(() => gameState.pendingEvents || [], [gameState.pendingEvents])
   const practiceOptions = useMemo(() => buildPracticeOptions(gameState), [gameState])
-  const canAdvance = useMemo(() => pendingEvents.length === 0, [pendingEvents.length])
+  const canAdvance = useMemo(
+    () => pendingEvents.every(event => !!event.defaultChoiceId),
+    [pendingEvents]
+  )
   const gameEnded = useMemo(() => gameState.month > 46, [gameState.month])
 
   const gameOverStats = useMemo(() => ({
@@ -312,7 +315,6 @@ function App() {
     <Container>
       <Header>
         <h1>🏆 ACMer选手模拟器</h1>
-        <p className="subtitle">从大一打到毕业前</p>
       </Header>
 
       <AppLayout>
@@ -347,6 +349,7 @@ function App() {
                   onStart={startGame}
                   onReset={wrappedResetGame}
                   onAdvanceMonth={wrappedAdvanceMonth}
+                  canAdvance={canAdvance}
                 />
 
                 {!gameState.activeContest && !gameState.activePractice && (

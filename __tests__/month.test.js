@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { advanceMonth } from '../src/gameLogics/month';
 import { createInitialGameState } from '../src/gameState';
 import { END_MONTH } from '../src/constants';
+import { EVENTS } from '../src/data/events';
 
 describe('月份推进', () => {
   let gameState;
@@ -78,6 +79,23 @@ describe('月份推进', () => {
     const result = advanceMonth(gameState);
     expect(result.newState.isRunning).toBe(true);
   });
+
+  it('只有默认选项的事件未处理时应自动按默认结算并推进月份', () => {
+    gameState.pendingEvents = EVENTS.filter(event => event.id === 'club_intro');
+    const result = advanceMonth(gameState);
+
+    expect(result.newState.month).toBe(2);
+    expect(result.logs.find(log => log.message.includes('按“先不去”结算'))).toBeDefined();
+    expect(result.newState.worldFlags.joinedClub).toBeUndefined();
+  });
+
+  it('存在没有默认选项的事件时不应推进月份', () => {
+    gameState.pendingEvents = EVENTS.filter(event => event.id === 'june_finals_week');
+    const result = advanceMonth(gameState);
+
+    expect(result.newState.month).toBe(1);
+    expect(result.logs.find(log => log.message.includes('必须处理的事件'))).toBeDefined();
+  });
 });
 
 describe('月份推进 - 随机行为测试', () => {
@@ -119,6 +137,16 @@ describe('月份推进 - 随机行为测试', () => {
 
     const warningLog = result.logs.find(l => l.message && l.message.includes('GPA额外扣除'));
     expect(warningLog).toBeUndefined();
+  });
+
+  it('上过课且触发正面随机时应出现保住平时分日志', () => {
+    Math.random.mockReturnValue(0.1);
+    gameState.worldFlags.attendedClassThisMonth = true;
+
+    const result = advanceMonth(gameState);
+
+    const successLog = result.logs.find(l => l.message && l.message.includes('平时分多保住了一点'));
+    expect(successLog).toBeDefined();
   });
 
   it('多次运行验证概率分布', () => {

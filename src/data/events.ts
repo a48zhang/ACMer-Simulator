@@ -48,6 +48,7 @@ const REGIONAL_PATH_WILDCARD = 2;
 const REGIONAL_SERIES_LIMIT = 2;
 
 export const REGIONAL_QUOTA_EVENT_ID = 'september_regional_quota';
+const REGIONAL_CONTEST_DIFFICULTIES = [2, 3, 4, 5, 5, 6, 8, 10, 13, 17, 21, 25, 30];
 
 const REGIONAL_STATIONS = [
   {
@@ -467,7 +468,7 @@ export const EVENTS: Event[] = [
                     name: station.contestName,
                     problemCount: [11, 13],
                     durationMinutes: 300,
-                    difficulties: [2, 3, 4, 5, 5, 6, 6, 7, 8, 8, 9, 10, 10],
+                    difficulties: REGIONAL_CONTEST_DIFFICULTIES,
                     isRated: false,
                     category: 'regional',
                     awardEligible: true,
@@ -653,67 +654,6 @@ export const EVENTS: Event[] = [
         ]
     },
     {
-        id: 'club_training_session',
-        title: '队内补题会',
-        description: '今晚队里有人约补题和讲题。去蹭一波强度，还是先自己安排？',
-        mandatory: false,
-        defaultChoiceId: 'skip',
-        chanceToAppear: EVENT_CHANCES.CLUB_TRAINING_SESSION,
-        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, ['joinedClub']),
-        choices: [
-            {
-                id: 'join_session',
-                label: '去补题会',
-                effects: {
-                    attributeChanges: { algorithm: 1 },
-                    playerProblemsDelta: 2,
-                    sanDelta: -6,
-                    log: '🧠 跟着队里补了一晚上题，思维+1，额外解决 2 题，SAN-6。',
-                    logType: 'success'
-                }
-            },
-            {
-                id: 'skip',
-                label: '先不去',
-                effects: {
-                    sanDelta: 2,
-                    log: '😌 今晚没去队里，自己缓了一下。',
-                    logType: 'info'
-                }
-            }
-        ]
-    },
-    {
-        id: 'senior_code_review',
-        title: '学长拉你看代码',
-        description: '有学长说可以帮你看看最近的代码风格和常犯问题。要不要拿过去挨喷？',
-        mandatory: false,
-        defaultChoiceId: 'pass',
-        chanceToAppear: EVENT_CHANCES.SENIOR_CODE_REVIEW,
-        conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, ['joinedClub']),
-        choices: [
-            {
-                id: 'take_review',
-                label: '拿去看看',
-                effects: {
-                    attributeChanges: { coding: 1 },
-                    sanDelta: -4,
-                    log: '🧾 被学长喷了一轮，但代码习惯确实顺了点。代码+1，SAN-4。',
-                    logType: 'success'
-                }
-            },
-            {
-                id: 'pass',
-                label: '算了下次',
-                effects: {
-                    sanDelta: 1,
-                    log: '😌 这次先不去挨喷，自己再改改。',
-                    logType: 'info'
-                }
-            }
-        ]
-    },
-    {
         id: 'dorm_power_outage',
         title: '宿舍断网断电',
         description: '宿舍今晚又断了。是换地方继续学，还是干脆摆一天？',
@@ -745,31 +685,32 @@ export const EVENTS: Event[] = [
     },
     {
         id: 'campus_clinic',
-        title: '状态有点扛不住',
-        description: '这几天明显有点顶不住了。去校医院看看，还是继续硬扛？',
+        title: '身体有点不对劲',
+        description: '这几天状态不太对。要不要去医院、去校医院、先买点药，还是继续硬扛？',
         mandatory: false,
         defaultChoiceId: 'tough_it_out',
         chanceToAppear: EVENT_CHANCES.CAMPUS_CLINIC,
         conditions: createMonthlyCondition(ACTIVE_SEMESTER_MONTHS, 1, []),
         choices: [
             {
-                id: 'visit_clinic',
+                id: 'go_hospital',
+                label: '去医院',
+                effects: {}
+            },
+            {
+                id: 'go_campus_clinic',
                 label: '去校医院',
-                effects: {
-                    balanceDelta: -80,
-                    sanDelta: 8,
-                    log: '💊 去校医院开了点药，状态稍微稳住了。SAN+8，余额-80。',
-                    logType: 'success'
-                }
+                effects: {}
+            },
+            {
+                id: 'buy_medicine',
+                label: '先买点药',
+                effects: {}
             },
             {
                 id: 'tough_it_out',
                 label: '继续硬扛',
-                effects: {
-                    sanDelta: -6,
-                    log: '🥴 你决定继续硬扛，结果状态更差了。SAN-6。',
-                    logType: 'warning'
-                }
+                effects: {}
             }
         ]
     },
