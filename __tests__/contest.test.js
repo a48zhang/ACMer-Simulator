@@ -3,6 +3,8 @@ import {
   createContestSession, evaluateAttempt, calculateContestOutcome,
   readProblem, thinkProblem, codeProblem, debugProblem
 } from '../src/data/contests';
+import { finishContest } from '../src/gameLogics/contest';
+import { createInitialGameState } from '../src/gameState';
 
 describe('比赛系统', () => {
   it('应能创建比赛', () => {
@@ -95,6 +97,26 @@ describe('比赛系统', () => {
     const outcome = calculateContestOutcome(session, 100, 1500);
     expect(outcome.solved).toBe(0);
     expect(outcome.total).toBe(3);
+  });
+
+  it('比赛结束时应把未解题加入补题池', () => {
+    const session = createContestSession({
+      name: '测试赛',
+      problemCount: [2, 2],
+      durationMinutes: 120,
+      difficulties: [2, 3]
+    });
+    session.problems[0].status = 'solved';
+
+    const gameState = {
+      ...createInitialGameState(),
+      activeContest: session,
+      contestTimeRemaining: 60
+    };
+
+    const result = finishContest(gameState);
+    expect(result.newState.practiceBacklog.length).toBe(1);
+    expect(result.newState.practiceBacklog[0].contestName).toBe('测试赛');
   });
 });
 

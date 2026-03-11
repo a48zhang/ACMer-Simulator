@@ -3,8 +3,7 @@ import { clampValue } from '../utils';
 import { applyTraitEffects } from '../data/traits';
 import { scheduleMonthlyEvents } from '../data/events';
 import { createInitialGameState } from '../gameState';
-import { createContestSession } from '../data/contests';
-import type { GameState, LogicResult, LogEntry, Teammate, ContestConfig, ContestOutcome } from '../types';
+import type { GameState, LogicResult, Teammate, ContestOutcome } from '../types';
 
 /**
  * 默认队友列表
@@ -59,6 +58,8 @@ export function handleTraitConfirm(gameState: GameState, selectedTraitIds: strin
     eventGraph: {},
     activeContest: null,
     contestTimeRemaining: 0,
+    activePractice: null,
+    practiceBacklog: [],
     teammates: DEFAULT_TEAMMATES,
     selectedTeam: null,
     buffs: {
@@ -98,55 +99,6 @@ export function handleGameOverRestart(): LogicResult {
     logs: [{ message: '🔄 游戏已重置', type: 'warning' }],
     uiState: { gameOverReason: null },
     clearLogs: true
-  };
-}
-
-export interface PracticeContestConfig extends ContestConfig {
-  id: string;
-  description: string;
-  cost: number;
-}
-
-/**
- * 处理练习赛选择
- * @param gameState - 当前游戏状态
- * @param contestConfig - 比赛配置
- * @returns LogicResult
- */
-export function handlePracticeContestSelect(gameState: GameState, contestConfig: PracticeContestConfig): LogicResult {
-  const logs: LogEntry[] = [];
-
-  if (gameState.activeContest) {
-    logs.push({ message: '⚠️ 已有正在进行的比赛', type: 'warning' });
-    return { newState: gameState, logs, uiState: { showPracticeContestDialog: false } };
-  }
-
-  if (gameState.remainingAP < contestConfig.cost) {
-    logs.push({
-      message: `❌ 行动点不足！需要 ${contestConfig.cost} AP，剩余 ${gameState.remainingAP} AP`,
-      type: 'error'
-    });
-    return { newState: gameState, logs, uiState: { showPracticeContestDialog: true } };
-  }
-
-  const session = createContestSession(contestConfig);
-  logs.push({
-    message: `🏁 开始${session.name}（${session.problems.length} 题，${session.durationMinutes} 分钟）`,
-    type: 'info'
-  });
-
-  const newState: GameState = {
-    ...gameState,
-    remainingAP: Math.max(0, gameState.remainingAP - contestConfig.cost),
-    activeContest: session,
-    contestTimeRemaining: session.timeRemaining,
-    selectedTeam: null
-  };
-
-  return {
-    newState,
-    logs,
-    uiState: { showPracticeContestDialog: false }
   };
 }
 

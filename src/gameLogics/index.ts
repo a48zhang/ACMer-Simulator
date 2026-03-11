@@ -14,6 +14,18 @@ export {
 // 活动逻辑
 export { executeActivity } from './activity';
 
+// 练习逻辑
+export {
+  startPracticeSession,
+  finishPracticeSession,
+  readPracticeProblem,
+  thinkPracticeProblem,
+  codePracticeProblem,
+  debugPracticeProblem,
+  viewPracticeEditorial,
+  attemptPracticeProblem
+} from './practice';
+
 // 月份逻辑
 export { advanceMonth } from './month';
 
@@ -28,7 +40,6 @@ export {
   handleTraitConfirm,
   resetGame,
   handleGameOverRestart,
-  handlePracticeContestSelect,
   applyContestResult
 } from './gameFlow';
 

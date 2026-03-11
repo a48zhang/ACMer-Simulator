@@ -7,6 +7,7 @@ import ActivityPanel from './components/panels/ActivityPanel'
 import EventPanel from './components/panels/EventPanel'
 import EventDialog from './components/dialogs/EventDialog'
 import ContestInProgress from './components/game/ContestInProgress'
+import PracticeInProgress from './components/game/PracticeInProgress'
 import ContestResultDialog from './components/dialogs/ContestResultDialog'
 import ConfirmDialog from './components/dialogs/ConfirmDialog'
 import GameOverDialog from './components/dialogs/GameOverDialog'
@@ -15,6 +16,7 @@ import IntroPanel from './components/panels/IntroPanel'
 import TraitSelectionPanel from './components/panels/TraitSelectionPanel'
 import PracticeContestSelectionDialog from './components/dialogs/PracticeContestSelectionDialog'
 import { ACTIVITIES } from './data/activities'
+import { buildPracticeOptions } from './data/practice'
 import {
   Container,
   Header,
@@ -39,12 +41,18 @@ import {
   handleTraitConfirm as handleTraitConfirmLogic,
   resetGame as resetGameLogic,
   handleGameOverRestart as handleGameOverRestartLogic,
-  handlePracticeContestSelect as handlePracticeContestSelectLogic,
   applyContestResult,
-  createAddLog
+  createAddLog,
+  startPracticeSession,
+  finishPracticeSession,
+  readPracticeProblem,
+  thinkPracticeProblem,
+  codePracticeProblem,
+  debugPracticeProblem,
+  viewPracticeEditorial,
+  attemptPracticeProblem
 } from './gameLogics'
-import type { GameState, Event, ContestOutcome, LogicResult } from './types'
-import type { PracticeContestConfig } from './gameLogics/gameFlow'
+import type { GameState, Event, ContestOutcome, LogicResult, PracticeOption } from './types'
 
 type GamePhase = 'intro' | 'traitSelection' | 'playing'
 
@@ -215,9 +223,37 @@ function App() {
     setGamePhase('intro')
   }, [applyLogicResult])
 
-  const wrappedHandlePracticeContestSelect = useCallback((contestConfig: PracticeContestConfig) => {
-    const result = handlePracticeContestSelectLogic(gameState, contestConfig)
+  const wrappedHandlePracticeContestSelect = useCallback((option: PracticeOption) => {
+    const result = startPracticeSession(gameState, option)
     applyLogicResult(result)
+  }, [gameState, applyLogicResult])
+
+  const wrappedFinishPractice = useCallback(() => {
+    applyLogicResult(finishPracticeSession(gameState))
+  }, [gameState, applyLogicResult])
+
+  const wrappedReadPracticeProblem = useCallback((problemId: string) => {
+    applyLogicResult(readPracticeProblem(gameState, problemId))
+  }, [gameState, applyLogicResult])
+
+  const wrappedThinkPracticeProblem = useCallback((problemId: string) => {
+    applyLogicResult(thinkPracticeProblem(gameState, problemId))
+  }, [gameState, applyLogicResult])
+
+  const wrappedCodePracticeProblem = useCallback((problemId: string) => {
+    applyLogicResult(codePracticeProblem(gameState, problemId))
+  }, [gameState, applyLogicResult])
+
+  const wrappedDebugPracticeProblem = useCallback((problemId: string) => {
+    applyLogicResult(debugPracticeProblem(gameState, problemId))
+  }, [gameState, applyLogicResult])
+
+  const wrappedViewPracticeEditorial = useCallback((problemId: string) => {
+    applyLogicResult(viewPracticeEditorial(gameState, problemId))
+  }, [gameState, applyLogicResult])
+
+  const wrappedAttemptPracticeProblem = useCallback((problemId: string) => {
+    applyLogicResult(attemptPracticeProblem(gameState, problemId))
   }, [gameState, applyLogicResult])
 
   const wrappedApplyContestResult = useCallback(() => {
@@ -255,6 +291,7 @@ function App() {
   }, [wrappedFinishContest])
 
   const pendingEvents = useMemo(() => gameState.pendingEvents || [], [gameState.pendingEvents])
+  const practiceOptions = useMemo(() => buildPracticeOptions(gameState), [gameState])
   const canAdvance = useMemo(() => pendingEvents.length === 0, [pendingEvents.length])
   const gameEnded = useMemo(() => gameState.month > 46, [gameState.month])
 
@@ -275,7 +312,7 @@ function App() {
     <Container>
       <Header>
         <h1>🏆 ACMer选手模拟器</h1>
-        <p className="subtitle">体验编程竞赛选手的生活</p>
+        <p className="subtitle">从大一打到毕业前</p>
       </Header>
 
       <AppLayout>
@@ -312,7 +349,7 @@ function App() {
                   onAdvanceMonth={wrappedAdvanceMonth}
                 />
 
-                {!gameState.activeContest && (
+                {!gameState.activeContest && !gameState.activePractice && (
                   <EventPanel
                     pendingEvents={pendingEvents}
                     onOpenEvent={openEventDialog}
@@ -334,7 +371,20 @@ function App() {
                   />
                 )}
 
-                {!gameState.activeContest && (
+                {gameState.activePractice && (
+                  <PracticeInProgress
+                    session={gameState.activePractice}
+                    onRead={wrappedReadPracticeProblem}
+                    onThink={wrappedThinkPracticeProblem}
+                    onCode={wrappedCodePracticeProblem}
+                    onDebug={wrappedDebugPracticeProblem}
+                    onEditorial={wrappedViewPracticeEditorial}
+                    onAttempt={wrappedAttemptPracticeProblem}
+                    onFinish={wrappedFinishPractice}
+                  />
+                )}
+
+                {!gameState.activeContest && !gameState.activePractice && (
                   <ActivityPanel
                     activities={ACTIVITIES}
                     remainingAP={gameState.remainingAP}
@@ -388,6 +438,8 @@ function App() {
 
       {showPracticeContestDialog && (
         <PracticeContestSelectionDialog
+          options={practiceOptions}
+          backlogCount={gameState.practiceBacklog.length}
           onSelect={wrappedHandlePracticeContestSelect}
           onCancel={handlePracticeContestCancel}
         />

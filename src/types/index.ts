@@ -54,6 +54,8 @@ export interface GameState {
   eventGraph: Record<string, unknown>;
   activeContest: ContestSession | null;
   contestTimeRemaining: number;
+  activePractice: PracticeSession | null;
+  practiceBacklog: PracticeBacklogItem[];
   teammates: Teammate[];
   selectedTeam: string[] | null;
   buffs: Buffs;
@@ -121,6 +123,10 @@ export interface Problem {
   hasBug: boolean;
   bugFound: boolean;
   hasWrittenCode: boolean;
+  editorialViewed?: boolean;
+  backlogId?: string;
+  sourceContestId?: string;
+  sourceContestName?: string;
   revealedInfo: unknown | null;
 }
 
@@ -151,6 +157,34 @@ export interface ContestConfig {
   difficulties?: number[];
   isRated?: boolean;
   ratingSource?: string;
+}
+
+export interface PracticeSession {
+  id: string;
+  name: string;
+  description: string;
+  mode: 'sheet' | 'upsolve';
+  cost: number;
+  problems: Problem[];
+  startedAt: number;
+}
+
+export interface PracticeBacklogItem {
+  id: string;
+  contestId: string;
+  contestName: string;
+  problem: Problem;
+  createdAt: number;
+}
+
+export interface PracticeOption {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  mode: 'sheet' | 'upsolve';
+  problems: Problem[];
+  badge?: string;
 }
 
 export interface ContestOutcome {

@@ -27,6 +27,8 @@ export const createInitialGameState = (): GameStateType => ({
   eventGraph: {},
   activeContest: null,
   contestTimeRemaining: 0,
+  activePractice: null,
+  practiceBacklog: [],
   teammates: [],
   selectedTeam: null,
   buffs: {

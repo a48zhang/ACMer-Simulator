@@ -1,6 +1,41 @@
-import { calculateContestOutcome, readProblem, thinkProblem, codeProblem, debugProblem, evaluateAttempt } from '../data/contests';
+import {
+  calculateContestOutcome,
+  readProblem,
+  thinkProblem,
+  codeProblem,
+  debugProblem,
+  evaluateAttempt,
+  resetProblemProgress
+} from '../data/contests';
 import { getEffectiveContestAttributes } from '../utils';
 import type { GameState, LogicResult, Problem, ContestSession } from '../types';
+
+function buildContestCompletionState(
+  gameState: GameState,
+  session: ContestSession,
+  extraState: Partial<GameState> = {}
+): GameState {
+  const backlogItems = session.problems
+    .filter((problem) => problem.status !== 'solved')
+    .map((problem) => ({
+      id: crypto.randomUUID(),
+      contestId: session.id,
+      contestName: session.name,
+      problem: resetProblemProgress(problem, {
+        sourceContestId: session.id,
+        sourceContestName: session.name
+      }),
+      createdAt: Date.now()
+    }));
+
+  return {
+    ...gameState,
+    activeContest: null,
+    contestTimeRemaining: 0,
+    practiceBacklog: [...gameState.practiceBacklog, ...backlogItems],
+    ...extraState
+  };
+}
 
 /**
  * 完成比赛
@@ -12,12 +47,7 @@ export function finishContest(gameState: GameState): LogicResult {
   if (!session) return { newState: gameState, logs: [], uiState: {} };
 
   const outcome = calculateContestOutcome(session, gameState.contestTimeRemaining, gameState.rating);
-
-  const newState = {
-    ...gameState,
-    activeContest: null,
-    contestTimeRemaining: 0
-  };
+  const newState = buildContestCompletionState(gameState, session);
 
   return {
     newState,
@@ -72,9 +102,7 @@ export function readContestProblem(gameState: GameState, problemId: string): Log
     const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
     return {
       newState: {
-        ...gameState,
-        activeContest: null,
-        contestTimeRemaining: 0
+        ...buildContestCompletionState(gameState, nextSession)
       },
       logs: [
         {
@@ -156,9 +184,7 @@ export function thinkContestProblem(gameState: GameState, problemId: string): Lo
     const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
     return {
       newState: {
-        ...gameState,
-        activeContest: null,
-        contestTimeRemaining: 0
+        ...buildContestCompletionState(gameState, nextSession)
       },
       logs: [
         {
@@ -235,9 +261,7 @@ export function codeContestProblem(gameState: GameState, problemId: string): Log
     const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
     return {
       newState: {
-        ...gameState,
-        activeContest: null,
-        contestTimeRemaining: 0
+        ...buildContestCompletionState(gameState, nextSession)
       },
       logs: [
         {
@@ -325,9 +349,7 @@ export function debugContestProblem(gameState: GameState, problemId: string): Lo
     const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
     return {
       newState: {
-        ...gameState,
-        activeContest: null,
-        contestTimeRemaining: 0
+        ...buildContestCompletionState(gameState, nextSession)
       },
       logs: [
         { message: logMessage, type: debugResult.foundBug ? 'success' : 'info' },
@@ -410,10 +432,9 @@ export function attemptContestProblem(gameState: GameState, problemId: string): 
     const outcome = calculateContestOutcome(nextSession, timeRemaining, gameState.rating);
     return {
       newState: {
-        ...gameState,
-        activeContest: null,
-        contestTimeRemaining: 0,
+        ...buildContestCompletionState(gameState, nextSession, {
         playerProblems: problemSolved ? gameState.playerProblems + 1 : gameState.playerProblems
+        })
       },
       logs: [
         {

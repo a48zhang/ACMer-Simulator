@@ -141,6 +141,7 @@ function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
   };
 
   const hasActiveContest = !!gameState.activeContest;
+  const hasActivePractice = !!gameState.activePractice;
 
   const getAPProgressColor = () => {
     const ratio = gameState.remainingAP / currentAPCap;
@@ -158,7 +159,7 @@ function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
         <Button
           variant="success"
           onClick={onAdvanceMonth}
-          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest}
+          disabled={!gameState.isRunning || gameState.isPaused || gameState.month > 46 || hasPendingEvents || hasActiveContest || hasActivePractice}
         >
           下一月 ➡️
         </Button>
@@ -179,6 +180,11 @@ function GameControls({ gameState, onAdvanceMonth }: GameControlsProps) {
         {hasActiveContest && (
           <StatusChip $alert>
             ⏱️ 比赛剩余 <StatusChipStrong $alert>{gameState.contestTimeRemaining}</StatusChipStrong> 分钟
+          </StatusChip>
+        )}
+        {hasActivePractice && (
+          <StatusChip $alert>
+            📚 练习中 <StatusChipStrong $alert>{gameState.activePractice?.name}</StatusChipStrong>
           </StatusChip>
         )}
       </GameStatusWrapper>

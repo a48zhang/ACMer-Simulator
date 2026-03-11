@@ -1,13 +1,10 @@
 import styled from 'styled-components';
 import { Button } from '../common/Button';
-import type { PracticeContestConfig } from '../../gameLogics/gameFlow';
+import type { PracticeOption } from '../../types';
 
 const DialogOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
@@ -21,175 +18,163 @@ const DialogBox = styled.div`
   padding: 1.5rem;
   box-shadow: ${props => props.theme.shadows.lg};
   border: 1px solid ${props => props.theme.colors.border};
-  max-width: 700px;
-  width: 90%;
+  max-width: 760px;
+  width: 92%;
   max-height: 85vh;
   overflow-y: auto;
 `;
 
 const DialogTitle = styled.h2`
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: ${props => props.theme.colors.textMain};
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
 `;
 
 const DialogSubtitle = styled.p`
   color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 1.5rem;
-  font-size: 0.9375rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
 `;
 
-const ContestGrid = styled.div`
+const UnlockHint = styled.div`
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: ${props => props.theme.radius.md};
+  background: rgba(59, 130, 246, 0.08);
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.84rem;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+`;
+
+const OptionGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 0.95rem;
+  margin-bottom: 1.4rem;
 `;
 
-const ContestCard = styled.div`
+const OptionCard = styled.button`
+  text-align: left;
   padding: 1rem;
   border: 2px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.radius.md};
   background: ${props => props.theme.colors.background};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.18s;
+  font: inherit;
 
   &:hover {
     border-color: ${props => props.theme.colors.primary};
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.md};
   }
 `;
 
-const ContestName = styled.div`
-  font-weight: 600;
-  font-size: 0.9375rem;
+const OptionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.45rem;
+`;
+
+const OptionName = styled.div`
+  font-weight: 700;
+  font-size: 0.95rem;
   color: ${props => props.theme.colors.textMain};
-  margin-bottom: 0.25rem;
 `;
 
-const ContestDesc = styled.div`
-  font-size: 0.8125rem;
-  color: ${props => props.theme.colors.textSecondary};
-  margin-bottom: 0.5rem;
-`;
-
-const ContestCost = styled.div`
-  font-size: 0.875rem;
-  font-weight: 600;
+const OptionBadge = styled.span`
+  font-size: 0.72rem;
+  font-weight: 700;
   color: ${props => props.theme.colors.primary};
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: ${props => props.theme.radius.sm};
-  display: inline-block;
+  background: rgba(37, 99, 235, 0.12);
+  padding: 0.18rem 0.45rem;
+  border-radius: ${props => props.theme.radius.full};
+  flex-shrink: 0;
+`;
+
+const OptionDescription = styled.div`
+  font-size: 0.82rem;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+`;
+
+const OptionMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+`;
+
+const OptionMode = styled.span`
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const OptionCost = styled.span`
+  color: ${props => props.theme.colors.primary};
+  font-weight: 700;
 `;
 
 const DialogFooter = styled.div`
   display: flex;
-  gap: 0.75rem;
   justify-content: flex-end;
 `;
 
 interface PracticeContestSelectionDialogProps {
-  onSelect: (contest: PracticeContestConfig) => void;
+  options: PracticeOption[];
+  backlogCount: number;
+  onSelect: (option: PracticeOption) => void;
   onCancel: () => void;
 }
 
-function PracticeContestSelectionDialog({ onSelect, onCancel }: PracticeContestSelectionDialogProps) {
-    const contestTypes: PracticeContestConfig[] = [
-        {
-            id: 'cf_div2',
-            name: 'Codeforces Div.2',
-            description: '7-8道题目，120分钟，有Rating',
-            problemCount: [7, 8],
-            durationMinutes: 120,
-            difficulties: [1, 2, 3, 5, 7, 8, 10, 10],
-            isRated: true,
-            ratingSource: 'cf',
-            cost: 10
-        },
-        {
-            id: 'cf_div3',
-            name: 'Codeforces Div.3',
-            description: '6-7道题目，120分钟，有Rating',
-            problemCount: [6, 7],
-            durationMinutes: 120,
-            difficulties: [1, 1, 2, 3, 4, 5, 7],
-            isRated: true,
-            ratingSource: 'cf',
-            cost: 10
-        },
-        {
-            id: 'cf_div4',
-            name: 'Codeforces Div.4',
-            description: '5-6道题目，90分钟，有Rating',
-            problemCount: [5, 6],
-            durationMinutes: 90,
-            difficulties: [1, 1, 1, 2, 2, 3],
-            isRated: true,
-            ratingSource: 'cf',
-            cost: 8
-        },
-        {
-            id: 'cf_educational',
-            name: 'Educational Round',
-            description: '6-7道题目，120分钟，有Rating',
-            problemCount: [6, 7],
-            durationMinutes: 120,
-            difficulties: [1, 2, 2, 3, 4, 5, 6],
-            isRated: true,
-            ratingSource: 'cf',
-            cost: 10
-        },
-        {
-            id: 'atcoder_beginner',
-            name: 'AtCoder Beginner',
-            description: '6道题目，100分钟，有Rating',
-            problemCount: 6,
-            durationMinutes: 100,
-            difficulties: [1, 2, 3, 4, 5, 6],
-            isRated: true,
-            ratingSource: 'atcoder',
-            cost: 10
-        },
-        {
-            id: 'practice_school',
-            name: '校内练习赛',
-            description: '4-5道题目，120分钟，无Rating',
-            problemCount: [4, 5],
-            durationMinutes: 120,
-            difficulties: [2, 3, 4, 5, 6],
-            isRated: false,
-            cost: 8
-        }
-    ];
+function PracticeContestSelectionDialog({
+  options,
+  backlogCount,
+  onSelect,
+  onCancel
+}: PracticeContestSelectionDialogProps) {
+  return (
+    <DialogOverlay>
+      <DialogBox>
+        <DialogTitle>📚 选择练习计划</DialogTitle>
+        <DialogSubtitle>
+          可以做预设题单，也可以回头补最近比赛没做完的题。练习沿用比赛式的读题、思考、写代码、对拍、提交流程。
+        </DialogSubtitle>
 
-    return (
-        <DialogOverlay>
-            <DialogBox>
-                <DialogTitle>🏆 选择练习赛</DialogTitle>
-                <DialogSubtitle>选择你要参加的练习赛类型</DialogSubtitle>
-                
-                <ContestGrid>
-                    {contestTypes.map(contest => (
-                        <ContestCard
-                            key={contest.id}
-                            onClick={() => onSelect(contest)}
-                        >
-                            <ContestName>{contest.name}</ContestName>
-                            <ContestDesc>{contest.description}</ContestDesc>
-                            <ContestCost>⚡ {contest.cost} AP</ContestCost>
-                        </ContestCard>
-                    ))}
-                </ContestGrid>
+        <UnlockHint>
+          练习中的每道题都可以直接看题解，用来补思路或卡关时兜底。
+          {backlogCount > 0 ? ` 当前有 ${backlogCount} 道待补题。` : ' 当前还没有待补的比赛题。'}
+        </UnlockHint>
 
-                <DialogFooter>
-                    <Button variant="secondary" onClick={onCancel}>
-                        取消
-                    </Button>
-                </DialogFooter>
-            </DialogBox>
-        </DialogOverlay>
-    );
+        <OptionGrid>
+          {options.map((option) => (
+            <OptionCard key={option.id} type="button" onClick={() => onSelect(option)}>
+              <OptionHeader>
+                <OptionName>{option.name}</OptionName>
+                {option.badge && <OptionBadge>{option.badge}</OptionBadge>}
+              </OptionHeader>
+              <OptionDescription>{option.description}</OptionDescription>
+              <OptionMeta>
+                <OptionMode>{option.mode === 'upsolve' ? '补题模式' : '题单模式'}</OptionMode>
+                <OptionCost>{option.cost} AP</OptionCost>
+              </OptionMeta>
+            </OptionCard>
+          ))}
+        </OptionGrid>
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={onCancel}>
+            取消
+          </Button>
+        </DialogFooter>
+      </DialogBox>
+    </DialogOverlay>
+  );
 }
 
 export default PracticeContestSelectionDialog;

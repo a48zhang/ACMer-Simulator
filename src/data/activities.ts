@@ -148,12 +148,12 @@ export const ACTIVITIES: Activity[] = [
     },
     {
         id: 'practice_contest',
-        name: '参加练习赛',
+        name: '专项练习',
         cost: 0,
-        description: '打开练习赛列表，按所选赛事消耗 AP',
+        description: '选择题单或补题计划，进入分步练习模式',
         effects: (): ActivityResult => ({
             specialAction: 'OPEN_PRACTICE_CONTEST_DIALOG',
-            log: '🏁 准备参加练习赛...',
+            log: '📚 准备开始专项练习...',
             logType: 'info'
         }),
         repeatable: true

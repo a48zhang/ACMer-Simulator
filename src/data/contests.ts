@@ -24,6 +24,17 @@ const ATTR_NAMES_CN: Partial<Record<string, string>> = {
     string: '字符串', search: '搜索', greedy: '贪心', geometry: '计算几何'
 };
 
+export const getProblemTagNames = (problem: Problem): string[] => {
+    const attrKeys = Object.keys(problem.requires || {});
+    const specializedKeys = attrKeys.filter(k =>
+        (SKILL_TYPES.specialized as readonly string[]).includes(k)
+    );
+    const tags = specializedKeys.length > 0
+        ? specializedKeys.slice(0, 3)
+        : attrKeys.slice(0, 3);
+    return tags.map(k => ATTR_NAMES_CN[k] || k);
+};
+
 interface ReadProblemResult {
     readTime: number;
     tags: string[];
@@ -35,17 +46,8 @@ export const readProblem = (problem: Problem, attributes: Partial<Attributes>): 
     const readTime = 3 + Math.max(0, problem.difficulty - 2);
 
     // 从 requires 中提取主要算法标签（取前2个非通用属性，或通用属性）
-    const tags: string[] = [];
+    const tagsCn = getProblemTagNames(problem).slice(0, 2);
     const attrKeys = Object.keys(problem.requires || {});
-    const specializedKeys = attrKeys.filter(k =>
-        (SKILL_TYPES.specialized as readonly string[]).includes(k)
-    );
-    if (specializedKeys.length > 0) {
-        tags.push(...specializedKeys.slice(0, 2));
-    } else {
-        tags.push(...attrKeys.slice(0, 2));
-    }
-    const tagsCn = tags.map(k => ATTR_NAMES_CN[k] || k);
 
     // 计算预估成功率（不包含随机和 trickiness，只看平均属性比）
     let ratioSum = 0;
@@ -257,9 +259,24 @@ const generateProblem = (difficulty: number): Omit<Problem, 'letter' | 'order'> 
         hasBug: false, // 是否有 bug（对玩家不可见）
         bugFound: false, // bug 是否已被发现
         hasWrittenCode: false, // 是否已经写过代码
+        editorialViewed: false,
         revealedInfo: null // { tags }
     };
 };
+
+export const resetProblemProgress = (problem: Problem, overrides: Partial<Problem> = {}): Problem => ({
+    ...problem,
+    status: 'pending',
+    attempts: 0,
+    thinkBonus: 0,
+    debugBonus: 0,
+    hasBug: false,
+    bugFound: false,
+    hasWrittenCode: false,
+    editorialViewed: false,
+    revealedInfo: null,
+    ...overrides
+});
 
 export const createContestSession = (config: ContestConfig): ContestSession => {
     // 配置参数：
